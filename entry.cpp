@@ -7,10 +7,7 @@ void *AkariStack;
 
 // Just for this initialisation only.
 static u32 placementAddress;
-static void *PlacementAlloc(u32 n, bool align=false) {
-	if (align && (placementAddress & 0xFFF))
-		placementAddress = (placementAddress & ~0xFFF) + 0x1000;
-	
+static void *PlacementAlloc(u32 n) {
 	u32 addr = placementAddress;
 	placementAddress += n;
 	return (void *)addr;
