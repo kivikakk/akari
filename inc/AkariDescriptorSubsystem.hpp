@@ -22,7 +22,7 @@ extern "C" struct GDTEntry {
 	u8 base_high;
 } __attribute__((__packed__));
 
-extern "C" struct GDTPtr {
+extern "C" struct GDTPointer {
 	u16 limit;
 	u32 base;
 } __attribute__((__packed__));
@@ -39,6 +39,16 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 		const char *VersionProduct() const;
 
 	protected:
+		class GDT {
+			public:
+				void SetGate(s32, u32, u32, u8, u8);
+
+			protected:
+				GDTEntry *_entries;
+				GDTPointer *_pointer;
+		};
+
+		GDT _gdt;
 };
 
 #endif
