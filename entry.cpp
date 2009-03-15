@@ -1,4 +1,5 @@
 #include <entry.hpp>
+#include <debug.hpp>
 #include <Akari.hpp>
 
 void *AkariMultiboot;

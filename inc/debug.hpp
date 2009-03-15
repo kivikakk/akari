@@ -7,5 +7,7 @@
 #define ASSERT(x)	
 #endif
 
+extern "C" void AkariPanic(const char *);
+
 #endif
 

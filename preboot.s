@@ -9,8 +9,8 @@ AkariPreboot:
 
 .NoMultiboot:
 	pushl $AkariEntryNoMultibootMessage
+	call _AkariPanic
 	hlt
-	#; call _AkariPanic
 
 .HasMultiboot:
 	mov %ebx, _AkariMultiboot
