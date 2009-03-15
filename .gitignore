@@ -1,0 +1,5 @@
+Akari
+*.img
+.*.swp
+*.p
+obj/*
