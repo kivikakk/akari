@@ -24,11 +24,11 @@ void AkariEntry() {
 	// We'll start allocating from here
 	placementAddress = kernelEnd;
 
-	Kernel = new (PlacementAlloc(sizeof(Akari))) Akari();
-	Kernel->Console = new (PlacementAlloc(sizeof(AkariConsoleSubsystem))) AkariConsoleSubsystem(Kernel);
-	Kernel->Memory = new (PlacementAlloc(sizeof(AkariMemorySubsystem))) AkariMemorySubsystem(Kernel);
+	Akari = new (PlacementAlloc(sizeof(AkariKernel))) AkariKernel();
+	Akari->Console = new (PlacementAlloc(sizeof(AkariConsoleSubsystem))) AkariConsoleSubsystem();
+	Akari->Memory = new (PlacementAlloc(sizeof(AkariMemorySubsystem))) AkariMemorySubsystem();
 
-	void *heap = PlacementAlloc(Kernel->Memory->GetHeapSize());
-	Kernel->Memory->CreateHeap(heap);
+	void *heap = PlacementAlloc(Akari->Memory->GetHeapSize());
+	Akari->Memory->CreateKernelHeap(heap);
 }
 

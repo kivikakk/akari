@@ -9,7 +9,7 @@
 
 #define SCREEN_BLANK	0x0720
 
-AkariConsoleSubsystem::AkariConsoleSubsystem(Akari *kernel): AkariSubsystem(kernel) {
+AkariConsoleSubsystem::AkariConsoleSubsystem() {
 	Clear();
 }
 

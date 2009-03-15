@@ -1,7 +1,7 @@
 #include <AkariMemorySubsystem.hpp>
 
-AkariMemorySubsystem::AkariMemorySubsystem(Akari *kernel): AkariSubsystem(kernel), _heap(0) {
-}
+AkariMemorySubsystem::AkariMemorySubsystem()
+{ }
 
 u8 AkariMemorySubsystem::VersionMajor() const { return 0; }
 u8 AkariMemorySubsystem::VersionMinor() const { return 1; }
@@ -12,7 +12,7 @@ u32 AkariMemorySubsystem::GetHeapSize() const {
 	return sizeof(AkariMemorySubsystem::Heap);
 }
 
-void AkariMemorySubsystem::CreateHeap(void *addr) {
+void AkariMemorySubsystem::CreateKernelHeap(void *addr) {
 	_heap = new (addr) Heap();
 }
 

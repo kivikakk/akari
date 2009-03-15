@@ -1,12 +1,12 @@
 #include <Akari.hpp>
 #include <debug.hpp>
 
-Akari *Kernel;
+AkariKernel *Akari;
 
-Akari::Akari(): Console(0), Memory(0) {
+AkariKernel::AkariKernel(): Console(0), Memory(0) {
 }
 
-void Akari::Assert(bool condition) {
+void AkariKernel::Assert(bool condition) {
 	if (!condition)
 		AkariPanic("Assertion failed somewhere!");
 }

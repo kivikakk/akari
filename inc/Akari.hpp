@@ -8,9 +8,9 @@
  * The base class for the kernel services.
  */
 
-class Akari {
+class AkariKernel {
 	public:
-		Akari();
+		AkariKernel();
 
 		static void Assert(bool);
 
@@ -19,7 +19,7 @@ class Akari {
 		AkariMemorySubsystem *Memory;
 };
 
-extern Akari *Kernel;
+extern AkariKernel *Akari;
 
 #endif
 

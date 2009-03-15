@@ -6,7 +6,7 @@
 // Direct implementation.
 class AkariConsoleSubsystem : public AkariSubsystem {
 	public:
-		AkariConsoleSubsystem(Akari *);
+		AkariConsoleSubsystem();
 
 		u8 VersionMajor() const;
 		u8 VersionMinor() const;

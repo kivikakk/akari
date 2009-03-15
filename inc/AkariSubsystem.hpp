@@ -3,18 +3,14 @@
 
 #include <arch.hpp>
 
-class Akari;
-
 class AkariSubsystem {
 	public:
-		AkariSubsystem(Akari *);
+		AkariSubsystem();
 
 		virtual u8 VersionMajor() const = 0;
 		virtual u8 VersionMinor() const = 0;
 		virtual const char *VersionManufacturer() const = 0;
 		virtual const char *VersionProduct() const = 0;
-
-		Akari *_kernel;
 };
 
 #endif

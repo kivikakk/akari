@@ -2,7 +2,7 @@
 #define __DEBUG_HPP__
 
 #ifdef DEBUG
-#define ASSERT(x) 	Akari::Assert(x)
+#define ASSERT(x) 	AkariKernel::Assert(x)
 #else
 #define ASSERT(x)	
 #endif

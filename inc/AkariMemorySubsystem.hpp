@@ -5,7 +5,7 @@
 
 class AkariMemorySubsystem : public AkariSubsystem {
 	public:
-		AkariMemorySubsystem(Akari *);
+		AkariMemorySubsystem();
 
 		u8 VersionMajor() const;
 		u8 VersionMinor() const;
@@ -13,7 +13,7 @@ class AkariMemorySubsystem : public AkariSubsystem {
 		const char *VersionProduct() const;
 
 		u32 GetHeapSize() const;
-		void CreateHeap(void *);
+		void CreateKernelHeap(void *);
 
 		void *Alloc(u32);
 		void *AllocAligned(u32);
