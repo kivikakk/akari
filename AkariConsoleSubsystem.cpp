@@ -9,9 +9,12 @@
 
 #define SCREEN_BLANK	0x0720
 
-/*AkariConsoleSubsystem::AkariConsoleSubsystem(Akari *kernel): AkariSubsystem(kernel) {
+AkariConsoleSubsystem::AkariConsoleSubsystem(Akari *kernel): AkariSubsystem(kernel) {
 	Clear();
-}*/
+}
+
+u8 AkariConsoleSubsystem::VersionMajor() const { return 0; }
+u8 AkariConsoleSubsystem::VersionMinor() const { return 1; }
 
 void AkariConsoleSubsystem::Clear() {
 	u16 *i = (u16 *)SCREEN_VMEM;
@@ -33,12 +36,12 @@ void AkariConsoleSubsystem::PutChar(s8 c) {
 	}
 }
 
-void AkariConsoleSubsystem::PutString(const s8 *s) {
+void AkariConsoleSubsystem::PutString(const char *s) {
 	while (*s)
 		PutChar(*s++);
 }
 
-void AkariConsoleSubsystem::PutStringN(const s8 *s, u32 n) {
+void AkariConsoleSubsystem::PutStringN(const char *s, u32 n) {
 	while (*s && n)
 		PutChar(*s++), --n;
 }

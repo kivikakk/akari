@@ -8,13 +8,13 @@ class AkariConsoleSubsystem : public AkariSubsystem {
 	public:
 		AkariConsoleSubsystem(Akari *);
 
-		u16 VersionMajor() const;
-		u16 VersionMinor() const;
+		u8 VersionMajor() const;
+		u8 VersionMinor() const;
 
 		void Clear();
 		void PutChar(s8);
-		void PutString(const s8 *);
-		void PutStringN(const s8 *, u32);
+		void PutString(const char *);
+		void PutStringN(const char *, u32);
 		void PutInt(u32, u8);
 
 	protected:

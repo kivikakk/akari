@@ -1,6 +1,7 @@
 #ifndef __AKARI_HPP__
 #define __AKARI_HPP__
 
+#include <AkariConsoleSubsystem.hpp>
 #include <AkariMemorySubsystem.hpp>
 
 /**

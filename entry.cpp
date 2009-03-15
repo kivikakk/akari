@@ -5,6 +5,7 @@ void *AkariMultiboot;
 void *AkariStack;
 
 void AkariEntry() {
-	Kernel = ;
+	Kernel = 0;
+	Kernel->Console->PutString("Hello, world!\n");
 }
 
