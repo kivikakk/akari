@@ -26,7 +26,6 @@ void AkariEntry() {
 
 	Kernel = new (PlacementAlloc(sizeof(Akari))) Akari();
 	Kernel->Console = new (PlacementAlloc(sizeof(AkariConsoleSubsystem))) AkariConsoleSubsystem(Kernel);
-
-	Kernel->Console->PutString("Are we here yet?");
+	Kernel->Memory = new (PlacementAlloc(sizeof(AkariMemorySubsystem))) AkariMemorySubsystem(Kernel);
 }
 
