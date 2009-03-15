@@ -1,6 +1,6 @@
 #include <arch.hpp>
 
-void ___cxa_pure_virtual() {
+void __cxa_pure_virtual() {
 	// TODO: panic or something!
 }
 

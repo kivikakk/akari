@@ -14,7 +14,7 @@ typedef signed char s8;
 
 // C++ pure virtual function called?!
 
-extern "C" void ___cxa_pure_virtual();
+extern "C" void __cxa_pure_virtual();
 
 #endif
 
