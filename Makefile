@@ -17,15 +17,18 @@ all: $(TARGET)-copy
 $(TARGET)-copy: $(TARGET)
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
 
-$(TARGET): $(OBJS) $(LDFILE)
+$(TARGET): $(OBJS) $(LDFILE) obj
 	$(LD) $(LDOPTS) -T$(LDFILE) $(OBJS) -o $(TARGET)
 
-obj/%.s.o: %.s
+obj/%.s.o: %.s obj
 	$(AS) $(ASOPTS) -o $@ $<
-obj/%.c.o: %.c
+obj/%.c.o: %.c obj
 	$(CC) $(COPTS) -c -o $@ $<
-obj/%.cpp.o: %.cpp
+obj/%.cpp.o: %.cpp obj
 	$(CXX) -D__CPLUSPLUS $(CXXOPTS) -c -o $@ $<
+
+obj:
+	if [ ! -e obj ]; then mkdir obj; fi
 
 clean:
 	@-rm $(TARGET) $(OBJS)
