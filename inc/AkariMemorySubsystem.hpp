@@ -12,20 +12,26 @@ class AkariMemorySubsystem : public AkariSubsystem {
 		const char *VersionManufacturer() const;
 		const char *VersionProduct() const;
 
-		u32 GetHeapSize() const;
-		void CreateKernelHeap(void *);
+		void SetPlacementMode(u32);
 
-		void *Alloc(u32);
-		void *AllocAligned(u32);
-		void *AllocPhys(u32, u32 *);
-		void *AllocPhysAligned(u32, u32 *);
+		void *Alloc(u32, u32 *phys=0);
+		void *AllocAligned(u32, u32 *phys=0);
+		void Free(void *);
 	
 	protected:
 		class Heap {
+			Heap(u32, u32, u32, bool, bool);
 
+			class Header {
+				Header(u32, bool);
+
+				u32 size;
+				bool is_hole;
+			};
 		};
 
 		Heap *_heap;
+		u32 _placementAddress;
 };
 
 #endif

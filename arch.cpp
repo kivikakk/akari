@@ -25,7 +25,19 @@ void __cxa_pure_virtual() {
 	AkariPanic("__cxa_pure_virtual called");
 }
 
+void *operator new(u32 n) {
+	ASSERT(Akari);
+	ASSERT(Akari->Memory);
+	return Akari->Memory->Alloc(n);
+}
+
 void *operator new(u32, void *p) {
 	return p;
+}
+
+void operator delete(void *p) {
+	ASSERT(Akari);
+	ASSERT(Akari->Memory);
+	return Akari->Memory->Free(p);
 }
 

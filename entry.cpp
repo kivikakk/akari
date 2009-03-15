@@ -5,9 +5,9 @@
 void *AkariMultiboot;
 void *AkariStack;
 
-u32 placementAddress;
-
-inline void *PlacementAlloc(u32 n, bool align=false) {
+// Just for this initialisation only.
+static u32 placementAddress;
+static void *PlacementAlloc(u32 n, bool align=false) {
 	if (align && (placementAddress & 0xFFF))
 		placementAddress = (placementAddress & ~0xFFF) + 0x1000;
 	
@@ -28,7 +28,6 @@ void AkariEntry() {
 	Akari->Console = new (PlacementAlloc(sizeof(AkariConsoleSubsystem))) AkariConsoleSubsystem();
 	Akari->Memory = new (PlacementAlloc(sizeof(AkariMemorySubsystem))) AkariMemorySubsystem();
 
-	void *heap = PlacementAlloc(Akari->Memory->GetHeapSize());
-	Akari->Memory->CreateKernelHeap(heap);
+	Akari->Memory->SetPlacementMode(placementAddress);
 }
 
