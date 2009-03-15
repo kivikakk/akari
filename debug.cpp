@@ -9,6 +9,7 @@ void AkariPanic(const char *message) {
 	for (u16 j = 0; j < 80 * 25; ++j, ++i)
 		*i = SCREEN_DEATH;
 	
+	// "Clever."
 	i = (u16 *)SCREEN_VMEM;
 	while (*message)
 		*((s8 *)i++) = *message++;

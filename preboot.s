@@ -20,7 +20,7 @@ AkariPreboot:
 
 .section .data
 AkariEntryNoMultibootMessage:
-	.asciz "Akari: not loaded by a MULTIBOOT compliant boot loader!\nCannot continue - dying now. Please use GRUB or a similar loader.\n"
+	.asciz "Akari: not loaded by a MULTIBOOT compliant boot loader! Cannot continue - dying now. Please use GRUB or a similar loader."
 
 #; Multiboot header
 
