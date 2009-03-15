@@ -6,12 +6,8 @@ void *AkariMultiboot;
 void *AkariStack;
 
 void AkariEntry() {
-	// Bootstrap memory subsystems.
-	u32 kernelStart = (u32)&__kstart,
-		kernelEnd = (u32)&__kend;
-
-	// We'll start allocating from here
-	u32 placementAddress = kernelEnd;
+	// Bootstrap memory subsystems; we'll start allocating from here.
+	u32 placementAddress = (u32)&__kend;
 
 	Akari = new ((void *)placementAddress) AkariKernel();
 	placementAddress += sizeof(AkariKernel);
@@ -22,6 +18,5 @@ void AkariEntry() {
 	// we can now use `new' to use the memory manager's placement
 
 	Akari->Console = new AkariConsoleSubsystem();
-	Akari->Console->PutString("Testing!");
 }
 

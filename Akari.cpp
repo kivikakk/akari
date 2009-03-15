@@ -3,7 +3,7 @@
 
 AkariKernel *Akari;
 
-AkariKernel::AkariKernel(): Console(0), Memory(0) {
+AkariKernel::AkariKernel(): Memory(0), Console(0), Descriptor(0) {
 }
 
 void AkariKernel::Assert(bool condition) {
