@@ -19,9 +19,9 @@ extern "C" void AkariOutW(u16, u16);
 extern "C" u8 AkariInB(u16);
 extern "C" u16 AkariInW(u16);
 
-// C++ pure virtual function called?!
-
+// Compiler-specific things.
 extern "C" void __cxa_pure_virtual();
+void *operator new (u32, void *);
 
 #endif
 

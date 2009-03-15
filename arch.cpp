@@ -1,8 +1,5 @@
 #include <arch.hpp>
-
-void __cxa_pure_virtual() {
-	// TODO: panic or something!
-}
+#include <debug.hpp>
 
 void AkariOutB(u16 port, u8 data) {
 	asm volatile("outb %1, %0" : : "dN" (port), "a" (data));
@@ -22,5 +19,13 @@ u16 AkariInW(u16 port) {
 	u16 r;
 	asm volatile("inw %1, %0" : "=a" (r) : "dN" (port));
 	return r;
+}
+
+void __cxa_pure_virtual() {
+	AkariPanic("__cxa_pure_virtual called");
+}
+
+void *operator new(u32, void *p) {
+	return p;
 }
 
