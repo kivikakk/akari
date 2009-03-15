@@ -12,6 +12,13 @@ typedef signed long s32;
 typedef signed short s16;
 typedef signed char s8;
 
+// Minor IO functions. May need to be moved elsewhere later? (arch-dep)
+
+extern "C" void AkariOutB(u16, u8);
+extern "C" void AkariOutW(u16, u16);
+extern "C" u8 AkariInB(u16);
+extern "C" u16 AkariInW(u16);
+
 // C++ pure virtual function called?!
 
 extern "C" void __cxa_pure_virtual();

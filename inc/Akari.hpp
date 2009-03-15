@@ -11,7 +11,10 @@ class Akari {
 	public:
 		Akari();
 
-		// TODO: list of AkariSubsystems.
+		static void Assert(bool);
+
+		// TODO: linked list of AkariSubsystems.
+		AkariConsoleSubsystem *Console;
 		AkariMemorySubsystem *Memory;
 };
 
