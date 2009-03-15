@@ -15,6 +15,8 @@ AkariConsoleSubsystem::AkariConsoleSubsystem(Akari *kernel): AkariSubsystem(kern
 
 u8 AkariConsoleSubsystem::VersionMajor() const { return 0; }
 u8 AkariConsoleSubsystem::VersionMinor() const { return 1; }
+const char *AkariConsoleSubsystem::VersionManufacturer() const { return "Akari"; }
+const char *AkariConsoleSubsystem::VersionProduct() const { return "Akari Console"; }
 
 void AkariConsoleSubsystem::Clear() {
 	u16 *i = (u16 *)SCREEN_VMEM;

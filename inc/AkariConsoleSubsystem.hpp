@@ -10,6 +10,8 @@ class AkariConsoleSubsystem : public AkariSubsystem {
 
 		u8 VersionMajor() const;
 		u8 VersionMinor() const;
+		const char *VersionManufacturer() const;
+		const char *VersionProduct() const;
 
 		void Clear();
 		void PutChar(s8);

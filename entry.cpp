@@ -27,5 +27,8 @@ void AkariEntry() {
 	Kernel = new (PlacementAlloc(sizeof(Akari))) Akari();
 	Kernel->Console = new (PlacementAlloc(sizeof(AkariConsoleSubsystem))) AkariConsoleSubsystem(Kernel);
 	Kernel->Memory = new (PlacementAlloc(sizeof(AkariMemorySubsystem))) AkariMemorySubsystem(Kernel);
+
+	void *heap = PlacementAlloc(Kernel->Memory->GetHeapSize());
+	Kernel->Memory->CreateHeap(heap);
 }
 

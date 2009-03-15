@@ -5,6 +5,8 @@ AkariMemorySubsystem::AkariMemorySubsystem(Akari *kernel): AkariSubsystem(kernel
 
 u8 AkariMemorySubsystem::VersionMajor() const { return 0; }
 u8 AkariMemorySubsystem::VersionMinor() const { return 1; }
+const char *AkariMemorySubsystem::VersionManufacturer() const { return "Akari"; }
+const char *AkariMemorySubsystem::VersionProduct() const { return "Akari Memory Heap"; }
 
 u32 AkariMemorySubsystem::GetHeapSize() const {
 	return sizeof(AkariMemorySubsystem::Heap);

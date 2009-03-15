@@ -11,8 +11,8 @@ class AkariSubsystem {
 
 		virtual u8 VersionMajor() const = 0;
 		virtual u8 VersionMinor() const = 0;
-		// TODO: manufacturer string?
-		// TODO: product name?
+		virtual const char *VersionManufacturer() const = 0;
+		virtual const char *VersionProduct() const = 0;
 
 		Akari *_kernel;
 };

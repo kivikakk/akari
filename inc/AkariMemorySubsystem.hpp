@@ -9,6 +9,8 @@ class AkariMemorySubsystem : public AkariSubsystem {
 
 		u8 VersionMajor() const;
 		u8 VersionMinor() const;
+		const char *VersionManufacturer() const;
+		const char *VersionProduct() const;
 
 		u32 GetHeapSize() const;
 		void CreateHeap(void *);
