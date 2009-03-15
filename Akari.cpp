@@ -3,7 +3,10 @@
 
 Akari *Kernel;
 
-Akari::Akari(): Memory(0) {
-	AkariPanic("Akari initialising");
+Akari::Akari(): Console(0), Memory(0) {
 }
 
+void Akari::Assert(bool condition) {
+	if (!condition)
+		AkariPanic("Assertion failed somewhere!");
+}
