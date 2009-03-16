@@ -13,6 +13,8 @@ AkariDescriptorSubsystem::AkariDescriptorSubsystem() {
 	// TODO TSS flush
 
 	_idt = new IDT();
+
+	_irqt = new IRQT(_idt);
 }
 
 u8 AkariDescriptorSubsystem::VersionMajor() const { return 0; }
@@ -80,5 +82,39 @@ void AkariDescriptorSubsystem::IDT::SetGate(u8 idt, void (*callback)(), u16 isrS
 	_entries[idt]._always_0 = 0;
 	_entries[idt].flags = flags | 0x60;
 	_entries[idt].offset_high = ((u32)callback >> 16) & 0xFFFF;
+}
+
+AkariDescriptorSubsystem::IRQT::IRQT(IDT *idt): _idt(idt) {
+	AkariOutB(0x20, 0x11);
+	AkariOutB(0xA0, 0x11);
+	AkariOutB(0x21, 0x20);
+	AkariOutB(0xA1, 0x28);
+	AkariOutB(0x21, 0x04);
+	AkariOutB(0xA1, 0x02);
+	AkariOutB(0x21, 0x01);
+	AkariOutB(0xA1, 0x01);
+	AkariOutB(0x21, 0x00);
+	AkariOutB(0xA1, 0x00);
+
+#define SET_IRQ_GATE(n) _idt->SetGate(0x2##n, irq##n, 0x08, 0x8e)
+	SET_IRQ_GATE(0); SET_IRQ_GATE(1); SET_IRQ_GATE(2); SET_IRQ_GATE(3);
+	SET_IRQ_GATE(4); SET_IRQ_GATE(5); SET_IRQ_GATE(6); SET_IRQ_GATE(7);
+	SET_IRQ_GATE(8); SET_IRQ_GATE(9); SET_IRQ_GATE(a); SET_IRQ_GATE(b);
+	SET_IRQ_GATE(c); SET_IRQ_GATE(d); SET_IRQ_GATE(e); SET_IRQ_GATE(f);
+#undef SET_IRQ_GATE
+}
+
+void AkariDescriptorSubsystem::IRQT::InstallHandler(u8 irq, irq_handler_func_t callback) {
+	ASSERT(irq >= 0 && irq <= 0x0f);
+	_routines[irq] = callback;
+}
+
+void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
+	InstallHandler(irq, 0);
+}
+
+void AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct registers regs) {
+	if (_routines[irq])
+		_routines[irq](regs);
 }
 

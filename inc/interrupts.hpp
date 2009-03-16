@@ -12,8 +12,8 @@ struct registers {
 };
 
 /* This needs to go somewhere better, the structure needs to be verified, and its purpose verified */
-typedef struct irq_regs *(*isr_handler_func)(struct registers);
-typedef struct irq_regs *(*irq_handler_func)(struct registers); // ??
+typedef void (*isr_handler_func_t)(struct registers);
+typedef void (*irq_handler_func_t)(struct registers); // ??
 
 extern "C" void isr_handler(struct registers);
 extern "C" void irq_handler(struct registers);
@@ -51,6 +51,23 @@ extern "C" void isr1d();
 extern "C" void isr1e();
 extern "C" void isr1f();
 extern "C" void isr80();
+
+extern "C" void irq0();
+extern "C" void irq1();
+extern "C" void irq2();
+extern "C" void irq3();
+extern "C" void irq4();
+extern "C" void irq5();
+extern "C" void irq6();
+extern "C" void irq7();
+extern "C" void irq8();
+extern "C" void irq9();
+extern "C" void irqa();
+extern "C" void irqb();
+extern "C" void irqc();
+extern "C" void irqd();
+extern "C" void irqe();
+extern "C" void irqf();
 
 #endif
 

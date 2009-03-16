@@ -2,6 +2,7 @@
 #define __AKARI_DESCRIPTOR_SUBSYSTEM_HPP__
 
 #include <AkariSubsystem.hpp>
+#include <interrupts.hpp>
 
 // the subsystem itself
 
@@ -14,7 +15,9 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 		const char *VersionManufacturer() const;
 		const char *VersionProduct() const;
 
-	protected:
+	//protected:
+	// XXX - _irqt is used publicly... whoops
+
 		class GDT {
 			public:
 				GDT(u32);
@@ -77,8 +80,22 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 				Pointer _pointer;
 		};
 
+		class IRQT {
+			public:
+				IRQT(IDT *);
+
+				void InstallHandler(u8, irq_handler_func_t);
+				void ClearHandler(u8);
+				void CallHandler(u8, struct registers);
+
+			protected:
+				irq_handler_func_t _routines[16];
+				IDT *_idt;
+		};
+
 		GDT *_gdt;
 		IDT *_idt;
+		IRQT *_irqt;
 };
 
 #endif
