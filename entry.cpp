@@ -19,5 +19,9 @@ void AkariEntry() {
 
 	Akari->Console = new AkariConsoleSubsystem();
 	Akari->Descriptor = new AkariDescriptorSubsystem();
+
+	Akari->Console->PutString("\nSystem halted!");
+	while (1)
+		asm volatile("hlt");
 }
 

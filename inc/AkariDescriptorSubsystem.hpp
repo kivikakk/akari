@@ -77,8 +77,8 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 				Pointer _pointer;
 		};
 
-		GDT _gdt;
-		IDT _idt;
+		GDT *_gdt;
+		IDT *_idt;
 };
 
 #endif
