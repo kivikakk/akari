@@ -3,8 +3,6 @@
 
 #include <AkariSubsystem.hpp>
 
-// GDT structures
-
 // the subsystem itself
 
 class AkariDescriptorSubsystem : public AkariSubsystem {
@@ -52,7 +50,35 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 				Pointer _pointer;
 		};
 
+		class IDT {
+			public:
+				IDT();
+
+				void SetGate(u8, void (*)(), u16, u8);
+
+			protected:
+				union Entry {
+					struct {
+						unsigned offset_low : 16;
+						unsigned selector : 16;
+						unsigned _always_0 : 8;
+						unsigned flags : 8;
+						unsigned offset_high : 16;
+					} __attribute__((__packed__));
+					unsigned long ulong;
+				} __attribute__((__packed__));
+
+				struct Pointer {
+					u16 limit;
+					u32 ridt;
+				} __attribute__((__packed__));
+
+				Entry _entries[256];
+				Pointer _pointer;
+		};
+
 		GDT _gdt;
+		IDT _idt;
 };
 
 #endif
