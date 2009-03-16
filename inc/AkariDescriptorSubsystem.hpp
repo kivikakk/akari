@@ -19,7 +19,10 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 	protected:
 		class GDT {
 			public:
+				GDT(u32);
+
 				void SetGate(s32, u32, u32, u8, u8);
+				void Flush();
 
 			protected:
 				struct Entry {
@@ -44,8 +47,9 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 					u32 base;
 				} __attribute__((__packed__));
 
+				u32 _entryCount;
 				Entry *_entries;
-				Pointer *_pointer;
+				Pointer _pointer;
 		};
 
 		GDT _gdt;

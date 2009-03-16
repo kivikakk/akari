@@ -22,6 +22,7 @@ extern "C" u16 AkariInW(u16);
 // Compiler-specific things.
 extern "C" void __cxa_pure_virtual();
 void *operator new(u32);
+void *operator new[](u32);
 void *operator new(u32, void *);
 void operator delete(void *);
 

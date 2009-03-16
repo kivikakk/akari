@@ -18,5 +18,6 @@ void AkariEntry() {
 	// we can now use `new' to use the memory manager's placement
 
 	Akari->Console = new AkariConsoleSubsystem();
+	Akari->Descriptor = new AkariDescriptorSubsystem();
 }
 

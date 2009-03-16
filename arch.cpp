@@ -31,6 +31,12 @@ void *operator new(u32 n) {
 	return Akari->Memory->Alloc(n);
 }
 
+void *operator new[](u32 n) {
+	ASSERT(Akari);
+	ASSERT(Akari->Memory);
+	return Akari->Memory->Alloc(n);
+}
+
 void *operator new(u32, void *p) {
 	return p;
 }
