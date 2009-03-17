@@ -2,7 +2,7 @@
 #include <interrupts.hpp>
 #include <debug.hpp>
 
-AkariDescriptorSubsystem::AkariDescriptorSubsystem() {
+AkariDescriptorSubsystem::AkariDescriptorSubsystem(): _gdt(0), _idt(0), _irqt(0) {
 	_gdt = new GDT(6);
 	_gdt->SetGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);	// code
 	_gdt->SetGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);	// data
@@ -22,7 +22,7 @@ u8 AkariDescriptorSubsystem::VersionMinor() const { return 1; }
 const char *AkariDescriptorSubsystem::VersionManufacturer() const { return "Akari"; }
 const char *AkariDescriptorSubsystem::VersionProduct() const { return "Akari Descriptor Table Manager"; }
 
-AkariDescriptorSubsystem::GDT::GDT(u32 n): _entryCount(n) {
+AkariDescriptorSubsystem::GDT::GDT(u32 n): _entryCount(n), _entries(0) {
 	_entries = new Entry[n];
 	_pointer.limit = (sizeof(Entry) * n - 1);
 	_pointer.base = (u32)_entries;
@@ -58,6 +58,9 @@ void AkariDescriptorSubsystem::GDT::Flush() {
 }
 
 AkariDescriptorSubsystem::IDT::IDT() {
+	for (u16 i = 0; i < 0x100; ++i)
+		_entries[i].ulong = 0;
+
 #define SET_IDT_GATE(n)	SetGate(0x##n, isr##n, 0x08, 0x8e)
 	SET_IDT_GATE(0); SET_IDT_GATE(1); SET_IDT_GATE(2); SET_IDT_GATE(3);
 	SET_IDT_GATE(4); SET_IDT_GATE(5); SET_IDT_GATE(6); SET_IDT_GATE(7);
@@ -102,6 +105,9 @@ AkariDescriptorSubsystem::IRQT::IRQT(IDT *idt): _idt(idt) {
 	SET_IRQ_GATE(8); SET_IRQ_GATE(9); SET_IRQ_GATE(a); SET_IRQ_GATE(b);
 	SET_IRQ_GATE(c); SET_IRQ_GATE(d); SET_IRQ_GATE(e); SET_IRQ_GATE(f);
 #undef SET_IRQ_GATE
+
+	for (u8 i = 0; i < 16; ++i)
+		_routines[i] = 0;
 }
 
 void AkariDescriptorSubsystem::IRQT::InstallHandler(u8 irq, irq_handler_func_t callback) {
@@ -114,7 +120,13 @@ void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
 }
 
 void AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct registers regs) {
-	if (_routines[irq])
+	if (_routines[irq]) {
+		Akari->Console->PutString("calling irq handler ");
+		Akari->Console->PutInt(irq, 16);
+		Akari->Console->PutString(" at ");
+		Akari->Console->PutInt((u32)_routines[irq], 16);
+		Akari->Console->PutChar('\n');
 		_routines[irq](regs);
+	}
 }
 

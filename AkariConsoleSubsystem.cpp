@@ -63,7 +63,7 @@ void AkariConsoleSubsystem::PutInt(u32 n, u8 base) {
 		n -= (u32)c * index;
 
 		PutChar( (c >= 0 && c <= 9) ? (c + '0') : (c - 10 + 'a') );
-	} while (index > base);
+	} while (index >= base);
 }
 
 void AkariConsoleSubsystem::_Scroll() {
