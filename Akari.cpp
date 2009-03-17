@@ -6,7 +6,3 @@ AkariKernel *Akari;
 AkariKernel::AkariKernel(): Memory(0), Console(0), Descriptor(0), Timer(0) {
 }
 
-void AkariKernel::Assert(bool condition) {
-	if (!condition)
-		AkariPanic("Assertion failed somewhere!");
-}

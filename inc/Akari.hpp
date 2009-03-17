@@ -14,8 +14,6 @@ class AkariKernel {
 	public:
 		AkariKernel();
 
-		static void Assert(bool);
-
 		// TODO: linked list of AkariSubsystems.
 
 		AkariMemorySubsystem *Memory;

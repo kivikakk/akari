@@ -1,10 +1,10 @@
 #ifndef __DEBUG_HPP__
 #define __DEBUG_HPP__
 
-#include <Akari.hpp>
-
 #ifdef DEBUG
-#define ASSERT(x) 	AkariKernel::Assert(x)
+#define ASSERT_STRINGIFY(x)	#x
+#define ASSERT_TOSTRING(x)	ASSERT_STRINGIFY(x)
+#define ASSERT(x) 	do { if (!(x)) { AkariPanic("Assertion at " __FILE__ ":" ASSERT_TOSTRING(__LINE__) " failed: " #x); } } while(0)
 #else
 #define ASSERT(x)	
 #endif

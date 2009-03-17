@@ -1,4 +1,5 @@
 #include <AkariDescriptorSubsystem.hpp>
+#include <Akari.hpp>
 #include <interrupts.hpp>
 #include <debug.hpp>
 
