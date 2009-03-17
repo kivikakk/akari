@@ -1,7 +1,7 @@
 #include <AkariMemorySubsystem.hpp>
 #include <debug.hpp>
 
-AkariMemorySubsystem::AkariMemorySubsystem(): _heap(0), _placementAddress(0)
+AkariMemorySubsystem::AkariMemorySubsystem(u32 upperMemory): _upperMemory(upperMemory), _placementAddress(0), _heap(0)
 { }
 
 u8 AkariMemorySubsystem::VersionMajor() const { return 0; }
@@ -13,6 +13,11 @@ void AkariMemorySubsystem::SetPlacementMode(u32 addr) {
 	ASSERT(!_placementAddress);
 
 	_placementAddress = addr;
+}
+
+void AkariMemorySubsystem::SetPaging(bool mode) {
+	ASSERT(mode);		// TODO support turning paging off [if ever required?!]
+	// RESUME from here; see paging.cpp from lobstertime (installpaging())
 }
 
 void *AkariMemorySubsystem::Alloc(u32 n, u32 *phys) {

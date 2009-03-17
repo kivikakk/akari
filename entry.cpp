@@ -2,7 +2,7 @@
 #include <debug.hpp>
 #include <Akari.hpp>
 
-void *AkariMultiboot;
+multiboot_info_t *AkariMultiboot;
 void *AkariStack;
 
 void timer_func(struct registers r) {
@@ -13,9 +13,12 @@ void AkariEntry() {
 	// Bootstrap memory subsystems; we'll start allocating from here.
 	u32 placementAddress = (u32)&__kend;
 
+	if ((AkariMultiboot->flags & 0x41) != 0x41)
+		AkariPanic("Akari: MULTIBOOT hasn't given us enough information about memory.");
+
 	Akari = new ((void *)placementAddress) AkariKernel();
 	placementAddress += sizeof(AkariKernel);
-	Akari->Memory = new ((void *)placementAddress) AkariMemorySubsystem();
+	Akari->Memory = new ((void *)placementAddress) AkariMemorySubsystem(AkariMultiboot->mem_upper);
 	placementAddress += sizeof(AkariMemorySubsystem);
 
 	// TODO: move much of this into Akari's initialisation code
