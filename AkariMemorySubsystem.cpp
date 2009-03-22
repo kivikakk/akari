@@ -174,7 +174,7 @@ _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly
 	_index.insert(Entry(start, end - start, true));
 }
 
-void *AkariMemorySubsystem::Heap::Alloc(u32 n, u32 *phys) {
+void *AkariMemorySubsystem::Heap::Alloc(u32 n) {
 	s32 it = SmallestHole(n);
 	ASSERT(it >= 0);		// TODO: resize instead
 
@@ -196,7 +196,7 @@ void *AkariMemorySubsystem::Heap::Alloc(u32 n, u32 *phys) {
 	return (void *)dataStart;
 }
 
-void *AkariMemorySubsystem::Heap::AllocAligned(u32 n, u32 *phys) {
+void *AkariMemorySubsystem::Heap::AllocAligned(u32 n) {
 	s32 it = SmallestAlignedHole(n);
 	ASSERT(it >= 0);		// TODO: resize instead
 

@@ -31,8 +31,8 @@ class AkariMemorySubsystem : public AkariSubsystem {
 			public:
 				Heap(u32, u32, u32, bool, bool);
 
-				void *Alloc(u32, u32 *phys=0);
-				void *AllocAligned(u32, u32 *phys=0);
+				void *Alloc(u32);
+				void *AllocAligned(u32);
 
 			protected:
 				class Entry {
