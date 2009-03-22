@@ -3,3 +3,5 @@
 AkariSubsystem::AkariSubsystem()
 { }
 
+AkariSubsystem::~AkariSubsystem()
+{ }

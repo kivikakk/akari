@@ -121,13 +121,7 @@ void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
 }
 
 void AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct registers regs) {
-	if (_routines[irq]) {
-		Akari->Console->PutString("calling irq handler ");
-		Akari->Console->PutInt(irq, 16);
-		Akari->Console->PutString(" at ");
-		Akari->Console->PutInt((u32)_routines[irq], 16);
-		Akari->Console->PutChar('\n');
+	if (_routines[irq])
 		_routines[irq](regs);
-	}
 }
 

@@ -6,6 +6,7 @@
 class AkariSubsystem {
 	public:
 		AkariSubsystem();
+		virtual ~AkariSubsystem();
 
 		virtual u8 VersionMajor() const = 0;
 		virtual u8 VersionMinor() const = 0;
