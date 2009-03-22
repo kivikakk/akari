@@ -15,7 +15,7 @@ class OrderedArray {
 			ASSERT(maxSize);
 			ASSERT(lessThan);
 
-			POSIX::memset(array, 0, maxSize * sizeof(T));
+			POSIX::memset(_array, 0, maxSize * sizeof(T));
 		}
 
 		const T &operator[](u32 index) const {

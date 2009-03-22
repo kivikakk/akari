@@ -12,7 +12,7 @@ CSRCS := $(wildcard *.c)
 CXXSRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.s,obj/%.s.o,$(ASMSRCS)) $(patsubst %.c,obj/%.c.o,$(CSRCS)) $(patsubst %.cpp,obj/%.cpp.o,$(CXXSRCS))
 
-all: $(TARGET)-copy
+all: clean $(TARGET)-copy
 
 $(TARGET)-copy: $(TARGET)
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)

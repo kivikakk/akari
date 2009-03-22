@@ -1,4 +1,5 @@
 #include <POSIX.hpp>
+#include <Akari.hpp>
 
 namespace POSIX {
 	void *memset(void *mem, u8 c, u32 n) {

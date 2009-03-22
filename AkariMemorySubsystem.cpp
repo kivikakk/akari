@@ -48,13 +48,12 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 	POSIX::memset(_frames, 0, INDEX_BIT(_frameCount) + 1);
 
 	_kernelDirectory = PageDirectory::Allocate();
-	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, false, true);
 
 	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
 		_kernelDirectory->GetPage(i, true);
 	
 	u32 base = 0;
-	while (base < _placementAddress) {
+	while (base < (_placementAddress + sizeof(Heap))) {
 		_kernelDirectory->GetPage(base, true)->AllocFrame(base, false, false);
 		base += 0x1000;
 	}
@@ -67,11 +66,13 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 		_kernelDirectory->GetPage(i, true)->AllocAnyFrame(false, false);
 
 	Akari->Descriptor->_idt->InstallHandler(14, this->PageFault);
+
+	SwitchPageDirectory(_kernelDirectory);
+	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, false, true);
+	_placementAddress = 0;
 	
 	_activeDirectory = _kernelDirectory->Clone();
 	SwitchPageDirectory(_activeDirectory);
-
-	_placementAddress = 0;
 }
 
 void *AkariMemorySubsystem::Alloc(u32 n, u32 *phys) {
@@ -217,7 +218,12 @@ _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly
 	if (start & 0xFFFF)
 		start = (start & 0xFFFFF000) + 0x1000;
 
+	ASSERT(_index._size == 0);
 	_index.insert(Entry(start, end - start, true));
+	ASSERT(_index._size == 1);
+	ASSERT(_index[0].start == start);
+	ASSERT(_index[0].size == end - start);
+	ASSERT(_index[0].isHole);
 }
 
 void *AkariMemorySubsystem::Heap::Alloc(u32 n) {
@@ -290,16 +296,19 @@ bool AkariMemorySubsystem::Heap::IndexSort(const Entry &a, const Entry &b) {
 
 s32 AkariMemorySubsystem::Heap::SmallestHole(u32 n) const {
 	u32 it = 0;
+	ASSERT(_index._size > 0);
+
 	while (it < _index._size) {
 		const Entry &entry = _index[it];
 		if (!entry.isHole) {
 			++it; continue;
 		}
-		if (entry.size >= n)
+		if (entry.size >= n) {
 			return it;
+		}
 		++it;
 	}
-	AkariPanic("no smallest hole!");
+	AkariPanic("no smallest hole in SmallestHole!");
 	return -1;
 }
 
@@ -323,7 +332,7 @@ s32 AkariMemorySubsystem::Heap::SmallestAlignedHole(u32 n) const {
 
 		++it;
 	}
-	AkariPanic("no smallest hole!");
+	AkariPanic("no smallest hole in SmallestAlignedHole!");
 	return -1;
 }
 
