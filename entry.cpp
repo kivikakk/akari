@@ -27,6 +27,9 @@ void AkariEntry() {
 
 	Akari->Memory->SetPaging(true);
 
+	u32 a = 0;
+	u32 b = *((u32 *)a);
+
 	Akari->Console->PutString("\nSystem halted!");
 	asm volatile("sti");
 	while (1)

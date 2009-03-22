@@ -64,7 +64,7 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
 		_kernelDirectory->GetPage(i, true)->AllocFrame(FreeFrame(), false, false);
 
-	//Akari->Descriptor->
+	Akari->Descriptor->_idt->InstallHandler(14, this->PageFault);
 
 	_placementAddress = 0;
 }
@@ -123,6 +123,31 @@ void AkariMemorySubsystem::Free(void *p) {
 	}
 	
 	AkariPanic("AkariMemorySubsystem: tried to Free() in placement mode");
+}
+
+void AkariMemorySubsystem::PageFault(struct registers r) {
+	u32 faultingAddress;
+	__asm__ __volatile__("mov %%cr2, %0" : "=r" (faultingAddress));
+
+	bool notPresent =	!(r.err_code & 0x1);
+	bool writeOp = 		r.err_code & 0x2;
+	bool userMode = 	r.err_code & 0x4;
+	bool reserved = 	r.err_code & 0x8;
+	bool insFetch = 	r.err_code & 0x10;
+
+	Akari->Console->PutString("\nPage fault!\n");
+	if (notPresent) Akari->Console->PutString(" * Page wasn't present.\n");
+	if (writeOp) 	Akari->Console->PutString(" * Write operation.\n");
+	if (userMode) 	Akari->Console->PutString(" * From user-mode.\n");
+	if (reserved) 	Akari->Console->PutString(" * Clobbered reserved bits in page.\n");
+	if (insFetch) 	Akari->Console->PutString(" * On instruction fetch.\n");
+
+	Akari->Console->PutString("Address: 0x");
+	Akari->Console->PutInt(faultingAddress, 16);
+	Akari->Console->PutChar('\n');
+
+	while (1)
+		__asm__ __volatile__("hlt");
 }
 
 void AkariMemorySubsystem::SetFrame(u32 addr) {

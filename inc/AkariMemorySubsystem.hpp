@@ -21,10 +21,11 @@ class AkariMemorySubsystem : public AkariSubsystem {
 		void Free(void *);
 	
 	protected:
+		static void PageFault(struct registers);
+
 		void SetFrame(u32);
 		void ClearFrame(u32);
 		bool TestFrame(u32) const;
-
 		u32 FreeFrame() const;
 		
 		class Heap {
