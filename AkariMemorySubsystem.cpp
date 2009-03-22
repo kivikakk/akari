@@ -199,6 +199,39 @@ void *AkariMemorySubsystem::Heap::Alloc(u32 n, u32 *phys) {
 void *AkariMemorySubsystem::Heap::AllocAligned(u32 n, u32 *phys) {
 	s32 it = SmallestAlignedHole(n);
 	ASSERT(it >= 0);		// TODO: resize instead
+
+	Entry hole = _index[it];
+	_index.remove(it);
+
+	u32 dataStart = hole.start;
+
+	if (dataStart & 0xFFF) {
+		// this isn't aligned! 
+		u32 oldSize = hole.size;
+
+		dataStart = (dataStart & 0xFFFFF000) + 0x1000;
+		hole.size = 0x1000 - (hole.start & 0xFFF);
+		_index.insert(hole);
+
+		hole.start = dataStart;
+		hole.size = oldSize - hole.size;
+	}
+
+	// by here, `hole' is an un-inserted hole, up to the end of
+	// the hole we originally had, but starting where our data
+	// wants to start.
+
+	if (n < hole.size) {
+		hole.size -= n;
+		hole.start += n;
+		_index.insert(hole);
+	} else {
+		// right size (as in Alloc())
+	}
+
+	Entry data(dataStart, n, false);
+	_index.insert(data);
+	return (void *)dataStart;
 }
 
 AkariMemorySubsystem::Heap::Entry::Entry(u32 start, u32 size, bool isHole):
