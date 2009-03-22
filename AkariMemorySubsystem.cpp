@@ -2,10 +2,20 @@
 #include <Akari.hpp>
 #include <POSIX.hpp>
 #include <debug.hpp>
+#include <entry.hpp>
 
 // Index into _frames, and the bit offset within a single entry
 #define INDEX_BIT(n)	((n)/(8*4))
 #define OFFSET_BIT(n)	((n)%(8*4))
+
+// where in virtual memory will the kernel heap lie?
+#define KHEAP_START	0xC0000000
+// how big will it start at? (5MiB)
+#define KHEAP_INITIAL_SIZE	0x500000
+// ???
+#define HEAP_INDEX_SIZE		0x20000
+// ???
+#define HEAP_MIN_SIZE		0x100000
 
 AkariMemorySubsystem::AkariMemorySubsystem(u32 upperMemory):
 _upperMemory(upperMemory), _placementAddress(0), _frames(0), _frameCount(0), _heap(0)
@@ -36,6 +46,23 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 	POSIX::memset(_frames, 0, INDEX_BIT(_frameCount) + 1);
 
 	_kernelDirectory = PageDirectory::Allocate();
+	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, false, true);
+
+	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
+		_kernelDirectory->GetPage(i, true);
+	
+	u32 base = 0;
+	while (base < _placementAddress) {
+		_kernelDirectory->GetPage(base, true)->AllocFrame(base, false, false);
+		base += 0x1000;
+	}
+
+	Akari->Console->PutString("Wrote up to page ");
+	Akari->Console->PutInt(base, 16);
+	Akari->Console->PutChar('\n');
+
+	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
+		_kernelDirectory->GetPage(i, true)->AllocFrame(FreeFrame(), false, false);
 }
 
 void *AkariMemorySubsystem::Alloc(u32 n, u32 *phys) {
@@ -97,19 +124,66 @@ bool AkariMemorySubsystem::TestFrame(u32 addr) const {
 	return (_frames[idx] & (1 << off));
 }
 
+u32 AkariMemorySubsystem::FreeFrame() const {
+	for (u32 i = 0; i < INDEX_BIT(_frameCount); ++i)
+		if (_frames[i] != 0xFFFFFFFF) {
+			for (u32 j = 0; j < 32; ++j)
+				if (!(_frames[i] & (1 << j)))
+					return (i * 32 + j) * 0x1000;
+			AkariPanic("FreeFrame thought it found a free frame, but didn't find one?");
+		}
+	
+	AkariPanic("no frames free! Time to panic. :)");
+}
+
+// Heap
+
+AkariMemorySubsystem::Heap::Heap(u32 start, u32 end, u32 max, bool supervisor, bool readonly):
+_start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly)
+{ }
+
+void AkariMemorySubsystem::Page::AllocFrame(u32 addr, bool kernel, bool writeable) {
+	ASSERT(!pageAddress);
+
+	Akari->Memory->SetFrame(addr);
+	present = true;
+	readwrite = writeable;
+	user = !kernel;
+	pageAddress = addr / 0x1000;
+}
+
+AkariMemorySubsystem::PageTable *AkariMemorySubsystem::PageTable::Allocate(u32 *phys) {
+	PageTable *table = (PageTable *)Akari->Memory->AllocAligned(sizeof(PageTable), phys);
+	POSIX::memset(table, 0, sizeof(PageTable));
+	Akari->Console->PutString("PT(");
+	Akari->Console->PutInt((u32)table, 16);
+	Akari->Console->PutString(") ");
+	return table;
+}
+
 AkariMemorySubsystem::PageDirectory *AkariMemorySubsystem::PageDirectory::Allocate() {
 	u32 phys;
 
 	PageDirectory *dir = (PageDirectory *)Akari->Memory->AllocAligned(sizeof(PageDirectory), &phys);
 	POSIX::memset(dir, 0, sizeof(PageDirectory));
-	// WARNING TODO XXX: is this calculation below correct? using dir and dir->tablePhysicals in this fashion?
-	// do we not need to take any addresses?
 	u32 off = (u32)dir->tablePhysicals - (u32)dir;
-	Akari->Console->PutString("offset: ");
-	Akari->Console->PutInt(off, 16);
-	Akari->Console->PutString("\n");
 	dir->physicalAddr = phys + off;						// check above
 
 	return dir;
 }
 
+AkariMemorySubsystem::Page *AkariMemorySubsystem::PageDirectory::GetPage(u32 addr, bool make) {
+	addr /= 0x1000;
+
+	u32 idx = addr / 1024, entry = addr % 1024;
+	if (this->tables[idx])
+		return &tables[idx]->pages[entry];
+	else if (make) {
+		u32 phys;
+		tables[idx] = PageTable::Allocate(&phys);
+		tablePhysicals[idx] = phys | 0x7;	// present, r/w, user
+		return &tables[idx]->pages[entry];
+	}
+
+	return 0;
+}

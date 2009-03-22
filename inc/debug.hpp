@@ -9,7 +9,7 @@
 #define ASSERT(x)	
 #endif
 
-extern "C" void AkariPanic(const char *);
+extern "C" __attribute__((noreturn)) void AkariPanic(const char *);
 
 #endif
 

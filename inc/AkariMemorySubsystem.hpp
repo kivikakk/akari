@@ -23,6 +23,8 @@ class AkariMemorySubsystem : public AkariSubsystem {
 		void SetFrame(u32);
 		void ClearFrame(u32);
 		bool TestFrame(u32) const;
+
+		u32 FreeFrame() const;
 		
 		class Heap {
 			public:
@@ -35,40 +37,47 @@ class AkariMemorySubsystem : public AkariSubsystem {
 					u32 size;
 					bool isHole;
 				};
+
+				u32 _start, _end, _max;
+				bool _supervisor, _readonly;
 		};
 
 		class Page {
-			union {
-				struct {
-					bool present			: 1;
-					bool readwrite			: 1;
-					bool user				: 1;
-					unsigned _reserved0		: 2;
-					bool accessed			: 1;
-					bool dirty				: 1;
-					unsigned _reserved1		: 2;
-					unsigned _available0	: 3;
-					unsigned pageAddress	: 20;
-				} __attribute__((__packed__));
-				u32 ulong;
-			} __attribute__((__packed__));
+			public:
+				void AllocFrame(u32, bool, bool);
 
-			// TODO: functions
+				union {
+					struct {
+						bool present			: 1;
+						bool readwrite			: 1;
+						bool user				: 1;
+						unsigned _reserved0		: 2;
+						bool accessed			: 1;
+						bool dirty				: 1;
+						unsigned _reserved1		: 2;
+						unsigned _available0	: 3;
+						unsigned pageAddress	: 20;
+					} __attribute__((__packed__));
+					u32 ulong;
+				} __attribute__((__packed__));
 		} __attribute__((__packed__));
 
 		class PageTable {
-			Page pages[1024];
-			// TODO: functions
+			public:
+				static PageTable *Allocate(u32 *);
+
+				Page pages[1024];
 		} __attribute__((__packed__));
 
 		class PageDirectory {
 			public:
 				static PageDirectory *Allocate();
 
+				Page *GetPage(u32, bool);
+
 				PageTable *tables[1024];
 				u32 tablePhysicals[1024];
 				u32 physicalAddr;
-			// TODO: functions
 		} __attribute__((__packed__));
 
 		u32 _upperMemory;
