@@ -12,8 +12,6 @@
 
 class AkariKernel {
 	public:
-		AkariKernel();
-
 		static AkariKernel *Construct(u32, u32);
 
 		// TODO: linked list of AkariSubsystems so we can iterate them generically.
@@ -22,6 +20,9 @@ class AkariKernel {
 		AkariConsoleSubsystem *Console;
 		AkariDescriptorSubsystem *Descriptor;
 		AkariTimerSubsystem *Timer;
+	
+	protected:
+		AkariKernel();
 };
 
 extern AkariKernel *Akari;

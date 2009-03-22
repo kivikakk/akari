@@ -15,6 +15,9 @@ void AkariEntry() {
 
 	Akari = AkariKernel::Construct((u32)&__kend, AkariMultiboot->mem_upper);
 
+	// these can only work if Akari = an AkariKernel, since `new' calls Akari-> ...
+	// how could we integrate these with construction in AkariKernel::Construct
+	// without just doing it all by using placement new with kernel->Alloc? (which is lame)
 	Akari->Console = new AkariConsoleSubsystem();
 	Akari->Descriptor = new AkariDescriptorSubsystem();
 	Akari->Timer = new AkariTimerSubsystem();
