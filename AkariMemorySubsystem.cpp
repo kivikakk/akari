@@ -176,10 +176,29 @@ _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly
 
 void *AkariMemorySubsystem::Heap::Alloc(u32 n, u32 *phys) {
 	s32 it = SmallestHole(n);
+	ASSERT(it >= 0);		// TODO: resize instead
+
+	Entry hole = _index[it];
+	_index.remove(it);
+
+	u32 dataStart = hole.start;
+	if (n < hole.size) {
+		// the hole is now forward by `n', and less by `n'
+		hole.size -= n;
+		hole.start += n;
+		_index.insert(hole);
+	} else {
+		// nothing: it was exactly the right size
+	}
+
+	Entry data(dataStart, n, false);
+	_index.insert(data);
+	return (void *)dataStart;
 }
 
 void *AkariMemorySubsystem::Heap::AllocAligned(u32 n, u32 *phys) {
 	s32 it = SmallestAlignedHole(n);
+	ASSERT(it >= 0);		// TODO: resize instead
 }
 
 AkariMemorySubsystem::Heap::Entry::Entry(u32 start, u32 size, bool isHole):
