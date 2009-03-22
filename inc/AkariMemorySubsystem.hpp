@@ -23,6 +23,9 @@ class AkariMemorySubsystem : public AkariSubsystem {
 	protected:
 		static void PageFault(struct registers);
 
+		class PageDirectory;
+		void SwitchPageDirectory(PageDirectory *);
+
 		void SetFrame(u32);
 		void ClearFrame(u32);
 		bool TestFrame(u32) const;
@@ -78,6 +81,8 @@ class AkariMemorySubsystem : public AkariSubsystem {
 			public:
 				static PageTable *Allocate(u32 *);
 
+				PageTable *Clone(u32 *) const;
+
 				Page pages[1024];
 		} __attribute__((__packed__));
 
@@ -86,6 +91,7 @@ class AkariMemorySubsystem : public AkariSubsystem {
 				static PageDirectory *Allocate();
 
 				Page *GetPage(u32, bool);
+				PageDirectory *Clone() const;
 
 				PageTable *tables[1024];
 				u32 tablePhysicals[1024];
@@ -97,7 +103,7 @@ class AkariMemorySubsystem : public AkariSubsystem {
 		u32 _placementAddress;
 		u32 *_frames, _frameCount;
 		Heap *_heap;
-		PageDirectory *_kernelDirectory, *_currentDirectory;
+		PageDirectory *_kernelDirectory, *_activeDirectory;
 };
 
 #endif

@@ -3,6 +3,7 @@
 #include <POSIX.hpp>
 #include <debug.hpp>
 #include <entry.hpp>
+#include <memory.hpp>
 
 // Index into _frames, and the bit offset within a single entry
 #define INDEX_BIT(n)	((n)/(8*4))
@@ -18,7 +19,8 @@
 #define HEAP_MIN_SIZE		0x500000
 
 AkariMemorySubsystem::AkariMemorySubsystem(u32 upperMemory):
-_upperMemory(upperMemory), _placementAddress(0), _frames(0), _frameCount(0), _heap(0)
+_upperMemory(upperMemory), _placementAddress(0), _frames(0), _frameCount(0), _heap(0),
+_kernelDirectory(0), _activeDirectory(0)
 { }
 
 u8 AkariMemorySubsystem::VersionMajor() const { return 0; }
@@ -65,6 +67,9 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 		_kernelDirectory->GetPage(i, true)->AllocFrame(FreeFrame(), false, false);
 
 	Akari->Descriptor->_idt->InstallHandler(14, this->PageFault);
+	
+	_activeDirectory = _kernelDirectory->Clone();
+	SwitchPageDirectory(_activeDirectory);
 
 	_placementAddress = 0;
 }
@@ -148,6 +153,20 @@ void AkariMemorySubsystem::PageFault(struct registers r) {
 
 	while (1)
 		__asm__ __volatile__("hlt");
+}
+
+void AkariMemorySubsystem::SwitchPageDirectory(PageDirectory *dir) {
+	u32 phys = dir->physicalAddr;
+	_activeDirectory = dir;
+
+	__asm__ __volatile__("mov %0, %%cr3" : : "r" (phys));
+	__asm__ __volatile__("\
+		mov %%cr0, %%eax; \
+		or $0x80000000, %%eax; \
+		mov %%eax, %%cr0" : : : "%eax");
+	__asm__ __volatile__("\
+		ljmp $8, $.ljd; \
+	.ljd:");
 }
 
 void AkariMemorySubsystem::SetFrame(u32 addr) {
@@ -331,6 +350,29 @@ AkariMemorySubsystem::PageTable *AkariMemorySubsystem::PageTable::Allocate(u32 *
 	return table;
 }
 
+AkariMemorySubsystem::PageTable *AkariMemorySubsystem::PageTable::Clone(u32 *phys) const {
+	// TODO: review this
+	PageTable *t = PageTable::Allocate(phys);
+
+	for (u32 i = 0; i < 1024; ++i) {
+		if (!pages[i].pageAddress)
+			continue;
+		t->pages[i].AllocFrame(Akari->Memory->FreeFrame(), false, false);
+
+		if (pages[i].present)	t->pages[i].present = true;
+		if (pages[i].readwrite)	t->pages[i].readwrite = true;
+		if (pages[i].user)		t->pages[i].user = true;
+		if (pages[i].accessed)	t->pages[i].accessed = true;
+		if (pages[i].dirty)		t->pages[i].dirty = true;
+
+		// physically copy data over
+		ASSERT(t->pages[i].pageAddress);
+		AkariCopyFramePhysical(pages[i].pageAddress * 0x1000, t->pages[i].pageAddress * 0x1000);
+	}
+
+	return t;
+}
+
 // PageDirectory
 
 AkariMemorySubsystem::PageDirectory *AkariMemorySubsystem::PageDirectory::Allocate() {
@@ -359,3 +401,26 @@ AkariMemorySubsystem::Page *AkariMemorySubsystem::PageDirectory::GetPage(u32 add
 
 	return 0;
 }
+
+AkariMemorySubsystem::PageDirectory *AkariMemorySubsystem::PageDirectory::Clone() const {
+	// TODO: review this code
+	PageDirectory *d = PageDirectory::Allocate();
+
+	for (u32 i = 0; i < 1024; ++i) {
+		if (!tables[i])
+			continue;
+		if (Akari->Memory->_kernelDirectory->tables[i] == tables[i]) {
+			// kernel has this table, so just link it
+			d->tables[i] = tables[i];
+			d->tablePhysicals[i] = tablePhysicals[i];
+		} else {
+			// copy it
+			u32 phys;
+			d->tables[i] = tables[i]->Clone(&phys);
+			d->tablePhysicals[i] = phys | 0x7;		// present, r/w, user
+		}
+	}
+
+	return d;
+}
+
