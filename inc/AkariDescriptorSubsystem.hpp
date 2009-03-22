@@ -16,7 +16,7 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 		const char *VersionProduct() const;
 
 	//protected:
-	// XXX - _irqt is used publicly... whoops
+	// XXX - _idt, _irqt is used publicly... whoops
 
 		class GDT {
 			public:
@@ -58,6 +58,9 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 				IDT();
 
 				void SetGate(u8, void (*)(), u16, u8);
+				void InstallHandler(u8, isr_handler_func_t);
+				void ClearHandler(u8);
+				bool CallHandler(u8, struct registers);
 
 			protected:
 				union Entry {
@@ -76,6 +79,7 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 					u32 ridt;
 				} __attribute__((__packed__));
 
+				isr_handler_func_t _routines[256];
 				Entry _entries[256];
 				Pointer _pointer;
 		};

@@ -64,6 +64,8 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
 		_kernelDirectory->GetPage(i, true)->AllocFrame(FreeFrame(), false, false);
 
+	//Akari->Descriptor->
+
 	_placementAddress = 0;
 }
 

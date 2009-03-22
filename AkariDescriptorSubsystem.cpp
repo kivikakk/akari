@@ -60,6 +60,9 @@ void AkariDescriptorSubsystem::GDT::Flush() {
 
 AkariDescriptorSubsystem::IDT::IDT() {
 	for (u16 i = 0; i < 0x100; ++i)
+		_routines[i] = 0;
+
+	for (u16 i = 0; i < 0x100; ++i)
 		_entries[i].ulong = 0;
 
 #define SET_IDT_GATE(n)	SetGate(0x##n, isr##n, 0x08, 0x8e)
@@ -78,6 +81,23 @@ AkariDescriptorSubsystem::IDT::IDT() {
 	_pointer.ridt = (u32)_entries;
 
 	__asm__ __volatile__("lidt %0" : : "m" (_pointer));
+}
+
+void AkariDescriptorSubsystem::IDT::InstallHandler(u8 isr, isr_handler_func_t callback) {
+	ASSERT(isr >= 0 && isr <= 0xFF);
+	_routines[isr] = callback;
+}
+
+void AkariDescriptorSubsystem::IDT::ClearHandler(u8 isr) {
+	InstallHandler(isr, 0);
+}
+
+bool AkariDescriptorSubsystem::IDT::CallHandler(u8 isr, struct registers regs) {
+	if (_routines[isr]) {
+		_routines[isr](regs);
+		return true;
+	}
+	return false;
 }
 
 void AkariDescriptorSubsystem::IDT::SetGate(u8 idt, void (*callback)(), u16 isrSegment, u8 flags) {
