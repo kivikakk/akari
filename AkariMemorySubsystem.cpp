@@ -66,8 +66,10 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 }
 
 void *AkariMemorySubsystem::Alloc(u32 n, u32 *phys) {
-	if (_heap)
+	if (!_placementAddress) {
+		ASSERT(_heap);
 		AkariPanic("implement Alloc() for heaps");
+	}
 
 	ASSERT(_placementAddress);
 
@@ -80,8 +82,10 @@ void *AkariMemorySubsystem::Alloc(u32 n, u32 *phys) {
 }
 
 void *AkariMemorySubsystem::AllocAligned(u32 n, u32 *phys) {
-	if (_heap)
+	if (!_placementAddress) {
+		ASSERT(_heap);
 		AkariPanic("implement AllocAligned() for heaps");
+	}
 
 	ASSERT(_placementAddress);
 
@@ -97,8 +101,10 @@ void *AkariMemorySubsystem::AllocAligned(u32 n, u32 *phys) {
 }
 
 void AkariMemorySubsystem::Free(void *p) {
-	if (_heap)
+	if (!_placementAddress) {
+		ASSERT(_heap);
 		AkariPanic("implement Free() for heaps");
+	}
 	
 	AkariPanic("AkariMemorySubsystem: tried to Free() in placement mode");
 }
