@@ -12,10 +12,10 @@
 #define KHEAP_START	0xC0000000
 // how big will it start at? (5MiB)
 #define KHEAP_INITIAL_SIZE	0x500000
-// ???
+// how many elements can exist within the heap?
 #define HEAP_INDEX_SIZE		0x20000
-// ???
-#define HEAP_MIN_SIZE		0x100000
+// minimum size of a heap
+#define HEAP_MIN_SIZE		0x500000
 
 AkariMemorySubsystem::AkariMemorySubsystem(u32 upperMemory):
 _upperMemory(upperMemory), _placementAddress(0), _frames(0), _frameCount(0), _heap(0)
@@ -139,8 +139,23 @@ u32 AkariMemorySubsystem::FreeFrame() const {
 // Heap
 
 AkariMemorySubsystem::Heap::Heap(u32 start, u32 end, u32 max, bool supervisor, bool readonly):
+_index((Entry *)start, HEAP_INDEX_SIZE, IndexSort),
 _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly)
+{
+	ASSERT(start % 0x1000 == 0);
+	ASSERT(end % 0x1000 == 0);
+	ASSERT(max % 0x1000 == 0);
+}
+
+AkariMemorySubsystem::Heap::Entry::Entry(u32 start, u32 size, bool isHole):
+start(start), size(size), isHole(isHole)
 { }
+
+bool AkariMemorySubsystem::Heap::IndexSort(const Entry &a, const Entry &b) {
+	return a.size < b.size;
+}
+
+// Page
 
 void AkariMemorySubsystem::Page::AllocFrame(u32 addr, bool kernel, bool writeable) {
 	ASSERT(!pageAddress);
@@ -152,6 +167,8 @@ void AkariMemorySubsystem::Page::AllocFrame(u32 addr, bool kernel, bool writeabl
 	pageAddress = addr / 0x1000;
 }
 
+// PageTable
+
 AkariMemorySubsystem::PageTable *AkariMemorySubsystem::PageTable::Allocate(u32 *phys) {
 	PageTable *table = (PageTable *)Akari->Memory->AllocAligned(sizeof(PageTable), phys);
 	POSIX::memset(table, 0, sizeof(PageTable));
@@ -160,6 +177,8 @@ AkariMemorySubsystem::PageTable *AkariMemorySubsystem::PageTable::Allocate(u32 *
 	Akari->Console->PutString(") ");
 	return table;
 }
+
+// PageDirectory
 
 AkariMemorySubsystem::PageDirectory *AkariMemorySubsystem::PageDirectory::Allocate() {
 	u32 phys;

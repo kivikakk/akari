@@ -2,6 +2,7 @@
 #define __AKARI_MEMORY_SUBSYSTEM_HPP__
 
 #include <AkariSubsystem.hpp>
+#include <OrderedArray.hpp>
 
 class AkariMemorySubsystem : public AkariSubsystem {
 	public:
@@ -31,13 +32,17 @@ class AkariMemorySubsystem : public AkariSubsystem {
 				Heap(u32, u32, u32, bool, bool);
 
 			protected:
-				class Header {
-					Header(u32, bool);
+				class Entry {
+					public:
+						Entry(u32, u32, bool);
 
-					u32 size;
-					bool isHole;
+						u32 start, size;
+						bool isHole;
 				};
 
+				static bool IndexSort(const Entry &, const Entry &);
+
+				OrderedArray<Entry> _index;
 				u32 _start, _end, _max;
 				bool _supervisor, _readonly;
 		};
