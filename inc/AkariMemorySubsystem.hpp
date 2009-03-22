@@ -20,7 +20,8 @@ class AkariMemorySubsystem : public AkariSubsystem {
 		void *AllocAligned(u32, u32 *phys=0);
 		void Free(void *);
 	
-	protected:
+	// protected:
+	// XXX _activeDirectory is accessed from outside
 		static void PageFault(struct registers);
 
 		class PageDirectory;
@@ -59,6 +60,7 @@ class AkariMemorySubsystem : public AkariSubsystem {
 
 		class Page {
 			public:
+				void AllocAnyFrame(bool, bool);
 				void AllocFrame(u32, bool, bool);
 
 				union {

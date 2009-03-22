@@ -64,7 +64,7 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 	Akari->Console->PutChar('\n');
 
 	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
-		_kernelDirectory->GetPage(i, true)->AllocFrame(FreeFrame(), false, false);
+		_kernelDirectory->GetPage(i, true)->AllocAnyFrame(false, false);
 
 	Akari->Descriptor->_idt->InstallHandler(14, this->PageFault);
 	
@@ -329,6 +329,17 @@ s32 AkariMemorySubsystem::Heap::SmallestAlignedHole(u32 n) const {
 
 // Page
 
+void AkariMemorySubsystem::Page::AllocAnyFrame(bool kernel, bool writeable) {
+	ASSERT(!pageAddress);
+
+	u32 addr = Akari->Memory->FreeFrame();
+	Akari->Memory->SetFrame(addr);
+	present = true;
+	readwrite = writeable;
+	user = !kernel;
+	pageAddress = addr / 0x1000;
+}
+
 void AkariMemorySubsystem::Page::AllocFrame(u32 addr, bool kernel, bool writeable) {
 	ASSERT(!pageAddress);
 
@@ -357,7 +368,7 @@ AkariMemorySubsystem::PageTable *AkariMemorySubsystem::PageTable::Clone(u32 *phy
 	for (u32 i = 0; i < 1024; ++i) {
 		if (!pages[i].pageAddress)
 			continue;
-		t->pages[i].AllocFrame(Akari->Memory->FreeFrame(), false, false);
+		t->pages[i].AllocAnyFrame(false, false);
 
 		if (pages[i].present)	t->pages[i].present = true;
 		if (pages[i].readwrite)	t->pages[i].readwrite = true;
