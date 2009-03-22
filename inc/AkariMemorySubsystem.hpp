@@ -31,6 +31,9 @@ class AkariMemorySubsystem : public AkariSubsystem {
 			public:
 				Heap(u32, u32, u32, bool, bool);
 
+				void *Alloc(u32, u32 *phys=0);
+				void *AllocAligned(u32, u32 *phys=0);
+
 			protected:
 				class Entry {
 					public:
@@ -41,6 +44,9 @@ class AkariMemorySubsystem : public AkariSubsystem {
 				};
 
 				static bool IndexSort(const Entry &, const Entry &);
+
+				s32 SmallestHole(u32) const;
+				s32 SmallestAlignedHole(u32) const;
 
 				OrderedArray<Entry> _index;
 				u32 _start, _end, _max;

@@ -56,7 +56,8 @@ class OrderedArray {
 			--_size;
 		}
 
-	protected:
+	// protected:
+	// XXX accessed directly by AMemorySubsystem. Accessor? Too slow?
 		T *_array;
 		u32 _size, _maxSize;
 		LessThanPredicate _lessThan;

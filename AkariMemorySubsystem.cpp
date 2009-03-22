@@ -72,7 +72,7 @@ void *AkariMemorySubsystem::Alloc(u32 n, u32 *phys) {
 		ASSERT(_heap);
 		void *addr = _heap->Alloc(n);
 		if (phys) {
-			Page *page = _kernelDirectory->GetPage(addr, false);
+			Page *page = _kernelDirectory->GetPage((u32)addr, false);
 			ASSERT(page);
 			*phys = page->pageAddress * 0x1000 + ((u32)addr & 0xFFF);
 		}
@@ -94,7 +94,7 @@ void *AkariMemorySubsystem::AllocAligned(u32 n, u32 *phys) {
 		ASSERT(_heap);
 		void *addr = _heap->AllocAligned(n);
 		if (phys) {
-			Page *page = _kernelDirectory->GetPage(addr, false);
+			Page *page = _kernelDirectory->GetPage((u32)addr, false);
 			ASSERT(page);
 			*phys = page->pageAddress * 0x1000 + ((u32)addr & 0xFFF);
 		}
@@ -174,12 +174,59 @@ _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly
 	_index.insert(Entry(start, end - start, true));
 }
 
+void *AkariMemorySubsystem::Heap::Alloc(u32 n, u32 *phys) {
+	s32 it = SmallestHole(n);
+}
+
+void *AkariMemorySubsystem::Heap::AllocAligned(u32 n, u32 *phys) {
+	s32 it = SmallestAlignedHole(n);
+}
+
 AkariMemorySubsystem::Heap::Entry::Entry(u32 start, u32 size, bool isHole):
 start(start), size(size), isHole(isHole)
 { }
 
 bool AkariMemorySubsystem::Heap::IndexSort(const Entry &a, const Entry &b) {
 	return a.size < b.size;
+}
+
+s32 AkariMemorySubsystem::Heap::SmallestHole(u32 n) const {
+	u32 it = 0;
+	while (it < _index._size) {
+		const Entry &entry = _index[it];
+		if (!entry.isHole) {
+			++it; continue;
+		}
+		if (entry.size >= n)
+			return it;
+		++it;
+	}
+	AkariPanic("no smallest hole!");
+	return -1;
+}
+
+s32 AkariMemorySubsystem::Heap::SmallestAlignedHole(u32 n) const {
+	u32 it = 0;
+	while (it < _index._size) {
+		const Entry &entry = _index[it];
+		if (!entry.isHole) {
+			++it; continue;
+		}
+
+		// calculate how far we have to travel from the start to get to a page-align
+		s32 off = 0;
+		if (entry.start & 0xFFF)
+			off = 0x1000 - (entry.start & 0xFFF);
+
+		// if the size of this hole is large enough for our needs, considering we have
+		// `off' bytes of waste, then it's good
+		if (((s32)entry.size - off) >= (s32)n)
+			return it;
+
+		++it;
+	}
+	AkariPanic("no smallest hole!");
+	return -1;
 }
 
 // Page
