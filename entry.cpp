@@ -21,15 +21,12 @@ void AkariEntry() {
 	Akari->Console = new AkariConsoleSubsystem();
 	Akari->Descriptor = new AkariDescriptorSubsystem();
 	Akari->Timer = new AkariTimerSubsystem();
+	Akari->Task = new AkariTaskSubsystem();
 
 	Akari->Timer->SetTimer(100);
 	Akari->Descriptor->_irqt->InstallHandler(0, timer_func);
-
 	Akari->Memory->SetPaging(true);
 
-	u32 a = (u32)Akari;
-	u32 b = *((u32 *)a);
-	Akari->Console->PutInt(b, 16);
 
 	Akari->Console->PutString("\nSystem halted!");
 	asm volatile("sti");

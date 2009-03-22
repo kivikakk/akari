@@ -5,6 +5,7 @@
 #include <AkariConsoleSubsystem.hpp>
 #include <AkariDescriptorSubsystem.hpp>
 #include <AkariTimerSubsystem.hpp>
+#include <AkariTaskSubsystem.hpp>
 
 /**
  * The base class for the kernel services.
@@ -20,6 +21,7 @@ class AkariKernel {
 		AkariConsoleSubsystem *Console;
 		AkariDescriptorSubsystem *Descriptor;
 		AkariTimerSubsystem *Timer;
+		AkariTaskSubsystem *Task;
 	
 	protected:
 		AkariKernel();
