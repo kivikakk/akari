@@ -63,12 +63,20 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 
 	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
 		_kernelDirectory->GetPage(i, true)->AllocFrame(FreeFrame(), false, false);
+
+	_placementAddress = 0;
 }
 
 void *AkariMemorySubsystem::Alloc(u32 n, u32 *phys) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
-		AkariPanic("implement Alloc() for heaps");
+		void *addr = _heap->Alloc(n);
+		if (phys) {
+			Page *page = _kernelDirectory->GetPage(addr, false);
+			ASSERT(page);
+			*phys = page->pageAddress * 0x1000 + ((u32)addr & 0xFFF);
+		}
+		return addr;
 	}
 
 	ASSERT(_placementAddress);
@@ -84,7 +92,13 @@ void *AkariMemorySubsystem::Alloc(u32 n, u32 *phys) {
 void *AkariMemorySubsystem::AllocAligned(u32 n, u32 *phys) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
-		AkariPanic("implement AllocAligned() for heaps");
+		void *addr = _heap->AllocAligned(n);
+		if (phys) {
+			Page *page = _kernelDirectory->GetPage(addr, false);
+			ASSERT(page);
+			*phys = page->pageAddress * 0x1000 + ((u32)addr & 0xFFF);
+		}
+		return addr;
 	}
 
 	ASSERT(_placementAddress);
@@ -151,6 +165,13 @@ _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly
 	ASSERT(start % 0x1000 == 0);
 	ASSERT(end % 0x1000 == 0);
 	ASSERT(max % 0x1000 == 0);
+
+	start += sizeof(Entry) * HEAP_INDEX_SIZE;
+	
+	if (start & 0xFFFF)
+		start = (start & 0xFFFFF000) + 0x1000;
+
+	_index.insert(Entry(start, end - start, true));
 }
 
 AkariMemorySubsystem::Heap::Entry::Entry(u32 start, u32 size, bool isHole):

@@ -51,19 +51,22 @@ void AkariConsoleSubsystem::PutStringN(const char *s, u32 n) {
 void AkariConsoleSubsystem::PutInt(u32 n, u8 base) {
 	ASSERT(base >= 2 && base <= 36);
 	
-	u32 index = base;
+	u32 index = 1, digits = 1;
 
 	// TODO include logic so we don't go 'one over' and need to divide later
-	while (index <= n)
-		index *= base;
+	while (n / index >= base)
+		index *= base, ++digits;
 
 	do {
-		index /= base;
 		u8 c = (n / index);
 		n -= (u32)c * index;
 
 		PutChar( (c >= 0 && c <= 9) ? (c + '0') : (c - 10 + 'a') );
-	} while (index >= base);
+		index /= base;
+
+		if (--digits % 4 == 0 && index >= 1)
+			PutChar(',');
+	} while (index >= 1);
 }
 
 void AkariConsoleSubsystem::_Scroll() {

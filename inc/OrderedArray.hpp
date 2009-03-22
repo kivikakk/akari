@@ -10,7 +10,7 @@ class OrderedArray {
 	public:
 		typedef bool (*LessThanPredicate)(const T &, const T &);
 
-		OrderedArray(T *array, u32 maxSize, LessThanPredicate lessThan): _array(array), _maxSize(maxSize), _lessThan(lessThan) {
+		OrderedArray(T *array, u32 maxSize, LessThanPredicate lessThan): _array(array), _size(0), _maxSize(maxSize), _lessThan(lessThan) {
 			ASSERT(array);
 			ASSERT(maxSize);
 			ASSERT(lessThan);
