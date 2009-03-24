@@ -14,16 +14,6 @@ void timer_func(struct registers r) {
 	// Akari->Console->PutString("timer run\n");
 }
 
-void NewStackTest() {
-	u32 abc = 0xbadbeef;
-	Akari->Console->PutString("addr of abc: ");
-	Akari->Console->PutInt((u32)&abc, 16);
-	Akari->Console->PutString("\n");
-	Akari->Console->PutString("content of abc: ");
-	Akari->Console->PutInt(abc, 16);
-	Akari->Console->PutString("\n");
-}
-
 void AkariEntry() {
 	if ((AkariMultiboot->flags & 0x41) != 0x41)
 		AkariPanic("Akari: MULTIBOOT hasn't given us enough information about memory.");
@@ -45,23 +35,14 @@ void AkariEntry() {
 	
 	// here we switch the stack to somewhere predictable.. assume we don't need
 	// any of the stack as it is
-
-	u32 phys;
-	void *xyz = Akari->Memory->Alloc(10, &phys);
-	Akari->Console->PutString("\nallocated to ");
-	Akari->Console->PutInt((u32)xyz, 16);
-	Akari->Console->PutString(", phys ");
-	Akari->Console->PutInt(phys, 16);
-	Akari->Console->PutString("\n");
-
 	AkariSetupStack(KERNEL_STACK_POS, KERNEL_STACK_SIZE);
+
 	__asm__ __volatile__("AkariEntryNewStack:");
 	// Note that we cannot `make' new stack variables here, as they're actually
 	// all part of the same stack which the C++ compiler thinks we had all along.
 	// (imagine they're initialised at the start of the function).
+	// We can't use old ones, either, as we're in a new stack from hereon.
 	// Function calls work fine, though, as they all push onto the current stack.
-
-	NewStackTest();
 
 	Akari->Console->PutString("\nSystem halted!");
 	asm volatile("sti");

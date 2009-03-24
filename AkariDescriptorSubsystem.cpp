@@ -9,9 +9,9 @@ AkariDescriptorSubsystem::AkariDescriptorSubsystem(): _gdt(0), _idt(0), _irqt(0)
 	_gdt->SetGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);	// data
 	_gdt->SetGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);	// user code
 	_gdt->SetGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);	// user data
-	// TODO write TSS into gdt
+	_gdt->WriteTSS(5, 0x10, 0x0);		// empty ESP in TSS for now.. changed later in execution
 	_gdt->Flush();
-	// TODO TSS flush
+	_gdt->FlushTSS(5);
 
 	_idt = new IDT();
 
@@ -44,6 +44,21 @@ void AkariDescriptorSubsystem::GDT::SetGate(s32 num, u32 base, u32 limit, u8 acc
 	_entries[num].access		= access;
 }
 
+void AkariDescriptorSubsystem::GDT::WriteTSS(s32 num, u16 ss0, u32 esp0) {
+	u32 base = (u32)&_tssEntry;
+	u32 limit = base + sizeof(TSSEntry);
+
+	POSIX::memset(&_tssEntry, 0, sizeof(TSSEntry));
+	
+	_tssEntry.ss0 = ss0; _tssEntry.esp0 = esp0;
+	_tssEntry.cs = 0x0b;	// 0x08 and 0x10 (kern code/data) + 0x3 (RPL ring 3)
+	_tssEntry.ss = 0x13; _tssEntry.ds = 0x13;
+	_tssEntry.es = 0x13; _tssEntry.fs = 0x13;
+	_tssEntry.gs = 0x13;
+
+	SetGate(num, base, limit, 0xE9, 0x00);
+}
+
 void AkariDescriptorSubsystem::GDT::Flush() {
 	__asm__ __volatile__("	\
 		movl %0, %%eax; \
@@ -56,6 +71,10 @@ void AkariDescriptorSubsystem::GDT::Flush() {
 		movw %%ax, %%ss; \
 		ljmp $0x08, $.flush; \
 	.flush:" : : "r" ((u32)&_pointer) : "eax");
+}
+
+void AkariDescriptorSubsystem::GDT::FlushTSS(s32 num) {
+	__asm__ __volatile__("ltr %%ax" : : "a" ((num * 8) + 0x3));
 }
 
 AkariDescriptorSubsystem::IDT::IDT() {
