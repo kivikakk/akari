@@ -11,6 +11,8 @@ class AkariTaskSubsystem : public AkariSubsystem {
 		u8 VersionMinor() const;
 		const char *VersionManufacturer() const;
 		const char *VersionProduct() const;
+
+		void SwitchToUsermode();
 };
 
 #endif

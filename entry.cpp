@@ -44,7 +44,9 @@ void AkariEntry() {
 	// We can't use old ones, either, as we're in a new stack from hereon.
 	// Function calls work fine, though, as they all push onto the current stack.
 
-	Akari->Console->PutString("\nSystem halted!");
+	Akari->Task->SwitchToUsermode();
+while(1);
+
 	asm volatile("sti");
 	while (1)
 		asm volatile("hlt");
@@ -56,7 +58,7 @@ void AkariSetupStack(u32 start, u32 size) {
 	for (u32 i = start; i >= start - size; i -= 0x1000)
 		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
 	
-	// flush transaction lookaside buffer
+	// flush translation lookaside buffer
 	__asm__ __volatile__("\
 		mov %%cr3, %%eax; \
 		mov %%eax, %%cr3" : : : "%eax");
