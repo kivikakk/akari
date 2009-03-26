@@ -103,7 +103,15 @@ void timer_func(struct registers *r) {
 	Akari->Console->PutInt(r->eip, 16);
 	Akari->Console->PutString(". Executing task was ");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
+	Akari->Console->PutString(". 'Real' ESP: ");
+	Akari->Console->PutInt(r->esp, 16);
+	Akari->Console->PutString(". Rubbish? User ESP: ");
+	Akari->Console->PutInt(r->useresp, 16);
+	Akari->Console->PutString(", SS: ");
+	Akari->Console->PutInt(r->ss, 16);
 	Akari->Console->PutString(".\n");
 
-	// r->eip = 0;
+	// useresp should appear if we're coming from a less privileged ring
+
+	r->eip = 0;		// << this actually does cause us to return to 0.
 }
