@@ -35,15 +35,15 @@ void isr_handler(struct registers r) {
 		Akari->Console->PutString((r.int_no < 32 && isr_messages[r.int_no]) ? isr_messages[r.int_no] : "[Intel reserved]");
 		Akari->Console->PutString(" exception occured!\n");
 
-		// TODO We don't know these yet.
-		/*
 		Akari->Console->PutString("EIP: ");
-		Akari->Console->PutInt(eip);
-		Akari->Console->PutString("ESP: ");
-		Akari->Console->PutInt(esp);
-		Akari->Console->PutString("EBP: ");
-		Akari->Console->PutInt(ebp);
-		*/
+		Akari->Console->PutInt(r.eip, 16);
+		Akari->Console->PutString(", ESP: ");
+		Akari->Console->PutInt(r.esp, 16);
+		Akari->Console->PutString(", EBP: ");
+		Akari->Console->PutInt(r.ebp, 16);
+		Akari->Console->PutString(", user ESP: ");
+		Akari->Console->PutInt(r.useresp, 16);
+		Akari->Console->PutString("\n");
 
 		while (1)
 			__asm__ __volatile__("hlt");

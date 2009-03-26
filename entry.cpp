@@ -81,6 +81,10 @@ static void AkariEntryCont() {
 	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0, 0, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
+	void *processStack = Akari->Memory->AllocAligned(0x2000);
+	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, entryPoint, Akari->Memory->_kernelDirectory);
+	Akari->Task->current->next = other;
+
 	u32 a = 0, b = 0;
 	Akari->Console->PutString("\ndoing sti\n");
 	asm volatile("sti");
@@ -99,13 +103,13 @@ static void AkariEntryCont() {
 }
 
 void timer_func(struct registers *r) {
-	Akari->Console->PutString("\nHello from scheduler.  Executing EIP was ");
+	Akari->Console->PutString("\nExecuting EIP was ");
 	Akari->Console->PutInt(r->eip, 16);
-	Akari->Console->PutString(". Executing task was ");
+	Akari->Console->PutString(", task was ");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
-	Akari->Console->PutString(". 'Real' ESP: ");
+	Akari->Console->PutString(", 'real' ESP ");
 	Akari->Console->PutInt(r->esp, 16);
-	Akari->Console->PutString(". Rubbish? User ESP: ");
+	Akari->Console->PutString(", user ESP ");
 	Akari->Console->PutInt(r->useresp, 16);
 	Akari->Console->PutString(", SS: ");
 	Akari->Console->PutInt(r->ss, 16);
