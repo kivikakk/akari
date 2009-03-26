@@ -71,8 +71,8 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, false, true);
 	_placementAddress = 0;
 	
-	_activeDirectory = _kernelDirectory->Clone();
-	SwitchPageDirectory(_activeDirectory);
+	// _activeDirectory = _kernelDirectory->Clone();
+	// SwitchPageDirectory(_activeDirectory);
 }
 
 void *AkariMemorySubsystem::Alloc(u32 n, u32 *phys) {

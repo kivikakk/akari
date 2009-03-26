@@ -17,14 +17,15 @@ class AkariTaskSubsystem : public AkariSubsystem {
 	
 		class Task {
 			public:
+				static Task *BootstrapTask(u32, u32, u32, AkariMemorySubsystem::PageDirectory *);
 
 			protected:
-				Task();
+				Task(u32, u32, u32);
 
-				u32 esp, ebp, eip;
-				u32 id;
+				u32 _esp, _ebp, _eip;
+				u32 _id;
 
-				AkariMemorySubsystem::PageDirectory *pageDir;
+				AkariMemorySubsystem::PageDirectory *_pageDir;
 		};
 };
 

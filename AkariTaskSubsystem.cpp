@@ -51,7 +51,14 @@ void AkariTaskSubsystem::SwitchToUsermode() {
 }
  */
 
-AkariTaskSubsystem::Task::Task(): esp(0), ebp(0), eip(0), id(0), pageDir(0) {
+AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(u32 esp, u32 ebp, u32 eip, AkariMemorySubsystem::PageDirectory *pageDirBase) {
+	Task *nt = new Task(esp, ebp, eip);
+	nt->_pageDir = pageDirBase->Clone();
+
+	return nt;
+}
+
+AkariTaskSubsystem::Task::Task(u32 esp, u32 ebp, u32 eip): _esp(esp), _ebp(ebp), _eip(eip), _id(0), _pageDir(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
-	id = ++lastAssignedId;
+	_id = ++lastAssignedId;
 }

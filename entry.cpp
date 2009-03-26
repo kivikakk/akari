@@ -5,7 +5,7 @@
 #define KERNEL_STACK_POS	0xE0000000
 #define KERNEL_STACK_SIZE	0x2000
 
-void AkariSetupStack(u32, u32);
+static void AkariEntryCont();
 
 multiboot_info_t *AkariMultiboot;
 void *AkariStack;
@@ -35,27 +35,8 @@ void AkariEntry() {
 	
 	// here we switch the stack to somewhere predictable.. assume we don't need
 	// any of the stack as it is
-	AkariSetupStack(KERNEL_STACK_POS, KERNEL_STACK_SIZE);
 
-	__asm__ __volatile__("AkariEntryNewStack:");
-	// Note that we cannot `make' new stack variables here, as they're actually
-	// all part of the same stack which the C++ compiler thinks we had all along.
-	// (imagine they're initialised at the start of the function).
-	// We can't use old ones, either, as we're in a new stack from hereon.
-	// Function calls work fine, though, as they all push onto the current stack.
-
-	//Akari->Task->SwitchToUsermode();
-	//while(1);
-
-	asm volatile("sti");
-	while (1)
-		asm volatile("hlt");
-}
-
-void AkariSetupStack(u32 start, u32 size) {
-	// NOTE: this function returns to AkariEntryNewStack directly.
-
-	for (u32 i = start; i >= start - size; i -= 0x1000)
+	for (u32 i = KERNEL_STACK_POS; i >= KERNEL_STACK_POS - KERNEL_STACK_SIZE; i -= 0x1000)
 		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
 	
 	// flush translation lookaside buffer
@@ -65,7 +46,37 @@ void AkariSetupStack(u32 start, u32 size) {
 	
 	__asm__ __volatile__("\
 		mov %%eax, %%esp; \
-		mov %%eax, %%ebp; \
-		jmp AkariEntryNewStack" : : "a" (start));
+		mov %%eax, %%ebp;" : : "a" (KERNEL_STACK_POS));
+
+	AkariEntryCont();		// it's important to do this so we're in a new stack context
 }
+
+static void AkariEntryCont() {
+	u32 esp, ebp;
+	__asm__ __volatile__("\
+		mov %%esp, %0; \
+		mov %%ebp, %1" : "=r" (esp), "=r" (ebp));
+	Akari->Console->PutString("esp is: 0x");
+	Akari->Console->PutInt(esp, 16);
+	Akari->Console->PutString("\nebp is: 0x");
+	Akari->Console->PutInt(ebp, 16);
+	Akari->Console->PutString("\n");
+
+	ASSERT(Akari->Memory->_kernelDirectory == Akari->Memory->_activeDirectory);
+	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(1, 2, 3, Akari->Memory->_kernelDirectory);
+
+
+	Akari->Console->PutString("\ndoing sti\n");
+	asm volatile("sti");
+	while (1)
+		asm volatile("hlt");
+
+	__asm__ __volatile__("\
+		subProcessEntryPoint:	\
+			mov $0, %%eax; \
+		1: \
+			inc %%eax; \
+			jmp $1b");
+}
+
 
