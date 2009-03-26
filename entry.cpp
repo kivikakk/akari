@@ -44,8 +44,8 @@ void AkariEntry() {
 	// We can't use old ones, either, as we're in a new stack from hereon.
 	// Function calls work fine, though, as they all push onto the current stack.
 
-	Akari->Task->SwitchToUsermode();
-while(1);
+	//Akari->Task->SwitchToUsermode();
+	//while(1);
 
 	asm volatile("sti");
 	while (1)

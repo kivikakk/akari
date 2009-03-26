@@ -2,6 +2,7 @@
 #define __AKARI_TASK_SUBSYSTEM_HPP__
 
 #include <AkariSubsystem.hpp>
+#include <AkariMemorySubsystem.hpp>
 
 class AkariTaskSubsystem : public AkariSubsystem {
 	public:
@@ -12,7 +13,19 @@ class AkariTaskSubsystem : public AkariSubsystem {
 		const char *VersionManufacturer() const;
 		const char *VersionProduct() const;
 
-		void SwitchToUsermode();
+		// void SwitchToUsermode();		XXX later
+	
+		class Task {
+			public:
+
+			protected:
+				Task();
+
+				u32 esp, ebp, eip;
+				u32 id;
+
+				AkariMemorySubsystem::PageDirectory *pageDir;
+		};
 };
 
 #endif

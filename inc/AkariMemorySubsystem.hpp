@@ -21,7 +21,7 @@ class AkariMemorySubsystem : public AkariSubsystem {
 		void Free(void *);
 	
 	// protected:
-	// XXX _activeDirectory is accessed from outside
+	// XXX _activeDirectory is accessed from outside, as are these classes! Damn! Refactor!
 		static void PageFault(struct registers);
 
 		class PageDirectory;
