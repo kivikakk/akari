@@ -14,7 +14,6 @@ AkariPreboot:
 
 .HasMultiboot:
 	mov %ebx, _AkariMultiboot
-	movl %esp, _AkariStack
 
 	jmp _AkariEntry
 

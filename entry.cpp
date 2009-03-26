@@ -6,13 +6,9 @@
 #define KERNEL_STACK_SIZE	0x2000
 
 static void AkariEntryCont();
+static void timer_func(struct registers *);
 
 multiboot_info_t *AkariMultiboot;
-void *AkariStack;
-
-void timer_func(struct registers r) {
-	// Akari->Console->PutString("timer run\n");
-}
 
 void AkariEntry() {
 	if ((AkariMultiboot->flags & 0x41) != 0x41)
@@ -52,6 +48,16 @@ void AkariEntry() {
 }
 
 static void AkariEntryCont() {
+	__asm__ __volatile__("\
+			jmp 2f; \
+		.globl subProcessEntryPoint; \
+		subProcessEntryPoint:	\
+			mov $0, %%eax; \
+		1: \
+			inc %%eax; \
+			jmp 1b; \
+		2:	" :);
+
 	u32 esp, ebp;
 	__asm__ __volatile__("\
 		mov %%esp, %0; \
@@ -62,21 +68,42 @@ static void AkariEntryCont() {
 	Akari->Console->PutInt(ebp, 16);
 	Akari->Console->PutString("\n");
 
+	u32 entryPoint;
+	__asm__ __volatile__("\
+		movl $subProcessEntryPoint, %0" : "=m" (entryPoint));
+
+	Akari->Console->PutString("entry point: 0x");
+	Akari->Console->PutInt(entryPoint, 16);
+	Akari->Console->PutString("\n");
+
 	ASSERT(Akari->Memory->_kernelDirectory == Akari->Memory->_activeDirectory);
-	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(1, 2, 3, Akari->Memory->_kernelDirectory);
+	// esp, ebp, eip
+	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0, 0, Akari->Memory->_kernelDirectory);
+	Akari->Task->current = base;
 
-
+	u32 a = 0, b = 0;
 	Akari->Console->PutString("\ndoing sti\n");
 	asm volatile("sti");
-	while (1)
-		asm volatile("hlt");
-
-	__asm__ __volatile__("\
-		subProcessEntryPoint:	\
-			mov $0, %%eax; \
-		1: \
-			inc %%eax; \
-			jmp $1b");
+	while (1) {
+		// Something computationally differing so that interrupting at regular intervals
+		// won't be at the same instruction.
+		++a, --b;
+		if (a % 4 == 1) {
+			a += 3;
+			if (b % 2 == 1)
+				--b;
+		} else if (b % 7 == 2) {
+			--a;
+		}
+	}
 }
 
+void timer_func(struct registers *r) {
+	Akari->Console->PutString("\nHello from scheduler.  Executing EIP was ");
+	Akari->Console->PutInt(r->eip, 16);
+	Akari->Console->PutString(". Executing task was ");
+	Akari->Console->PutInt(Akari->Task->current->_id, 16);
+	Akari->Console->PutString(".\n");
 
+	// r->eip = 0;
+}

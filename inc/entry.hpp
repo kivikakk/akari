@@ -8,7 +8,6 @@ extern "C" {
 	extern u8 __kstart, __kend;
 
 	extern multiboot_info_t *AkariMultiboot;
-	extern void *AkariStack;
 
 	void AkariEntry();
 }

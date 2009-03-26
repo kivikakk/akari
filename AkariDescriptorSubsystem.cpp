@@ -159,7 +159,7 @@ void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
 	InstallHandler(irq, 0);
 }
 
-void AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct registers regs) {
+void AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct registers *regs) {
 	if (_routines[irq])
 		_routines[irq](regs);
 }

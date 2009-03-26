@@ -316,7 +316,7 @@ isr_common:
 
 	popa
 	add $8, %esp		#; cleans pushed error code, and pushed ISR number
-	sti
+	sti	
 	iret				#; pops CS, EIP, EFLAGS, SS, ESP
 
 .type irq_common, @function
@@ -326,6 +326,9 @@ irq_common:
 	mov %ds, %ax
 	push %eax
 
+	mov %esp, %eax		#; stack from here *up*: ds, `pusha', task switch
+	push %eax			#; ptr to said stack becomes parameter for _irq_handler
+
 	mov $0x10, %ax
 	mov %ax, %ds
 	mov %ax, %es
@@ -334,14 +337,16 @@ irq_common:
 
 	call _irq_handler
 
-	pop %ebx
-	mov %bx, %ds
-	mov %bx, %es
-	mov %bx, %fs
-	mov %bx, %gs
+	add $4, %esp		#; clean up pointer
+
+	pop %eax
+	mov %ax, %ds		#; restore from stack, which hopefully _irq_handler has changed
+	mov %ax, %es
+	mov %ax, %fs
+	mov %ax, %gs
 
 	popa
 	add $8, %esp
-	sti
+	sti					#; waits one instruction, remember?
 	iret
 

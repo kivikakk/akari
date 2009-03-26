@@ -13,10 +13,10 @@ struct registers {
 
 /* This needs to go somewhere better, the structure needs to be verified, and its purpose verified */
 typedef void (*isr_handler_func_t)(struct registers);
-typedef void (*irq_handler_func_t)(struct registers);
+typedef void (*irq_handler_func_t)(struct registers *);
 
 extern "C" void isr_handler(struct registers);
-extern "C" void irq_handler(struct registers);
+extern "C" void irq_handler(struct registers *);
 
 extern "C" void isr0();
 extern "C" void isr1();

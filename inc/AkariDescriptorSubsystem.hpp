@@ -107,7 +107,7 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 
 				void InstallHandler(u8, irq_handler_func_t);
 				void ClearHandler(u8);
-				void CallHandler(u8, struct registers);
+				void CallHandler(u8, struct registers *);
 
 			protected:
 				irq_handler_func_t _routines[16];

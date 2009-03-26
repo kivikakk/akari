@@ -14,12 +14,12 @@ class AkariTaskSubsystem : public AkariSubsystem {
 		const char *VersionProduct() const;
 
 		// void SwitchToUsermode();		XXX later
-	
+
 		class Task {
 			public:
 				static Task *BootstrapTask(u32, u32, u32, AkariMemorySubsystem::PageDirectory *);
 
-			protected:
+			// protected:
 				Task(u32, u32, u32);
 
 				u32 _esp, _ebp, _eip;
@@ -27,6 +27,8 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 				AkariMemorySubsystem::PageDirectory *_pageDir;
 		};
+
+		Task *current;
 };
 
 #endif

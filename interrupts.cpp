@@ -50,11 +50,11 @@ void isr_handler(struct registers r) {
 	}
 }
 
-void irq_handler(struct registers r) {
-	if (r.int_no >= 0x28)			// IRQ 9+
+void irq_handler(struct registers *r) {
+	if (r->int_no >= 0x28)			// IRQ 9+
 		AkariOutB(0xA0, 0x20);		// EOI to slave IRQ controller
 	AkariOutB(0x20, 0x20);			// EOI to master IRQ controller
 
-	Akari->Descriptor->_irqt->CallHandler(r.int_no - 0x20, r);
+	Akari->Descriptor->_irqt->CallHandler(r->int_no - 0x20, r);
 }
 
