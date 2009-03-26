@@ -118,6 +118,8 @@ void timer_func(struct registers *r) {
 	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
 	*r = Akari->Task->current->_registers;
 
+	// whoops. TODO: load new page directory!! (currentDirecotry physicalAddr -> cr3)
+
 	Akari->Console->PutString(".\nSwitching to EIP ");
 	Akari->Console->PutInt(r->eip, 16);
 	Akari->Console->PutString(", task #");
