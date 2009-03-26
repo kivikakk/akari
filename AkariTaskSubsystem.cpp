@@ -42,13 +42,21 @@ void AkariTaskSubsystem::SwitchToUsermode() {
  */
 
 AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(u32 esp, u32 ebp, u32 eip, AkariMemorySubsystem::PageDirectory *pageDirBase) {
-	Task *nt = new Task(esp, ebp, eip);
+	struct registers regs;
+	POSIX::memset(&regs, 0, sizeof(struct registers));
+
+	regs.esp = esp;			// XXX: is this relevant?
+	regs.useresp = esp;		// XXX: this is more important? or only for less privileged tasks?
+	regs.ebp = ebp;
+	regs.eip = eip;
+
+	Task *nt = new Task(regs);
 	nt->_pageDir = pageDirBase->Clone();
 
 	return nt;
 }
 
-AkariTaskSubsystem::Task::Task(u32 esp, u32 ebp, u32 eip): _esp(esp), _ebp(ebp), _eip(eip), _id(0), _pageDir(0) {
+AkariTaskSubsystem::Task::Task(const struct registers &registers): next(0), _registers(registers), _id(0), _pageDir(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	_id = ++lastAssignedId;
 }

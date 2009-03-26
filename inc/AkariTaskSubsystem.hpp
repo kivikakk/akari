@@ -3,6 +3,7 @@
 
 #include <AkariSubsystem.hpp>
 #include <AkariMemorySubsystem.hpp>
+#include <interrupts.hpp>
 
 class AkariTaskSubsystem : public AkariSubsystem {
 	public:
@@ -19,16 +20,18 @@ class AkariTaskSubsystem : public AkariSubsystem {
 			public:
 				static Task *BootstrapTask(u32, u32, u32, AkariMemorySubsystem::PageDirectory *);
 
-			// protected:
-				Task(u32, u32, u32);
+				Task *next;
 
-				u32 _esp, _ebp, _eip;
+			// protected:
+				Task(const struct registers &);
+
+				struct registers _registers;
 				u32 _id;
 
 				AkariMemorySubsystem::PageDirectory *_pageDir;
 		};
 
-		Task *current;
+		Task *start, *current;
 };
 
 #endif

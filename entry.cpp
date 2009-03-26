@@ -79,7 +79,7 @@ static void AkariEntryCont() {
 	ASSERT(Akari->Memory->_kernelDirectory == Akari->Memory->_activeDirectory);
 	// esp, ebp, eip
 	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0, 0, Akari->Memory->_kernelDirectory);
-	Akari->Task->current = base;
+	Akari->Task->start = Akari->Task->current = base;
 
 	u32 a = 0, b = 0;
 	Akari->Console->PutString("\ndoing sti\n");
@@ -109,9 +109,20 @@ void timer_func(struct registers *r) {
 	Akari->Console->PutInt(r->useresp, 16);
 	Akari->Console->PutString(", SS: ");
 	Akari->Console->PutInt(r->ss, 16);
+
+	Akari->Task->current->_registers = *r;
+	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
+	*r = Akari->Task->current->_registers;
+
+	Akari->Console->PutString(".\nSwitching to EIP ");
+	Akari->Console->PutInt(r->eip, 16);
+	Akari->Console->PutString(", task #");
+	Akari->Console->PutInt(Akari->Task->current->_id, 16);
+	Akari->Console->PutString(", 'real' ESP ");
+	Akari->Console->PutInt(r->esp, 16);
+	Akari->Console->PutString(", user ESP ");
+	Akari->Console->PutInt(r->useresp, 16);
+	Akari->Console->PutString(", SS: ");
+	Akari->Console->PutInt(r->ss, 16);
 	Akari->Console->PutString(".\n");
-
-	// useresp should appear if we're coming from a less privileged ring
-
-	r->eip = 0;		// << this actually does cause us to return to 0.
 }
