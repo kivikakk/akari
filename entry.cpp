@@ -6,7 +6,7 @@
 #define KERNEL_STACK_SIZE	0x2000
 
 static void AkariEntryCont();
-static void timer_func(struct registers *);
+static void timer_func(struct callback_registers *);
 
 multiboot_info_t *AkariMultiboot;
 
@@ -83,34 +83,38 @@ void SubProcess() {
 	}
 }
 
-void timer_func(struct registers *r) {
+void timer_func(struct callback_registers *r) {
 	Akari->Console->PutString("\nFrom: &0x");
-	Akari->Console->PutInt(r->eip, 16);
+	//Akari->Console->PutInt(r->eip, 16);
 	Akari->Console->PutString(", #");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
+	Akari->Console->PutString(", EBP 0x");
+	Akari->Console->PutInt(r->ebp, 16);
 	Akari->Console->PutString(", ESP 0x");
 	Akari->Console->PutInt(r->esp, 16);
 	Akari->Console->PutString(", userESP 0x");
-	Akari->Console->PutInt(r->useresp, 16);
+	//Akari->Console->PutInt(r->useresp, 16);
 	Akari->Console->PutString(", SS: 0x");
-	Akari->Console->PutInt(r->ss, 16);
+	//Akari->Console->PutInt(r->ss, 16);
 
 	Akari->Task->current->_registers = *r;
-	//Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
+	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
 	*r = Akari->Task->current->_registers;
 
 	Akari->Memory->SwitchPageDirectory(Akari->Task->current->_pageDir);
 	// this should be tenable, as all the kernel-space stuff should be linked
 
 	Akari->Console->PutString(".\nTo: &0x");
-	Akari->Console->PutInt(r->eip, 16);
+	//Akari->Console->PutInt(r->eip, 16);
 	Akari->Console->PutString(", #");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
+	Akari->Console->PutString(", EBP 0x");
+	Akari->Console->PutInt(r->ebp, 16);
 	Akari->Console->PutString(", ESP 0x");
 	Akari->Console->PutInt(r->esp, 16);
 	Akari->Console->PutString(", userESP 0x");
-	Akari->Console->PutInt(r->useresp, 16);
+	//Akari->Console->PutInt(r->useresp, 16);
 	Akari->Console->PutString(", SS: 0x");
-	Akari->Console->PutInt(r->ss, 16);
+	//Akari->Console->PutInt(r->ss, 16);
 	Akari->Console->PutString(".\n");
 }

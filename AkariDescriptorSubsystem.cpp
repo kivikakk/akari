@@ -111,7 +111,7 @@ void AkariDescriptorSubsystem::IDT::ClearHandler(u8 isr) {
 	InstallHandler(isr, 0);
 }
 
-bool AkariDescriptorSubsystem::IDT::CallHandler(u8 isr, struct registers regs) {
+bool AkariDescriptorSubsystem::IDT::CallHandler(u8 isr, struct callback_registers regs) {
 	if (_routines[isr]) {
 		_routines[isr](regs);
 		return true;
@@ -159,7 +159,7 @@ void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
 	InstallHandler(irq, 0);
 }
 
-void AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct registers *regs) {
+void AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct callback_registers *regs) {
 	if (_routines[irq])
 		_routines[irq](regs);
 }

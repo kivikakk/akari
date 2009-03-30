@@ -3,20 +3,24 @@
 
 #include <arch.hpp>
 
-/* This needs to go somewhere better, the structure needs to be verified, and its purpose verified */
-struct registers {
+struct callback_registers {
 	u32 ds;
 	u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
 	u32 int_no, err_code;
+} __attribute__((__packed__));
+
+struct modeswitch_registers {
+	struct callback_registers callback;
+
 	u32 eip, cs, eflags, useresp, ss;
-};
+} __attribute__((__packed__));
 
 /* This needs to go somewhere better, the structure needs to be verified, and its purpose verified */
-typedef void (*isr_handler_func_t)(struct registers);
-typedef void (*irq_handler_func_t)(struct registers *);
+typedef void (*isr_handler_func_t)(struct callback_registers);
+typedef void (*irq_handler_func_t)(struct callback_registers *);
 
-extern "C" void isr_handler(struct registers);
-extern "C" void irq_handler(struct registers *);
+extern "C" void isr_handler(struct callback_registers);
+extern "C" void irq_handler(struct callback_registers *);
 
 extern "C" void isr0();
 extern "C" void isr1();

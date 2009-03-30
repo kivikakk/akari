@@ -23,9 +23,9 @@ class AkariTaskSubsystem : public AkariSubsystem {
 				Task *next;
 
 			// protected:
-				Task(const struct registers &);
+				Task(const struct callback_registers &);
 
-				struct registers _registers;
+				struct callback_registers _registers;
 				u32 _id;
 
 				AkariMemorySubsystem::PageDirectory *_pageDir;
