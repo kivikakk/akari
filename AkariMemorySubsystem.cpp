@@ -168,6 +168,8 @@ void AkariMemorySubsystem::SwitchPageDirectory(PageDirectory *dir) {
 	__asm__ __volatile__("\
 		ljmp $8, $.ljd; \
 	.ljd:");
+
+	// XXX do we always necessarily want to use $8 with ljmp here?
 }
 
 void AkariMemorySubsystem::SetFrame(u32 addr) {
