@@ -41,6 +41,10 @@ void isr_handler(struct callback_registers r) {
 		Akari->Console->PutInt(r.esp, 16);
 		Akari->Console->PutString(", EBP: ");
 		Akari->Console->PutInt(r.ebp, 16);
+		Akari->Console->PutString(", CS: ");
+		Akari->Console->PutInt(r.cs, 16);
+		Akari->Console->PutString(", EFLAGS: ");
+		Akari->Console->PutInt(r.eflags, 16);
 		Akari->Console->PutString(", user ESP (may be garbage)//: ");
 		Akari->Console->PutInt(((struct modeswitch_registers *)&r)->useresp, 16);
 		Akari->Console->PutString("\n");
