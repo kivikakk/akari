@@ -48,47 +48,27 @@ void AkariEntry() {
 	AkariEntryCont();		// it's important to do this so we're in a new stack context
 }
 
+void SubProcess();
+
 static void AkariEntryCont() {
-	__asm__ __volatile__("\
-			jmp 2f; \
-		.globl subProcessEntryPoint; \
-		subProcessEntryPoint:	\
-			mov $0, %%eax; \
-		1: \
-			inc %%eax; \
-			jmp 1b; \
-		2:	" :);
-
-	u32 esp, ebp;
-	__asm__ __volatile__("\
-		mov %%esp, %0; \
-		mov %%ebp, %1" : "=r" (esp), "=r" (ebp));
-	Akari->Console->PutString("esp is: 0x");
-	Akari->Console->PutInt(esp, 16);
-	Akari->Console->PutString("\nebp is: 0x");
-	Akari->Console->PutInt(ebp, 16);
-	Akari->Console->PutString("\n");
-
-	u32 entryPoint;
-	__asm__ __volatile__("\
-		movl $subProcessEntryPoint, %0" : "=m" (entryPoint));
-
-	Akari->Console->PutString("entry point: 0x");
-	Akari->Console->PutInt(entryPoint, 16);
-	Akari->Console->PutString("\n");
-
-	ASSERT(Akari->Memory->_kernelDirectory == Akari->Memory->_activeDirectory);
 	// esp, ebp, eip
 	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0, 0, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
 	void *processStack = Akari->Memory->AllocAligned(0x2000);
-	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, entryPoint, Akari->Memory->_kernelDirectory);
+	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
 
-	u32 a = 0, b = 0;
-	Akari->Console->PutString("\ndoing sti\n");
+	Akari->Console->PutString("&SubProcess: &0x");
+	Akari->Console->PutInt((u32)&SubProcess, 16);
+	Akari->Console->PutString(".. doing sti.\n");
 	asm volatile("sti");
+
+	SubProcess();
+}
+
+void SubProcess() { 
+	u32 a = 0, b = 0;
 	while (1) {
 		// Something computationally differing so that interrupting at regular intervals
 		// won't be at the same instruction.
@@ -104,33 +84,33 @@ static void AkariEntryCont() {
 }
 
 void timer_func(struct registers *r) {
-	Akari->Console->PutString("\nExecuting EIP was ");
+	Akari->Console->PutString("\nFrom: &0x");
 	Akari->Console->PutInt(r->eip, 16);
-	Akari->Console->PutString(", task was ");
+	Akari->Console->PutString(", #");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
-	Akari->Console->PutString(", 'real' ESP ");
+	Akari->Console->PutString(", ESP 0x");
 	Akari->Console->PutInt(r->esp, 16);
-	Akari->Console->PutString(", user ESP ");
+	Akari->Console->PutString(", userESP 0x");
 	Akari->Console->PutInt(r->useresp, 16);
-	Akari->Console->PutString(", SS: ");
+	Akari->Console->PutString(", SS: 0x");
 	Akari->Console->PutInt(r->ss, 16);
 
 	Akari->Task->current->_registers = *r;
-	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
+	//Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
 	*r = Akari->Task->current->_registers;
 
 	Akari->Memory->SwitchPageDirectory(Akari->Task->current->_pageDir);
 	// this should be tenable, as all the kernel-space stuff should be linked
 
-	Akari->Console->PutString(".\nSwitching to EIP ");
+	Akari->Console->PutString(".\nTo: &0x");
 	Akari->Console->PutInt(r->eip, 16);
-	Akari->Console->PutString(", task #");
+	Akari->Console->PutString(", #");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
-	Akari->Console->PutString(", 'real' ESP ");
+	Akari->Console->PutString(", ESP 0x");
 	Akari->Console->PutInt(r->esp, 16);
-	Akari->Console->PutString(", user ESP ");
+	Akari->Console->PutString(", userESP 0x");
 	Akari->Console->PutInt(r->useresp, 16);
-	Akari->Console->PutString(", SS: ");
+	Akari->Console->PutString(", SS: 0x");
 	Akari->Console->PutInt(r->ss, 16);
 	Akari->Console->PutString(".\n");
 }

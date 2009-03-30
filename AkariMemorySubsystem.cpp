@@ -58,10 +58,6 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 		base += 0x1000;
 	}
 
-	Akari->Console->PutString("Wrote up to page ");
-	Akari->Console->PutInt(base, 16);
-	Akari->Console->PutChar('\n');
-
 	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
 		_kernelDirectory->GetPage(i, true)->AllocAnyFrame(false, false);
 
@@ -366,9 +362,6 @@ void AkariMemorySubsystem::Page::AllocFrame(u32 addr, bool kernel, bool writeabl
 AkariMemorySubsystem::PageTable *AkariMemorySubsystem::PageTable::Allocate(u32 *phys) {
 	PageTable *table = (PageTable *)Akari->Memory->AllocAligned(sizeof(PageTable), phys);
 	POSIX::memset(table, 0, sizeof(PageTable));
-	Akari->Console->PutString("PT(");
-	Akari->Console->PutInt((u32)table, 16);
-	Akari->Console->PutString(") ");
 	return table;
 }
 
