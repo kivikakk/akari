@@ -51,12 +51,12 @@ void AkariEntry() {
 void SubProcess();
 
 static void AkariEntryCont() {
-	// esp, ebp, eip
-	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0, 0, Akari->Memory->_kernelDirectory);
+	// esp, ebp, eip, cs, EFLAGS.IF
+	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0, 0, 0, false, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
 	void *processStack = Akari->Memory->AllocAligned(0x2000);
-	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, Akari->Memory->_kernelDirectory);
+	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, 0x8, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
 
 	Akari->Console->PutString("&SubProcess: &0x");
@@ -85,17 +85,21 @@ void SubProcess() {
 
 void timer_func(struct callback_registers *r) {
 	Akari->Console->PutString("\nFrom: &0x");
-	//Akari->Console->PutInt(r->eip, 16);
+	Akari->Console->PutInt(r->eip, 16);
 	Akari->Console->PutString(", #");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
 	Akari->Console->PutString(", EBP 0x");
 	Akari->Console->PutInt(r->ebp, 16);
 	Akari->Console->PutString(", ESP 0x");
 	Akari->Console->PutInt(r->esp, 16);
+	Akari->Console->PutString(", CS 0x");
+	Akari->Console->PutInt(r->cs, 16);
+	Akari->Console->PutString(", EFLAGS 0x");
+	Akari->Console->PutInt(r->eflags, 16);
 	Akari->Console->PutString(", userESP 0x");
-	//Akari->Console->PutInt(r->useresp, 16);
+	Akari->Console->PutInt(((struct modeswitch_registers *)r)->useresp, 16);
 	Akari->Console->PutString(", SS: 0x");
-	//Akari->Console->PutInt(r->ss, 16);
+	Akari->Console->PutInt(((struct modeswitch_registers *)r)->ss, 16);
 
 	Akari->Task->current->_registers = *r;
 	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
@@ -105,16 +109,20 @@ void timer_func(struct callback_registers *r) {
 	// this should be tenable, as all the kernel-space stuff should be linked
 
 	Akari->Console->PutString(".\nTo: &0x");
-	//Akari->Console->PutInt(r->eip, 16);
+	Akari->Console->PutInt(r->eip, 16);
 	Akari->Console->PutString(", #");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
 	Akari->Console->PutString(", EBP 0x");
 	Akari->Console->PutInt(r->ebp, 16);
 	Akari->Console->PutString(", ESP 0x");
 	Akari->Console->PutInt(r->esp, 16);
+	Akari->Console->PutString(", CS 0x");
+	Akari->Console->PutInt(r->cs, 16);
+	Akari->Console->PutString(", EFLAGS 0x");
+	Akari->Console->PutInt(r->eflags, 16);
 	Akari->Console->PutString(", userESP 0x");
-	//Akari->Console->PutInt(r->useresp, 16);
+	Akari->Console->PutInt(((struct modeswitch_registers *)r)->useresp, 16);
 	Akari->Console->PutString(", SS: 0x");
-	//Akari->Console->PutInt(r->ss, 16);
+	Akari->Console->PutInt(((struct modeswitch_registers *)r)->ss, 16);
 	Akari->Console->PutString(".\n");
 }

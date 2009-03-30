@@ -36,13 +36,13 @@ void isr_handler(struct callback_registers r) {
 		Akari->Console->PutString(" exception occured!\n");
 
 		Akari->Console->PutString("EIP: ");
-		//Akari->Console->PutInt(r.eip, 16);
+		Akari->Console->PutInt(r.eip, 16);
 		Akari->Console->PutString(", ESP: ");
 		Akari->Console->PutInt(r.esp, 16);
 		Akari->Console->PutString(", EBP: ");
 		Akari->Console->PutInt(r.ebp, 16);
-		Akari->Console->PutString(", user ESP: ");
-		//Akari->Console->PutInt(r.useresp, 16);
+		Akari->Console->PutString(", user ESP (may be garbage)//: ");
+		Akari->Console->PutInt(((struct modeswitch_registers *)&r)->useresp, 16);
 		Akari->Console->PutString("\n");
 
 		while (1)

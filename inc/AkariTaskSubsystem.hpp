@@ -18,7 +18,7 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 		class Task {
 			public:
-				static Task *BootstrapTask(u32, u32, u32, AkariMemorySubsystem::PageDirectory *);
+				static Task *BootstrapTask(u32, u32, u32, u8, bool, AkariMemorySubsystem::PageDirectory *);
 
 				Task *next;
 

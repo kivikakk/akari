@@ -7,12 +7,12 @@ struct callback_registers {
 	u32 ds;
 	u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
 	u32 int_no, err_code;
+	u32 eip, cs, eflags;
 } __attribute__((__packed__));
 
 struct modeswitch_registers {
 	struct callback_registers callback;
-
-	u32 eip, cs, eflags, useresp, ss;
+	u32 useresp, ss;
 } __attribute__((__packed__));
 
 /* This needs to go somewhere better, the structure needs to be verified, and its purpose verified */
