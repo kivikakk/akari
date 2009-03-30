@@ -32,6 +32,7 @@ void AkariEntry() {
 	// here we switch the stack to somewhere predictable.. assume we don't need
 	// any of the stack as it is
 
+	ASSERT(Akari->Memory->_activeDirectory == Akari->Memory->_kernelDirectory);
 	for (u32 i = KERNEL_STACK_POS; i >= KERNEL_STACK_POS - KERNEL_STACK_SIZE; i -= 0x1000)
 		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
 	

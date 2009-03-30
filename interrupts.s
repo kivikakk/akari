@@ -340,7 +340,7 @@ irq_common:
 	add $4, %esp		#; clean up pointer
 
 	pop %eax
-	mov %ax, %ds		#; restore from stack, which hopefully _irq_handler has changed
+	mov %ax, %ds		#; restore from stack, which _irq_handler may change
 	mov %ax, %es
 	mov %ax, %fs
 	mov %ax, %gs

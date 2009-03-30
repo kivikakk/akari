@@ -45,7 +45,7 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(u32 esp, u32 e
 	struct registers regs;
 	POSIX::memset(&regs, 0, sizeof(struct registers));
 
-	regs.esp = esp;			// XXX: is this relevant?
+	regs.esp = esp;			// this is not relevant; won't be restored by iret
 	regs.useresp = esp;		// XXX: this is more important? or only for less privileged tasks?
 	regs.ebp = ebp;
 	regs.eip = eip;
