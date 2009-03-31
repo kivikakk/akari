@@ -368,6 +368,9 @@ irq_timer_multitask:
 	mov %ax, %fs
 	mov %ax, %gs
 
+	mov $0x20, %ax
+	outb %ax, $0x20	#; EOI to master irq controller
+
 	call _AkariMicrokernel
 	#; returns the address of an ESP address if we're exiting
 	#; to a different protection level.
@@ -379,7 +382,6 @@ irq_timer_multitask:
 	cmp $0, %eax
 	je .popstack
 	mov %eax, %esp
-
 	.popstack:
 
 	pop %eax

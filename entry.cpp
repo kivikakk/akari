@@ -56,7 +56,7 @@ static void AkariEntryCont() {
 	Akari->Task->start = Akari->Task->current = base;
 
 	void *processStack = Akari->Memory->AllocAligned(0x2000);
-	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, false, true, Akari->Memory->_kernelDirectory);
+	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, true, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
 
 	Akari->Console->PutString("&SubProcess: &0x");
