@@ -26,6 +26,7 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 				void WriteTSS(s32, u16, u32);
 				void Flush();
 				void FlushTSS(s32);
+				void SetTSSStack(u32);
 
 			protected:
 				struct Entry {

@@ -5,8 +5,11 @@
 #define KERNEL_STACK_POS	0xE0000000
 #define KERNEL_STACK_SIZE	0x2000
 
-static void AkariEntryCont();
+#define IDLE_STACK_SIZE		0x2000
+
 static void timer_func(struct callback_registers *);
+static void AkariEntryCont();
+void SubProcess();
 
 multiboot_info_t *AkariMultiboot;
 
@@ -29,28 +32,26 @@ void AkariEntry() {
 	Akari->Descriptor->_irqt->InstallHandler(0, timer_func);
 	Akari->Memory->SetPaging(true);
 	
-	// here we switch the stack to somewhere predictable.. assume we don't need
-	// any of the stack as it is
-
-	ASSERT(Akari->Memory->_activeDirectory == Akari->Memory->_kernelDirectory);
-	for (u32 i = KERNEL_STACK_POS; i >= KERNEL_STACK_POS - KERNEL_STACK_SIZE; i -= 0x1000)
-		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
-	
-	// flush translation lookaside buffer
+	// Give ourselves a normal stack.
+	void *IdleTaskStack = Akari->Memory->AllocAligned(IDLE_STACK_SIZE);
+	// do we still need to flush the TLB?
 	__asm__ __volatile__("\
 		mov %%cr3, %%eax; \
 		mov %%eax, %%cr3" : : : "%eax");
-	
 	__asm__ __volatile__("\
 		mov %%eax, %%esp; \
-		mov %%eax, %%ebp;" : : "a" (KERNEL_STACK_POS));
-
-	AkariEntryCont();		// it's important to do this so we're in a new stack context
+		mov %%eax, %%ebp" : : "a" ((u32)IdleTaskStack));
+	
+	AkariEntryCont();
 }
 
-void SubProcess();
+static void AkariEntryCont() {	
+	ASSERT(Akari->Memory->_activeDirectory == Akari->Memory->_kernelDirectory);
+	for (u32 i = KERNEL_STACK_POS; i >= KERNEL_STACK_POS - KERNEL_STACK_SIZE; i -= 0x1000)
+		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
 
-static void AkariEntryCont() {
+	Akari->Descriptor->_gdt->SetTSSStack(KERNEL_STACK_POS);
+	
 	// esp, ebp, eip, cs, EFLAGS.IF
 	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0, 0, 0, false, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
@@ -67,6 +68,8 @@ static void AkariEntryCont() {
 	SubProcess();
 }
 
+void SubProcessA(s32);
+
 void SubProcess() { 
 	u32 a = 0, b = 0;
 	while (1) {
@@ -78,8 +81,14 @@ void SubProcess() {
 			if (b % 2 == 1)
 				--b;
 		} else if (b % 7 == 2) {
-			--a;
+			SubProcessA(4);
 		}
+	}
+}
+
+void SubProcessA(s32 n) {
+	while (--n > 0) {
+		__asm__ __volatile__("nop");
 	}
 }
 
@@ -100,6 +109,9 @@ void timer_func(struct callback_registers *r) {
 	Akari->Console->PutInt(((struct modeswitch_registers *)r)->useresp, 16);
 	Akari->Console->PutString(", SS: 0x");
 	Akari->Console->PutInt(((struct modeswitch_registers *)r)->ss, 16);
+	Akari->Console->PutString(", r at: 0x");
+	Akari->Console->PutInt((u32)r, 16);
+
 
 	Akari->Task->current->_registers = *r;
 	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;

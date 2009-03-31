@@ -77,6 +77,10 @@ void AkariDescriptorSubsystem::GDT::FlushTSS(s32 num) {
 	__asm__ __volatile__("ltr %%ax" : : "a" ((num * 8) + 0x3));
 }
 
+void AkariDescriptorSubsystem::GDT::SetTSSStack(u32 addr) {
+	_tssEntry.esp0 = addr;
+}
+
 AkariDescriptorSubsystem::IDT::IDT() {
 	for (u16 i = 0; i < 0x100; ++i)
 		_routines[i] = 0;
