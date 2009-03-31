@@ -56,8 +56,12 @@ static void AkariEntryCont() {
 	Akari->Task->start = Akari->Task->current = base;
 
 	void *processStack = Akari->Memory->AllocAligned(0x2000);
-	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, false, true, Akari->Memory->_kernelDirectory);
+	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, true, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
+
+	void *p2Stack = Akari->Memory->AllocAligned(0x2000);
+	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::BootstrapTask((u32)p2Stack + 0x2000, (u32)p2Stack + 0x2000, (u32)&SubProcess, true, true, Akari->Memory->_kernelDirectory);
+	other->next = third;
 
 	Akari->Console->PutString("&SubProcess: &0x");
 	Akari->Console->PutInt((u32)&SubProcess, 16);
@@ -79,6 +83,7 @@ void SubProcess() {
 		// Something computationally differing so that interrupting at regular intervals
 		// won't be at the same instruction.
 		++a, --b;
+		SubProcessA(1);
 		if (a % 4 == 1) {
 			a += 3;
 			if (b % 2 == 1)
