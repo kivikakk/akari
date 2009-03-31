@@ -10,6 +10,8 @@ extern "C" {
 	extern multiboot_info_t *AkariMultiboot;
 
 	void AkariEntry();
+
+	struct modeswitch_registers *AkariMicrokernel(struct callback_registers *r);
 }
 
 #endif

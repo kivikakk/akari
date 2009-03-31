@@ -212,10 +212,12 @@ _isr80:	cli
 	push $0x80
 	jmp isr_common
 
+
+#; timer is special case, handled manually!
 _irq0:	cli
 	push $0x00
 	push $0x20
-	jmp irq_common
+	jmp irq_timer_multitask
 
 _irq1:	cli
 	push $0x00
@@ -348,5 +350,46 @@ irq_common:
 	popa
 	add $8, %esp
 	sti					#; waits one instruction, remember?
+	iret
+
+.type irq_timer_multitask, @function
+irq_timer_multitask:
+	pusha
+
+	mov %ds, %ax
+	push %eax
+
+	mov %esp, %eax
+	push %eax
+
+	mov $0x10, %ax
+	mov %ax, %ds
+	mov %ax, %es
+	mov %ax, %fs
+	mov %ax, %gs
+
+	call _AkariMicrokernel
+	#; returns the address of an ESP address if we're exiting
+	#; to a different protection level.
+	#; returns 0 if we're not (the stuff on the stack will be
+	#; modified accordingly).
+
+	add $4, %esp	#; remove the pointer arg
+
+	cmp $0, %eax
+	je .popstack
+	mov %eax, %esp
+
+	.popstack:
+
+	pop %eax
+	mov %ax, %ds
+	mov %ax, %es
+	mov %ax, %fs
+	mov %ax, %gs
+
+	popa
+	add $8, %esp
+	sti
 	iret
 

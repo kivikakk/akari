@@ -40,6 +40,10 @@ void AkariMemorySubsystem::SetPlacementMode(u32 addr) {
  *
  * @param mode Whether to turn paging on or off.
  */
+
+#define KERNEL_HEAP_PROMISC true
+// temp debug flag only, set to true if you want the kheap to be writeable from usermode!
+
 void AkariMemorySubsystem::SetPaging(bool mode) {
 	ASSERT(mode);		// TODO support turning paging off [if ever required?! who knows! :)]
 
@@ -54,17 +58,17 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 	
 	u32 base = 0;
 	while (base < (_placementAddress + sizeof(Heap))) {
-		_kernelDirectory->GetPage(base, true)->AllocFrame(base, false, false);
+		_kernelDirectory->GetPage(base, true)->AllocFrame(base, false, KERNEL_HEAP_PROMISC);
 		base += 0x1000;
 	}
 
 	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
-		_kernelDirectory->GetPage(i, true)->AllocAnyFrame(false, false);
+		_kernelDirectory->GetPage(i, true)->AllocAnyFrame(false, KERNEL_HEAP_PROMISC);
 
 	Akari->Descriptor->_idt->InstallHandler(14, this->PageFault);
 
 	SwitchPageDirectory(_kernelDirectory);
-	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, false, true);
+	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, false, !(KERNEL_HEAP_PROMISC));
 	_placementAddress = 0;
 	
 	// _activeDirectory = _kernelDirectory->Clone();

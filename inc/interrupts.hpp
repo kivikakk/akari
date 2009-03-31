@@ -12,7 +12,7 @@ struct callback_registers {
 
 struct modeswitch_registers {
 	struct callback_registers callback;
-	u32 useresp, ss;
+	u32 useresp, ss;		// 8 bytes
 } __attribute__((__packed__));
 
 /* This needs to go somewhere better, the structure needs to be verified, and its purpose verified */

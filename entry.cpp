@@ -7,7 +7,6 @@
 
 #define IDLE_STACK_SIZE		0x2000
 
-static void timer_func(struct callback_registers *);
 static void AkariEntryCont();
 void SubProcess();
 
@@ -29,7 +28,6 @@ void AkariEntry() {
 	Akari->Task = new AkariTaskSubsystem();
 
 	Akari->Timer->SetTimer(100);
-	Akari->Descriptor->_irqt->InstallHandler(0, timer_func);
 	Akari->Memory->SetPaging(true);
 	
 	// Give ourselves a normal stack. (n.b. this is from kernel heap!)
@@ -58,7 +56,7 @@ static void AkariEntryCont() {
 	Akari->Task->start = Akari->Task->current = base;
 
 	void *processStack = Akari->Memory->AllocAligned(0x2000);
-	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, true, true, Akari->Memory->_kernelDirectory);
+	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, false, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
 
 	Akari->Console->PutString("&SubProcess: &0x");
@@ -97,8 +95,9 @@ void SubProcessA(s32 n) {
 	}
 }
 
-void timer_func(struct callback_registers *r) {
-	Akari->Console->PutString("\nFrom: &0x");
+// Returns how much the stack needs to be shifted.
+struct modeswitch_registers *AkariMicrokernel(struct callback_registers *r) {
+	Akari->Console->PutString("\nFrom: &1x");
 	Akari->Console->PutInt(r->eip, 16);
 	Akari->Console->PutString(", #");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
@@ -110,15 +109,16 @@ void timer_func(struct callback_registers *r) {
 	Akari->Console->PutInt(r->cs, 16);
 	Akari->Console->PutString(", EFLAGS 0x");
 	Akari->Console->PutInt(r->eflags, 16);
-	Akari->Console->PutString(", userESP 0x");
-	Akari->Console->PutInt(((struct modeswitch_registers *)r)->useresp, 16);
-	Akari->Console->PutString(", SS: 0x");
-	Akari->Console->PutInt(((struct modeswitch_registers *)r)->ss, 16);
+	if (Akari->Task->current->_userMode) {
+		Akari->Console->PutString(", userESP 0x");
+		Akari->Console->PutInt(((struct modeswitch_registers *)r)->useresp, 16);
+		Akari->Console->PutString(", SS: 0x");
+		Akari->Console->PutInt(((struct modeswitch_registers *)r)->ss, 16);
+	}
 	Akari->Console->PutString(", r at: 0x");
 	Akari->Console->PutInt((u32)r, 16);
 
-	bool wasUserMode = Akari->Task->current->_userMode;
-	if (wasUserMode) {
+	if (Akari->Task->current->_userMode) {
 		// modeswitch set of registers on stack
 		Akari->Task->current->_registers = *((struct modeswitch_registers *)r);
 	} else {
@@ -127,28 +127,12 @@ void timer_func(struct callback_registers *r) {
 	}
 
 	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
+	Akari->Memory->SwitchPageDirectory(Akari->Task->current->_pageDir);
 
-	bool isUserMode = Akari->Task->current->_userMode;
-	if (wasUserMode && !isUserMode) {
-		// need to push the stack forward a bit
-		// htf is this possible?
-		AkariPanic("wasUserMode && !isUserMode");
-	} else if (!wasUserMode && isUserMode) {
-		// need to pull the stack back a bit
-		// htf is this possible?
-		AkariPanic("!wasUserMode && isUserMode");
-	}
-
-	if (isUserMode) {
-		// go for modeswitch set
-		*((struct modeswitch_registers *)r) = Akari->Task->current->_registers;
-	} else {
-		// callback set only
+	if (!Akari->Task->current->_userMode) {
+		// modify it right on the stack
 		*r = Akari->Task->current->_registers.callback;
 	}
-
-	Akari->Memory->SwitchPageDirectory(Akari->Task->current->_pageDir);
-	// this should be tenable, as all the kernel-space stuff should be linked
 
 	Akari->Console->PutString(".\nTo: &0x");
 	Akari->Console->PutInt(r->eip, 16);
@@ -162,9 +146,18 @@ void timer_func(struct callback_registers *r) {
 	Akari->Console->PutInt(r->cs, 16);
 	Akari->Console->PutString(", EFLAGS 0x");
 	Akari->Console->PutInt(r->eflags, 16);
-	Akari->Console->PutString(", userESP 0x");
-	Akari->Console->PutInt(((struct modeswitch_registers *)r)->useresp, 16);
-	Akari->Console->PutString(", SS: 0x");
-	Akari->Console->PutInt(((struct modeswitch_registers *)r)->ss, 16);
+	if (Akari->Task->current->_userMode) {
+		Akari->Console->PutString(", userESP 0x");
+		Akari->Console->PutInt(((struct modeswitch_registers *)r)->useresp, 16);
+		Akari->Console->PutString(", SS: 0x");
+		Akari->Console->PutInt(((struct modeswitch_registers *)r)->ss, 16);
+	}
 	Akari->Console->PutString(".\n");
+
+	if (Akari->Task->current->_userMode) {
+		// return the register address for irq_timer_multitask
+		return &Akari->Task->current->_registers;
+	}
+	
+	return 0;
 }

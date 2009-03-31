@@ -155,7 +155,8 @@ AkariDescriptorSubsystem::IRQT::IRQT(IDT *idt): _idt(idt) {
 }
 
 void AkariDescriptorSubsystem::IRQT::InstallHandler(u8 irq, irq_handler_func_t callback) {
-	ASSERT(irq >= 0 && irq <= 0x0f);
+	// you can't set IRQ 0 (timer) here - it's done manually. see interrupts.s
+	ASSERT(irq >= 1 && irq <= 0x0f);
 	_routines[irq] = callback;
 }
 
