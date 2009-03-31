@@ -5,10 +5,10 @@
 
 AkariDescriptorSubsystem::AkariDescriptorSubsystem(): _gdt(0), _idt(0), _irqt(0) {
 	_gdt = new GDT(6);
-	_gdt->SetGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);	// code
-	_gdt->SetGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);	// data
-	_gdt->SetGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);	// user code
-	_gdt->SetGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);	// user data
+	_gdt->SetGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);	// code (CS)
+	_gdt->SetGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);	// data (SS)
+	_gdt->SetGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);	// user code (CS)
+	_gdt->SetGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);	// user data (SS)
 	_gdt->WriteTSS(5, 0x10, 0x0);		// empty ESP in TSS for now.. changed later in execution
 	_gdt->Flush();
 	_gdt->FlushTSS(5);

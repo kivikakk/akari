@@ -14,7 +14,7 @@ class AkariTaskSubsystem : public AkariSubsystem {
 		const char *VersionManufacturer() const;
 		const char *VersionProduct() const;
 
-		// void SwitchToUsermode();		XXX later
+		static void SwitchToUsermode();
 
 		class Task {
 			public:
@@ -23,10 +23,13 @@ class AkariTaskSubsystem : public AkariSubsystem {
 				Task *next;
 
 			// protected:
-				Task(const struct callback_registers &);
+				Task(const struct modeswitch_registers &, bool);
 
-				struct callback_registers _registers;
+				struct modeswitch_registers _registers;
+				// only use `callback' part of it if we're not usermode.
+
 				u32 _id;
+				bool _userMode;
 
 				AkariMemorySubsystem::PageDirectory *_pageDir;
 		};

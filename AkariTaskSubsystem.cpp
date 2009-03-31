@@ -9,14 +9,8 @@ u8 AkariTaskSubsystem::VersionMinor() const { return 1; }
 const char *AkariTaskSubsystem::VersionManufacturer() const { return "Akari"; }
 const char *AkariTaskSubsystem::VersionProduct() const { return "Akari Task Manager"; }
 
-/**
- * This is largely helper code.
- * The way we end up in user mode (and importantly, the way we end up OUT of user mode [wrt. TSS etc.])
- * will be quite different when we multitask, I imagine.
- *
 void AkariTaskSubsystem::SwitchToUsermode() {
 	__asm__ __volatile__("	\
-		cli; \
 		mov $0x23, %%ax; \
 		mov %%ax, %%ds; \
 		mov %%ax, %%es; \
@@ -39,17 +33,21 @@ void AkariTaskSubsystem::SwitchToUsermode() {
 	// EIP ($1f), CS (1b), EFLAGS (eax), ESP (eax from before), SS (23)
 	// note this works with our current stack... hm.
 }
- */
 
-AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(u32 esp, u32 ebp, u32 eip, u8 cs, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
-	struct callback_registers regs;
-	POSIX::memset(&regs, 0, sizeof(struct callback_registers));
+AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(u32 esp, u32 ebp, u32 eip, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
+	struct modeswitch_registers regs;
+	POSIX::memset(&regs, 0, sizeof(struct modeswitch_registers));
 
-	regs.esp = esp;			// this is not relevant; won't be restored by iret
-	regs.ebp = ebp;
-	regs.eip = eip;
-	regs.cs = cs;
-	regs.eflags = interruptFlag ? 0x200 : 0x0;	// preset eflags
+	regs.callback.esp = esp;			// this is not[?] relevant; won't be restored by iret XXX test
+	regs.callback.ebp = ebp;
+	regs.callback.eip = eip;
+	regs.callback.cs = userMode ? 0x1b : 0x8;			// dependent on our own GDT
+	regs.callback.eflags = interruptFlag ? 0x200 : 0x0;	// preset eflags
+
+	if (userMode) {
+		regs.useresp = esp;
+		regs.ss = 0x23;
+	}
 
 	// vv   is this just plain wrong? probably. think about this more next time
 	// regs.useresp = esp;		// XXX: this is more important? or only for less privileged tasks?
@@ -60,7 +58,7 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(u32 esp, u32 e
 	return nt;
 }
 
-AkariTaskSubsystem::Task::Task(const struct callback_registers &registers): next(0), _registers(registers), _id(0), _pageDir(0) {
+AkariTaskSubsystem::Task::Task(const struct modeswitch_registers &registers, bool userMode): next(0), _registers(registers), _id(0), _userMode(userMode), _pageDir(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	_id = ++lastAssignedId;
 }

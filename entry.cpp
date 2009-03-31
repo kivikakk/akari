@@ -63,7 +63,8 @@ static void AkariEntryCont() {
 	Akari->Console->PutString("&SubProcess: &0x");
 	Akari->Console->PutInt((u32)&SubProcess, 16);
 	Akari->Console->PutString(".. doing sti.\n");
-	asm volatile("sti");
+
+	Akari->Task->SwitchToUsermode(); // enables interrupts
 
 	SubProcess();
 }
