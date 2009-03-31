@@ -380,9 +380,16 @@ irq_timer_multitask:
 	add $4, %esp	#; remove the pointer arg
 
 	cmp $0, %eax
-	je .popstack
+	je .toKernel
+
+	#; to user mode
 	mov %eax, %esp
-	.popstack:
+	jmp .popStack
+
+.toKernel:
+	#; to kernel mode
+
+.popStack:
 
 	pop %eax
 	mov %ax, %ds
