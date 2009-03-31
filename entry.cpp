@@ -32,7 +32,7 @@ void AkariEntry() {
 	Akari->Descriptor->_irqt->InstallHandler(0, timer_func);
 	Akari->Memory->SetPaging(true);
 	
-	// Give ourselves a normal stack.
+	// Give ourselves a normal stack. (n.b. this is from kernel heap!)
 	void *IdleTaskStack = Akari->Memory->AllocAligned(IDLE_STACK_SIZE);
 	// do we still need to flush the TLB?
 	__asm__ __volatile__("\
@@ -52,17 +52,21 @@ static void AkariEntryCont() {
 
 	Akari->Descriptor->_gdt->SetTSSStack(KERNEL_STACK_POS);
 	
-	// esp, ebp, eip, cs, EFLAGS.IF
-	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0, 0, 0, false, Akari->Memory->_kernelDirectory);
+	// esp, ebp, eip, usermode?, EFLAGS.IF
+	// the only setting here which actually is important for the bootstrap task is `usermode' ...
+	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0, 0, true, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
 	void *processStack = Akari->Memory->AllocAligned(0x2000);
-	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, 0x8, true, Akari->Memory->_kernelDirectory);
+	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000, (u32)&SubProcess, true, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
 
 	Akari->Console->PutString("&SubProcess: &0x");
 	Akari->Console->PutInt((u32)&SubProcess, 16);
 	Akari->Console->PutString(".. doing sti.\n");
+
+	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
+	Akari->Memory->SwitchPageDirectory(base->_pageDir);
 
 	Akari->Task->SwitchToUsermode(); // enables interrupts
 
@@ -113,10 +117,35 @@ void timer_func(struct callback_registers *r) {
 	Akari->Console->PutString(", r at: 0x");
 	Akari->Console->PutInt((u32)r, 16);
 
+	bool wasUserMode = Akari->Task->current->_userMode;
+	if (wasUserMode) {
+		// modeswitch set of registers on stack
+		Akari->Task->current->_registers = *((struct modeswitch_registers *)r);
+	} else {
+		// callback set only
+		Akari->Task->current->_registers.callback = *r;
+	}
 
-	Akari->Task->current->_registers = *r;
 	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
-	*r = Akari->Task->current->_registers;
+
+	bool isUserMode = Akari->Task->current->_userMode;
+	if (wasUserMode && !isUserMode) {
+		// need to push the stack forward a bit
+		// htf is this possible?
+		AkariPanic("wasUserMode && !isUserMode");
+	} else if (!wasUserMode && isUserMode) {
+		// need to pull the stack back a bit
+		// htf is this possible?
+		AkariPanic("!wasUserMode && isUserMode");
+	}
+
+	if (isUserMode) {
+		// go for modeswitch set
+		*((struct modeswitch_registers *)r) = Akari->Task->current->_registers;
+	} else {
+		// callback set only
+		*r = Akari->Task->current->_registers.callback;
+	}
 
 	Akari->Memory->SwitchPageDirectory(Akari->Task->current->_pageDir);
 	// this should be tenable, as all the kernel-space stuff should be linked

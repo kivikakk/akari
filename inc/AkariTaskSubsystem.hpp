@@ -18,12 +18,12 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 		class Task {
 			public:
-				static Task *BootstrapTask(u32, u32, u32, u8, bool, AkariMemorySubsystem::PageDirectory *);
+				static Task *BootstrapTask(u32 esp, u32 ebp, u32 eip, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase);
 
 				Task *next;
 
 			// protected:
-				Task(const struct modeswitch_registers &, bool);
+				Task(const struct modeswitch_registers &registers, bool userMode);
 
 				struct modeswitch_registers _registers;
 				// only use `callback' part of it if we're not usermode.

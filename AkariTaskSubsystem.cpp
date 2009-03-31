@@ -49,10 +49,7 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(u32 esp, u32 e
 		regs.ss = 0x23;
 	}
 
-	// vv   is this just plain wrong? probably. think about this more next time
-	// regs.useresp = esp;		// XXX: this is more important? or only for less privileged tasks?
-
-	Task *nt = new Task(regs);
+	Task *nt = new Task(regs, userMode);
 	nt->_pageDir = pageDirBase->Clone();
 
 	return nt;
