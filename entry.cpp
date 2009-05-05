@@ -49,17 +49,15 @@ static void AkariEntryCont() {
 		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
 
 	// usermode?, EFLAGS.IF, page_dir
-	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(true, true, Akari->Memory->_kernelDirectory);
+	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(
+		true, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
-	Akari->Descriptor->_gdt->SetTSSStack((u32)base->_utks + USER_TASK_KERNEL_STACK_SIZE);
+	Akari->Descriptor->_gdt->SetTSSStack(base->_utks + sizeof(struct modeswitch_registers));
 
-	/*
-	void *processStack = Akari->Memory->AllocAligned(0x2000);
-	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000,
+	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::CreateTask(
 		(u32)&SubProcess, true, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
-	*/
 
 	/*
 	void *p2Stack = Akari->Memory->AllocAligned(0x2000);
@@ -130,14 +128,17 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 
 	if (!Akari->Task->current->_userMode) {
 		// update the tip of stack pointer so we can restore later
-		Akari->Task->current->_ks = (struct callback_registers *)r;
+		Akari->Task->current->_ks = (u32)r;
 	} else {
 		// update utks pointer
-		Akari->Task->current->_utks = r;
+		Akari->Task->current->_utks = (u32)r;
 	}
 
 	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
+
 	Akari->Memory->SwitchPageDirectory(Akari->Task->current->_pageDir);
+	if (Akari->Task->current->_userMode)
+		Akari->Descriptor->_gdt->SetTSSStack(Akari->Task->current->_utks + sizeof(struct modeswitch_registers));
 
 	Akari->Console->PutString(".\nTo: &0x");
 	Akari->Console->PutInt(r->callback.eip, 16);
@@ -160,7 +161,7 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 	Akari->Console->PutString(".\n");
 
 	if (!Akari->Task->current->_userMode)
-		return Akari->Task->current->_ks;
+		return (void *)Akari->Task->current->_ks;
 	else
-		return Akari->Task->current->_utks;
+		return (void *)Akari->Task->current->_utks;
 }

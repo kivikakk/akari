@@ -6,6 +6,7 @@
 #include <interrupts.hpp>
 
 #define USER_TASK_KERNEL_STACK_SIZE	0x1000
+#define USER_TASK_STACK_SIZE	0x4000
 
 class AkariTaskSubsystem : public AkariSubsystem {
 	public:
@@ -21,7 +22,7 @@ class AkariTaskSubsystem : public AkariSubsystem {
 		class Task {
 			public:
 				static Task *BootstrapInitialTask(bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase);
-				static Task *CreateTask(bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase);
+				static Task *CreateTask(u32 entry, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase);
 				// static Task *BootstrapTask(bool existing, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase);
 
 				Task *next;
@@ -34,8 +35,8 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 				AkariMemorySubsystem::PageDirectory *_pageDir;
 
-				struct callback_registers *_ks;
-				struct modeswitch_registers *_utks;
+				u32 _ks;
+				u32 _utks;
 		};
 
 		Task *start, *current;

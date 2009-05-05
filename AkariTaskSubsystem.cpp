@@ -38,18 +38,41 @@ void AkariTaskSubsystem::SwitchToUsermode() {
 AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	Task *nt = new Task(userMode);
 	if (userMode)
-		nt->_utks = (struct modeswitch_registers *)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);
+		nt->_utks = (u32)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 
 	nt->_pageDir = pageDirBase->Clone();
 
 	return nt;
 }
 
-AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
+AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(u32 entry, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	Task *nt = new Task(userMode);
-	if (userMode)
-		nt->_utks = (struct modeswitch_registers *)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);
-	nt->_ks = (struct callback_registers *)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);
+	nt->_ks = (u32)Akari->Memory->AllocAligned(USER_TASK_STACK_SIZE) + USER_TASK_STACK_SIZE;
+
+	struct modeswitch_registers *regs = 0;
+
+	if (userMode) {
+		nt->_utks = (u32)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		regs = (struct modeswitch_registers *)(nt->_utks);
+
+		regs->useresp = nt->_ks;
+		regs->ss = 0x23;		// dsと同じ.. ssがTSSにセットされ、dsは（後で）irq_timer_multitaskに手動によるセットされる
+	} else {
+		nt->_ks -= sizeof(struct callback_registers);
+		regs = (struct modeswitch_registers *)(nt->_ks);
+	}
+
+	// only set ->callback.* here, as it may not be a proper modeswitch_registers if this isn't userMode
+	regs->callback.ds = userMode ? 0x23 : 0x10;
+	regs->callback.edi = regs->callback.esi =
+		regs->callback.ebp = regs->callback.esp =
+		regs->callback.ebx = regs->callback.edx =
+		regs->callback.ecx = regs->callback.eax =
+		0;
+	regs->callback.eip = entry;
+	regs->callback.cs = userMode ? 0x1b : 0x08;
+	regs->callback.eflags = interruptFlag ? 0x200 : 0x0;
+
 	nt->_pageDir = pageDirBase->Clone();
 
 	return nt;
