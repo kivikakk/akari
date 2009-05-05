@@ -63,6 +63,10 @@ static void AkariEntryCont() {
 		(u32)&SubProcess, false, true, Akari->Memory->_kernelDirectory);
 	other->next = third;
 
+	AkariTaskSubsystem::Task *fourth = AkariTaskSubsystem::Task::CreateTask(
+		(u32)&SubProcess, false, true, Akari->Memory->_kernelDirectory);
+	third->next = fourth;
+
 	Akari->Console->PutString("&SubProcess: &0x");
 	Akari->Console->PutInt((u32)&SubProcess, 16);
 	Akari->Console->PutString(".. doing sti.\n");
@@ -100,12 +104,11 @@ void SubProcessA(s32 n) {
 	}
 }
 
-// Returns how much the stack needs to be shifted.
-void *AkariMicrokernel(struct modeswitch_registers *r) {
-	Akari->Console->PutString("\nFrom: &1x");
+static void ReportTaskVitals(struct modeswitch_registers *r, int id, bool userMode) {
+	Akari->Console->PutString("0x");
 	Akari->Console->PutInt(r->callback.eip, 16);
 	Akari->Console->PutString(", #");
-	Akari->Console->PutInt(Akari->Task->current->_id, 16);
+	Akari->Console->PutInt(id, 16);
 	Akari->Console->PutString(", EBP 0x");
 	Akari->Console->PutInt(r->callback.ebp, 16);
 	Akari->Console->PutString(", ESP 0x");
@@ -114,7 +117,7 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 	Akari->Console->PutInt(r->callback.cs, 16);
 	Akari->Console->PutString(", EFLAGS 0x");
 	Akari->Console->PutInt(r->callback.eflags, 16);
-	if (Akari->Task->current->_userMode) {
+	if (userMode) {
 		Akari->Console->PutString(", userESP 0x");
 		Akari->Console->PutInt(r->useresp, 16);
 		Akari->Console->PutString(", SS: 0x");
@@ -122,6 +125,12 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 	}
 	Akari->Console->PutString(", r at: 0x");
 	Akari->Console->PutInt((u32)r, 16);
+}
+
+// Returns how much the stack needs to be shifted.
+void *AkariMicrokernel(struct modeswitch_registers *r) {
+	Akari->Console->PutString("\nFrom: ");
+	ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_userMode);
 
 	if (!Akari->Task->current->_userMode) {
 		// update the tip of stack pointer so we can restore later
@@ -141,24 +150,8 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 
 	r = (struct modeswitch_registers *)((!Akari->Task->current->_userMode) ? Akari->Task->current->_ks : Akari->Task->current->_utks);
 
-	Akari->Console->PutString(".\nTo: &0x");
-	Akari->Console->PutInt(r->callback.eip, 16);
-	Akari->Console->PutString(", #");
-	Akari->Console->PutInt(Akari->Task->current->_id, 16);
-	Akari->Console->PutString(", EBP 0x");
-	Akari->Console->PutInt(r->callback.ebp, 16);
-	Akari->Console->PutString(", ESP 0x");
-	Akari->Console->PutInt(r->callback.esp, 16);
-	Akari->Console->PutString(", CS 0x");
-	Akari->Console->PutInt(r->callback.cs, 16);
-	Akari->Console->PutString(", EFLAGS 0x");
-	Akari->Console->PutInt(r->callback.eflags, 16);
-	if (Akari->Task->current->_userMode) {
-		Akari->Console->PutString(", userESP 0x");
-		Akari->Console->PutInt(r->useresp, 16);
-		Akari->Console->PutString(", SS: 0x");
-		Akari->Console->PutInt(r->ss, 16);
-	}
+	Akari->Console->PutString(".\nTo: ");
+	ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_userMode);
 	Akari->Console->PutString(".\n");
 
 	return (void *)r;
