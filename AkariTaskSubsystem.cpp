@@ -39,8 +39,6 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(bool us
 	Task *nt = new Task(userMode);
 	if (userMode)
 		nt->_utks = (struct modeswitch_registers *)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);
-	else
-		;		// nop. Doesn't need a stack, it already has one.
 
 	nt->_pageDir = pageDirBase->Clone();
 
@@ -51,8 +49,7 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(bool userMode, bo
 	Task *nt = new Task(userMode);
 	if (userMode)
 		nt->_utks = (struct modeswitch_registers *)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);
-	else
-		nt->_ks = (struct callback_registers *)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);
+	nt->_ks = (struct callback_registers *)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);
 	nt->_pageDir = pageDirBase->Clone();
 
 	return nt;
