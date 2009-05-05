@@ -39,6 +39,11 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(bool us
 	Task *nt = new Task(userMode);
 	if (userMode)
 		nt->_utks = (u32)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+	else {
+		AkariPanic("I haven't tested a non-user idle (initial) task. Uncomment this panic at your own peril.");
+		// i.e. you may need to add some code as deemed appropriate here. Current thoughts are that you may need to
+		// be careful about where you placed the stack.. probably not, but just check it all matches up?
+	}
 
 	nt->_pageDir = pageDirBase->Clone();
 
