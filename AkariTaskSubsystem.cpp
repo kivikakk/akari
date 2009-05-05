@@ -34,7 +34,32 @@ void AkariTaskSubsystem::SwitchToUsermode() {
 	// note this works with our current stack... hm.
 }
 
-AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(u32 esp, u32 ebp, u32 eip, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
+
+AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
+	Task *nt = new Task(userMode);
+	if (userMode)
+		nt->_utks = (struct modeswitch_registers *)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);
+	else
+		;		// nop. Doesn't need a stack, it already has one.
+
+	nt->_pageDir = pageDirBase->Clone();
+
+	return nt;
+}
+
+AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
+	Task *nt = new Task(userMode);
+	if (userMode)
+		nt->_utks = (struct modeswitch_registers *)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);
+	else
+		nt->_ks = (struct callback_registers *)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);
+	nt->_pageDir = pageDirBase->Clone();
+
+	return nt;
+}
+
+/*
+AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(bool existing, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	struct modeswitch_registers regs;
 	POSIX::memset(&regs, 0, sizeof(struct modeswitch_registers));
 
@@ -56,8 +81,9 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(u32 esp, u32 e
 
 	return nt;
 }
+*/
 
-AkariTaskSubsystem::Task::Task(const struct modeswitch_registers &registers, bool userMode): next(0), _registers(registers), _id(0), _userMode(userMode), _pageDir(0), _utks(0) {
+AkariTaskSubsystem::Task::Task(bool userMode): next(0), _id(0), _userMode(userMode), _pageDir(0), _ks(0), _utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	_id = ++lastAssignedId;
 }

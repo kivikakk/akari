@@ -48,13 +48,11 @@ static void AkariEntryCont() {
 	for (u32 i = UKERNEL_STACK_POS; i >= UKERNEL_STACK_POS - UKERNEL_STACK_SIZE; i -= 0x1000)
 		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
 
-	// esp, ebp, eip, usermode?, EFLAGS.IF
-	// the only setting here which actually is important for the bootstrap task is `usermode' ...
-	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0,
-		0, true, true, Akari->Memory->_kernelDirectory);
+	// usermode?, EFLAGS.IF, page_dir
+	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(true, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
-	Akari->Descriptor->_gdt->SetTSSStack(base->_utks + USER_TASK_KERNEL_STACK_SIZE);
+	Akari->Descriptor->_gdt->SetTSSStack((u32)base->_utks + USER_TASK_KERNEL_STACK_SIZE);
 
 	/*
 	void *processStack = Akari->Memory->AllocAligned(0x2000);
@@ -108,63 +106,61 @@ void SubProcessA(s32 n) {
 }
 
 // Returns how much the stack needs to be shifted.
-struct modeswitch_registers *AkariMicrokernel(struct callback_registers *r) {
+void *AkariMicrokernel(struct modeswitch_registers *r) {
 	Akari->Console->PutString("\nFrom: &1x");
-	Akari->Console->PutInt(r->eip, 16);
+	Akari->Console->PutInt(r->callback.eip, 16);
 	Akari->Console->PutString(", #");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
 	Akari->Console->PutString(", EBP 0x");
-	Akari->Console->PutInt(r->ebp, 16);
+	Akari->Console->PutInt(r->callback.ebp, 16);
 	Akari->Console->PutString(", ESP 0x");
-	Akari->Console->PutInt(r->esp, 16);
+	Akari->Console->PutInt(r->callback.esp, 16);
 	Akari->Console->PutString(", CS 0x");
-	Akari->Console->PutInt(r->cs, 16);
+	Akari->Console->PutInt(r->callback.cs, 16);
 	Akari->Console->PutString(", EFLAGS 0x");
-	Akari->Console->PutInt(r->eflags, 16);
+	Akari->Console->PutInt(r->callback.eflags, 16);
 	if (Akari->Task->current->_userMode) {
 		Akari->Console->PutString(", userESP 0x");
-		Akari->Console->PutInt(((struct modeswitch_registers *)r)->useresp, 16);
+		Akari->Console->PutInt(r->useresp, 16);
 		Akari->Console->PutString(", SS: 0x");
-		Akari->Console->PutInt(((struct modeswitch_registers *)r)->ss, 16);
+		Akari->Console->PutInt(r->ss, 16);
 	}
 	Akari->Console->PutString(", r at: 0x");
 	Akari->Console->PutInt((u32)r, 16);
 
-	if (Akari->Task->current->_userMode) {
-		// modeswitch set of registers on stack
-		Akari->Task->current->_registers = *((struct modeswitch_registers *)r);
+	if (!Akari->Task->current->_userMode) {
+		// update the tip of stack pointer so we can restore later
+		Akari->Task->current->_ks = (struct callback_registers *)r;
 	} else {
-		// callback set only
-		Akari->Task->current->_registers.callback = *r;
+		// update utks pointer
+		Akari->Task->current->_utks = r;
 	}
 
 	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
 	Akari->Memory->SwitchPageDirectory(Akari->Task->current->_pageDir);
 
-	if (!Akari->Task->current->_userMode) {
-		// modify it right on the stack
-		*r = Akari->Task->current->_registers.callback;
-	}
-
 	Akari->Console->PutString(".\nTo: &0x");
-	Akari->Console->PutInt(r->eip, 16);
+	Akari->Console->PutInt(r->callback.eip, 16);
 	Akari->Console->PutString(", #");
 	Akari->Console->PutInt(Akari->Task->current->_id, 16);
 	Akari->Console->PutString(", EBP 0x");
-	Akari->Console->PutInt(r->ebp, 16);
+	Akari->Console->PutInt(r->callback.ebp, 16);
 	Akari->Console->PutString(", ESP 0x");
-	Akari->Console->PutInt(r->esp, 16);
+	Akari->Console->PutInt(r->callback.esp, 16);
 	Akari->Console->PutString(", CS 0x");
-	Akari->Console->PutInt(r->cs, 16);
+	Akari->Console->PutInt(r->callback.cs, 16);
 	Akari->Console->PutString(", EFLAGS 0x");
-	Akari->Console->PutInt(r->eflags, 16);
+	Akari->Console->PutInt(r->callback.eflags, 16);
 	if (Akari->Task->current->_userMode) {
 		Akari->Console->PutString(", userESP 0x");
-		Akari->Console->PutInt(((struct modeswitch_registers *)r)->useresp, 16);
+		Akari->Console->PutInt(r->useresp, 16);
 		Akari->Console->PutString(", SS: 0x");
-		Akari->Console->PutInt(((struct modeswitch_registers *)r)->ss, 16);
+		Akari->Console->PutInt(r->ss, 16);
 	}
 	Akari->Console->PutString(".\n");
 
-	return &Akari->Task->current->_registers;
+	if (!Akari->Task->current->_userMode)
+		return Akari->Task->current->_ks;
+	else
+		return Akari->Task->current->_utks;
 }

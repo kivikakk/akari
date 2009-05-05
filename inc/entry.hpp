@@ -11,7 +11,7 @@ extern "C" {
 
 	void AkariEntry();
 
-	struct modeswitch_registers *AkariMicrokernel(struct callback_registers *r);
+	void *AkariMicrokernel(struct modeswitch_registers *r);
 }
 
 #endif

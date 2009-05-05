@@ -369,8 +369,8 @@ irq_timer_multitask:
 	mov %ax, %fs
 	mov %ax, %gs
 
-	mov $0x20, %ax
-	outb %ax, $0x20	#; EOI to master irq controller
+	mov $0x20, %al
+	outb %al, $0x20	#; EOI to master irq controller
 
 	call _AkariMicrokernel	#; see use of %eax below, i.e. the return value.
 

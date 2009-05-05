@@ -20,21 +20,22 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 		class Task {
 			public:
-				static Task *BootstrapTask(u32 esp, u32 ebp, u32 eip, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase);
+				static Task *BootstrapInitialTask(bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase);
+				static Task *CreateTask(bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase);
+				// static Task *BootstrapTask(bool existing, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase);
 
 				Task *next;
 
 			// protected:
-				Task(const struct modeswitch_registers &registers, bool userMode);
-
-				struct modeswitch_registers _registers;
-				// only use `callback' part of it if we're not usermode.
+				Task(bool userMode);
 
 				u32 _id;
 				bool _userMode;
 
 				AkariMemorySubsystem::PageDirectory *_pageDir;
-				u32 _utks;
+
+				struct callback_registers *_ks;
+				struct modeswitch_registers *_utks;
 		};
 
 		Task *start, *current;
