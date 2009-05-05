@@ -59,12 +59,9 @@ static void AkariEntryCont() {
 		(u32)&SubProcess, true, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
 
-	/*
-	void *p2Stack = Akari->Memory->AllocAligned(0x2000);
-	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::BootstrapTask((u32)p2Stack + 0x2000, (u32)p2Stack + 0x2000,
+	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::CreateTask(
 		(u32)&SubProcess, false, true, Akari->Memory->_kernelDirectory);
 	other->next = third;
-	*/
 
 	Akari->Console->PutString("&SubProcess: &0x");
 	Akari->Console->PutInt((u32)&SubProcess, 16);
@@ -134,11 +131,15 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 		Akari->Task->current->_utks = (u32)r;
 	}
 
+	// update the `current' task
 	Akari->Task->current = Akari->Task->current->next ? Akari->Task->current->next : Akari->Task->start;
 
+	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
 	Akari->Memory->SwitchPageDirectory(Akari->Task->current->_pageDir);
 	if (Akari->Task->current->_userMode)
 		Akari->Descriptor->_gdt->SetTSSStack(Akari->Task->current->_utks + sizeof(struct modeswitch_registers));
+
+	r = (struct modeswitch_registers *)((!Akari->Task->current->_userMode) ? Akari->Task->current->_ks : Akari->Task->current->_utks);
 
 	Akari->Console->PutString(".\nTo: &0x");
 	Akari->Console->PutInt(r->callback.eip, 16);
@@ -160,8 +161,5 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 	}
 	Akari->Console->PutString(".\n");
 
-	if (!Akari->Task->current->_userMode)
-		return (void *)Akari->Task->current->_ks;
-	else
-		return (void *)Akari->Task->current->_utks;
+	return (void *)r;
 }
