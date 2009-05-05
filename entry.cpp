@@ -2,8 +2,8 @@
 #include <debug.hpp>
 #include <Akari.hpp>
 
-#define KERNEL_STACK_POS	0xE0000000
-#define KERNEL_STACK_SIZE	0x2000
+#define UKERNEL_STACK_POS	0xE0000000
+#define UKERNEL_STACK_SIZE	0x2000
 
 #define IDLE_STACK_SIZE		0x2000
 
@@ -45,26 +45,30 @@ void AkariEntry() {
 
 static void AkariEntryCont() {	
 	ASSERT(Akari->Memory->_activeDirectory == Akari->Memory->_kernelDirectory);
-	for (u32 i = KERNEL_STACK_POS; i >= KERNEL_STACK_POS - KERNEL_STACK_SIZE; i -= 0x1000)
+	for (u32 i = UKERNEL_STACK_POS; i >= UKERNEL_STACK_POS - UKERNEL_STACK_SIZE; i -= 0x1000)
 		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
 
-	Akari->Descriptor->_gdt->SetTSSStack(KERNEL_STACK_POS);
-	
 	// esp, ebp, eip, usermode?, EFLAGS.IF
 	// the only setting here which actually is important for the bootstrap task is `usermode' ...
 	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapTask(0, 0,
 		0, true, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
+	Akari->Descriptor->_gdt->SetTSSStack(base->_utks + USER_TASK_KERNEL_STACK_SIZE);
+
+	/*
 	void *processStack = Akari->Memory->AllocAligned(0x2000);
 	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::BootstrapTask((u32)processStack + 0x2000, (u32)processStack + 0x2000,
 		(u32)&SubProcess, true, true, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
+	*/
 
+	/*
 	void *p2Stack = Akari->Memory->AllocAligned(0x2000);
 	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::BootstrapTask((u32)p2Stack + 0x2000, (u32)p2Stack + 0x2000,
 		(u32)&SubProcess, false, true, Akari->Memory->_kernelDirectory);
 	other->next = third;
+	*/
 
 	Akari->Console->PutString("&SubProcess: &0x");
 	Akari->Console->PutInt((u32)&SubProcess, 16);
@@ -162,10 +166,5 @@ struct modeswitch_registers *AkariMicrokernel(struct callback_registers *r) {
 	}
 	Akari->Console->PutString(".\n");
 
-	if (Akari->Task->current->_userMode) {
-		// return the register address for irq_timer_multitask
-		return &Akari->Task->current->_registers;
-	}
-	
-	return 0;
+	return &Akari->Task->current->_registers;
 }

@@ -5,6 +5,8 @@
 #include <AkariMemorySubsystem.hpp>
 #include <interrupts.hpp>
 
+#define USER_TASK_KERNEL_STACK_SIZE	0x1000
+
 class AkariTaskSubsystem : public AkariSubsystem {
 	public:
 		AkariTaskSubsystem();
@@ -32,6 +34,7 @@ class AkariTaskSubsystem : public AkariSubsystem {
 				bool _userMode;
 
 				AkariMemorySubsystem::PageDirectory *_pageDir;
+				u32 _utks;
 		};
 
 		Task *start, *current;

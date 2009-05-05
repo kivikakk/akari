@@ -50,12 +50,14 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(u32 esp, u32 e
 	}
 
 	Task *nt = new Task(regs, userMode);
+	nt->_utks = Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);	// this MUST be visible from the kernel
+
 	nt->_pageDir = pageDirBase->Clone();
 
 	return nt;
 }
 
-AkariTaskSubsystem::Task::Task(const struct modeswitch_registers &registers, bool userMode): next(0), _registers(registers), _id(0), _userMode(userMode), _pageDir(0) {
+AkariTaskSubsystem::Task::Task(const struct modeswitch_registers &registers, bool userMode): next(0), _registers(registers), _id(0), _userMode(userMode), _pageDir(0), _utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	_id = ++lastAssignedId;
 }

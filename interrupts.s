@@ -360,6 +360,7 @@ irq_timer_multitask:
 	push %eax
 
 	mov %esp, %eax
+	mov $0xE0000000, %esp
 	push %eax
 
 	mov $0x10, %ax
@@ -371,25 +372,14 @@ irq_timer_multitask:
 	mov $0x20, %ax
 	outb %ax, $0x20	#; EOI to master irq controller
 
-	call _AkariMicrokernel
-	#; returns the address of an ESP address if we're exiting
-	#; to a different protection level.
-	#; returns 0 if we're not (the stuff on the stack will be
-	#; modified accordingly).
+	call _AkariMicrokernel	#; see use of %eax below, i.e. the return value.
 
-	add $4, %esp	#; remove the pointer arg
+	#; add $4, %esp	#; remove the pointer arg we pushed
+	#; technically the above is wasted since we replace %esp below,
+	#; but should we not at some point later, don't forget to remove
+	#; the pointer arg with something similar!
 
-	cmp $0, %eax
-	je .toKernel
-
-	#; to user mode
-	mov %eax, %esp
-	jmp .popStack
-
-.toKernel:
-	#; to kernel mode
-
-.popStack:
+	mov %eax, %esp		#; this will be either the utks or kernel-stack. either way.
 
 	pop %eax
 	mov %ax, %ds
