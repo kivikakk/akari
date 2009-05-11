@@ -49,22 +49,22 @@ static void AkariEntryCont() {
 		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
 
 	// usermode?, EFLAGS.IF, page_dir
-	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(
-		true, true, Akari->Memory->_kernelDirectory);
+	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(true, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
 	Akari->Descriptor->_gdt->SetTSSStack(base->_utks + sizeof(struct modeswitch_registers));
+	Akari->Descriptor->_gdt->SetTSSIOMap(base->_iomap);
 
 	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, true, true, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, true, true, 3, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
 
 	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, false, true, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, false, true, 3, Akari->Memory->_kernelDirectory);
 	other->next = third;
 
 	AkariTaskSubsystem::Task *fourth = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, false, true, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, false, true, 3, Akari->Memory->_kernelDirectory);
 	third->next = fourth;
 
 	Akari->Console->PutString("&SubProcess: &0x");
@@ -74,7 +74,7 @@ static void AkariEntryCont() {
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->Memory->SwitchPageDirectory(base->_pageDir);
 
-	Akari->Task->SwitchToUsermode(); // enables interrupts
+	Akari->Task->SwitchToUsermode(3); // enables interrupts, gives this task an IOPL of 3
 
 	SubProcess();
 }
@@ -86,6 +86,10 @@ void SubProcess() {
 	while (1) {
 		// Something computationally differing so that interrupting at regular intervals
 		// won't be at the same instruction.
+		unsigned char r;
+		asm volatile("inb %1, %0" : "=a" (r) : "dN" (0x60));
+		//*((char *)0x9) = 4;
+
 		++a, --b;
 		SubProcessA(1);
 		if (a % 4 == 1) {
@@ -145,8 +149,10 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 
 	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
 	Akari->Memory->SwitchPageDirectory(Akari->Task->current->_pageDir);
-	if (Akari->Task->current->_userMode)
+	if (Akari->Task->current->_userMode) {
 		Akari->Descriptor->_gdt->SetTSSStack(Akari->Task->current->_utks + sizeof(struct modeswitch_registers));
+		Akari->Descriptor->_gdt->SetTSSIOMap(Akari->Task->current->_iomap);
+	}
 
 	r = (struct modeswitch_registers *)((!Akari->Task->current->_userMode) ? Akari->Task->current->_ks : Akari->Task->current->_utks);
 

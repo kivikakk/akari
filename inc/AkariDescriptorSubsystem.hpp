@@ -24,9 +24,12 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 
 				void SetGate(s32, u32, u32, u8, u8);
 				void WriteTSS(s32, u16, u32);
+
 				void Flush();
 				void FlushTSS(s32);
+
 				void SetTSSStack(u32);
+				void SetTSSIOMap(u8 *const &);
 
 			protected:
 				struct Entry {
@@ -53,16 +56,18 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 
 				class TSSEntry {
 					public:
-						u32 prev_tss;	// linked list in hardware task switching
-						u32 esp0, ss0;	// stack ptr+segment to load when we change to kernel mode
+						u32 prev_tss;					// linked list in hardware task switching
+						u32 esp0, ss0;					// stack ptr+segment to load when we change to kernel mode
 						// unused below.
 						u32 esp1, ss1, esp2, ss2, cr3, eip;
 						u32 eflags, eax, ecx, edx, ebx, esp, ebp;
 						u32 esi, edi;
 						// unused above.
 						u32 es, cs, ss, ds, fs, gs;		// loaded into appropriate registers when we change to kernel
-						u32 ldt;					// unused
-						u16 trap, iomap_base;		// unused
+						u32 ldt;						// unused
+						u16 trap;						// unused
+						u16 iomap_base;
+						u8 iomap[(256 / 8) + 1];
 				} __attribute__((__packed__));
 
 				u32 _entryCount;

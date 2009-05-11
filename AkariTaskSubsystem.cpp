@@ -9,7 +9,7 @@ u8 AkariTaskSubsystem::VersionMinor() const { return 1; }
 const char *AkariTaskSubsystem::VersionManufacturer() const { return "Akari"; }
 const char *AkariTaskSubsystem::VersionProduct() const { return "Akari Task Manager"; }
 
-void AkariTaskSubsystem::SwitchToUsermode() {
+void AkariTaskSubsystem::SwitchToUsermode(u8 iopl) {
 	__asm__ __volatile__("	\
 		mov $0x23, %%ax; \
 		mov %%ax, %%ds; \
@@ -23,19 +23,26 @@ void AkariTaskSubsystem::SwitchToUsermode() {
 		pushf; \
 		pop %%eax; \
 		or $0x200, %%eax; \
+		"
+		// is this bit below even necessary?
+		" \
+		xor %%bh, %%bh; \
+		shl $12, %%bx; \
+		or %%bx, %%ax; \
+		\
 		push %%eax; \
 		pushl $0x1b; \
 		pushl $1f; \
 		\
 		iret; \
-	1:" : : : "%eax");
+	1:" : : "b" (iopl) : "%eax");
 
 	// EIP ($1f), CS (1b), EFLAGS (eax), ESP (eax from before), SS (23)
 	// note this works with our current stack... hm.
 }
 
 
-AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
+AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(bool userMode, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	Task *nt = new Task(userMode);
 	if (userMode)
 		nt->_utks = (u32)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
@@ -50,7 +57,7 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(bool us
 	return nt;
 }
 
-AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(u32 entry, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
+AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(u32 entry, bool userMode, bool interruptFlag, u8 iopl, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	Task *nt = new Task(userMode);
 	nt->_ks = (u32)Akari->Memory->AllocAligned(USER_TASK_STACK_SIZE) + USER_TASK_STACK_SIZE;
 
@@ -75,40 +82,29 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(u32 entry, bool u
 		regs->callback.ecx = regs->callback.eax =
 		0;
 	regs->callback.eip = entry;
-	regs->callback.cs = userMode ? 0x1b : 0x08;
-	regs->callback.eflags = interruptFlag ? 0x200 : 0x0;
+	regs->callback.cs = userMode ? 0x1b : 0x08;			// note the low 2 bits are the CPL
+	regs->callback.eflags = (interruptFlag ? 0x200 : 0x0) | (iopl << 12);
 
 	nt->_pageDir = pageDirBase->Clone();
 
 	return nt;
 }
 
-/*
-AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapTask(bool existing, bool userMode, bool interruptFlag, AkariMemorySubsystem::PageDirectory *pageDirBase) {
-	struct modeswitch_registers regs;
-	POSIX::memset(&regs, 0, sizeof(struct modeswitch_registers));
-
-	regs.callback.esp = esp;			// this is not[?] relevant; won't be restored by iret XXX test
-	regs.callback.ebp = ebp;
-	regs.callback.eip = eip;
-	regs.callback.cs = userMode ? 0x1b : 0x8;			// dependent on our own GDT
-	regs.callback.eflags = interruptFlag ? 0x200 : 0x0;	// preset eflags
-
-	if (userMode) {
-		regs.useresp = esp;
-		regs.ss = 0x23;
-	}
-
-	Task *nt = new Task(regs, userMode);
-	nt->_utks = Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE);	// this MUST be visible from the kernel
-
-	nt->_pageDir = pageDirBase->Clone();
-
-	return nt;
+bool AkariTaskSubsystem::Task::GetIOMap(u8 port) const {
+	return (_iomap[port / 8] & (1 << (port % 8))) == 0;
 }
-*/
+
+void AkariTaskSubsystem::Task::SetIOMap(u8 port, bool enabled) {
+	if (enabled)
+		_iomap[port / 8] &= ~(1 << (port % 8));
+	else
+		_iomap[port / 8] |= (1 << (port % 8));
+}
 
 AkariTaskSubsystem::Task::Task(bool userMode): next(0), _id(0), _userMode(userMode), _pageDir(0), _ks(0), _utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	_id = ++lastAssignedId;
+
+	for (u8 i = 0; i < 32; ++i)
+		_iomap[i] = 0xFF;
 }

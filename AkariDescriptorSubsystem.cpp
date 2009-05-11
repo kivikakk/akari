@@ -55,6 +55,10 @@ void AkariDescriptorSubsystem::GDT::WriteTSS(s32 num, u16 ss0, u32 esp0) {
 	_tssEntry.ss = 0x13; _tssEntry.ds = 0x13;
 	_tssEntry.es = 0x13; _tssEntry.fs = 0x13;
 	_tssEntry.gs = 0x13;
+	_tssEntry.iomap_base = (u32)&_tssEntry.iomap - (u32)&_tssEntry;
+
+	for (u32 i = 0; i < sizeof(_tssEntry.iomap); ++i)
+		_tssEntry.iomap[i] = 0xFF;
 
 	SetGate(num, base, limit, 0xE9, 0x00);
 }
@@ -79,6 +83,10 @@ void AkariDescriptorSubsystem::GDT::FlushTSS(s32 num) {
 
 void AkariDescriptorSubsystem::GDT::SetTSSStack(u32 addr) {
 	_tssEntry.esp0 = addr;
+}
+
+void AkariDescriptorSubsystem::GDT::SetTSSIOMap(u8 *const &iomap) {
+	POSIX::memcpy(_tssEntry.iomap, iomap, 32);
 }
 
 AkariDescriptorSubsystem::IDT::IDT() {
