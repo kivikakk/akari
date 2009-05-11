@@ -57,7 +57,7 @@ void AkariDescriptorSubsystem::GDT::WriteTSS(s32 num, u16 ss0, u32 esp0) {
 	_tssEntry.gs = 0x13;
 	_tssEntry.iomap_base = (u32)&_tssEntry.iomap - (u32)&_tssEntry;
 
-	for (u32 i = 0; i < sizeof(_tssEntry.iomap); ++i)
+	for (u16 i = 0; i < sizeof(_tssEntry.iomap); ++i)
 		_tssEntry.iomap[i] = 0xFF;
 
 	SetGate(num, base, limit, 0xE9, 0x00);

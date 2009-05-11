@@ -52,13 +52,16 @@ static void AkariEntryCont() {
 	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(true, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
+	base->SetIOMap(0x60, true);
+
 	Akari->Descriptor->_gdt->SetTSSStack(base->_utks + sizeof(struct modeswitch_registers));
 	Akari->Descriptor->_gdt->SetTSSIOMap(base->_iomap);
 
 	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, true, true, 3, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, false, true, 3, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
 
+	/*
 	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::CreateTask(
 		(u32)&SubProcess, false, true, 3, Akari->Memory->_kernelDirectory);
 	other->next = third;
@@ -66,6 +69,7 @@ static void AkariEntryCont() {
 	AkariTaskSubsystem::Task *fourth = AkariTaskSubsystem::Task::CreateTask(
 		(u32)&SubProcess, false, true, 3, Akari->Memory->_kernelDirectory);
 	third->next = fourth;
+	*/
 
 	Akari->Console->PutString("&SubProcess: &0x");
 	Akari->Console->PutInt((u32)&SubProcess, 16);
@@ -74,7 +78,7 @@ static void AkariEntryCont() {
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->Memory->SwitchPageDirectory(base->_pageDir);
 
-	Akari->Task->SwitchToUsermode(3); // enables interrupts, gives this task an IOPL of 3
+	Akari->Task->SwitchToUsermode(0); // switches to usermode, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 
 	SubProcess();
 }
