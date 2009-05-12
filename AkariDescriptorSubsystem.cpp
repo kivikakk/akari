@@ -4,14 +4,18 @@
 #include <debug.hpp>
 
 AkariDescriptorSubsystem::AkariDescriptorSubsystem(): _gdt(0), _idt(0), _irqt(0) {
-	_gdt = new GDT(6);
-	_gdt->SetGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);	// code (CS)
-	_gdt->SetGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);	// data (SS)
-	_gdt->SetGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);	// user code (CS)
-	_gdt->SetGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);	// user data (SS)
-	_gdt->WriteTSS(5, 0x10, 0x0);		// empty ESP in TSS for now.. changed later in execution
+	_gdt = new GDT(10);
+	_gdt->SetGate(1, 0, 0xFFFFFFFF, 0, true);	// code (CS)
+	_gdt->SetGate(2, 0, 0xFFFFFFFF, 0, false);	// data (SS)
+	_gdt->SetGate(3, 0, 0xFFFFFFFF, 3, true);	// driver code (CS)
+	_gdt->SetGate(4, 0, 0xFFFFFFFF, 3, false);	// driver data (SS)
+	//_gdt->ClearGate(5);	// unused
+	//_gdt->ClearGate(6);	// unused
+	//_gdt->SetGate(7, 0, 0xFFFFFFFF, 3, true);	// user code (CS)
+	//_gdt->SetGate(8, 0, 0xFFFFFFFF, 3, false);	// user data (SS)
+	_gdt->WriteTSS(9, 0x10, 0x0);		// empty ESP in TSS for now.. changed later in execution
 	_gdt->Flush();
-	_gdt->FlushTSS(5);
+	_gdt->FlushTSS(9);
 
 	_idt = new IDT();
 
@@ -31,7 +35,7 @@ AkariDescriptorSubsystem::GDT::GDT(u32 n): _entryCount(n), _entries(0) {
 	SetGate(0, 0, 0, 0, 0);
 }
 
-void AkariDescriptorSubsystem::GDT::SetGate(s32 num, u32 base, u32 limit, u8 access, u8 granularity) {
+void AkariDescriptorSubsystem::GDT::SetGateFields(s32 num, u32 base, u32 limit, u8 access, u8 granularity) {
 	ASSERT(num >= 0 && num < (s32)_entryCount);
 
 	_entries[num].base_low		= (base & 0xFFFF);
@@ -44,6 +48,15 @@ void AkariDescriptorSubsystem::GDT::SetGate(s32 num, u32 base, u32 limit, u8 acc
 	_entries[num].access		= access;
 }
 
+void AkariDescriptorSubsystem::GDT::SetGate(s32 num, u32 base, u32 limit, u8 dpl, bool code) {
+	// access flag is like 0b1xx1yyyy, where yyyy = code?0xA:0x2 (just 'cause), and xx=DPL.
+	SetGateFields(num, base, limit, (code ? 0xA : 0x2) | (dpl << 5) | (0x9 << 4), 0xCF);
+}
+
+void AkariDescriptorSubsystem::GDT::ClearGate(s32 num) {
+	SetGateFields(num, 0, 0, 0, 0);
+}
+
 void AkariDescriptorSubsystem::GDT::WriteTSS(s32 num, u16 ss0, u32 esp0) {
 	u32 base = (u32)&_tssEntry;
 	u32 limit = base + sizeof(TSSEntry);
@@ -52,6 +65,7 @@ void AkariDescriptorSubsystem::GDT::WriteTSS(s32 num, u16 ss0, u32 esp0) {
 	
 	_tssEntry.ss0 = ss0; _tssEntry.esp0 = esp0;
 	_tssEntry.cs = 0x0b;	// 0x08 and 0x10 (kern code/data) + 0x3 (RPL ring 3)
+	// NOTE: assumption about RPL is made right here!
 	_tssEntry.ss = 0x13; _tssEntry.ds = 0x13;
 	_tssEntry.es = 0x13; _tssEntry.fs = 0x13;
 	_tssEntry.gs = 0x13;
@@ -60,7 +74,7 @@ void AkariDescriptorSubsystem::GDT::WriteTSS(s32 num, u16 ss0, u32 esp0) {
 	for (u16 i = 0; i < sizeof(_tssEntry.iomap); ++i)
 		_tssEntry.iomap[i] = 0xFF;
 
-	SetGate(num, base, limit, 0xE9, 0x00);
+	SetGateFields(num, base, limit, 0xE9, 0x00);
 }
 
 void AkariDescriptorSubsystem::GDT::Flush() {

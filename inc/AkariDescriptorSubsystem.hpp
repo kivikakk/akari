@@ -22,8 +22,11 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 			public:
 				GDT(u32);
 
-				void SetGate(s32, u32, u32, u8, u8);
-				void WriteTSS(s32, u16, u32);
+				void SetGateFields(s32 num, u32 base, u32 limit, u8 access, u8 granularity);
+
+				void SetGate(s32 num, u32 base, u32 limit, u8 dpl, bool code);
+				void ClearGate(s32 num);
+				void WriteTSS(s32 num, u16 ss0, u32 esp0);
 
 				void Flush();
 				void FlushTSS(s32);
