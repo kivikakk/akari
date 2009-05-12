@@ -49,7 +49,7 @@ static void AkariEntryCont() {
 		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
 
 	// usermode?, EFLAGS.IF, page_dir
-	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(true, Akari->Memory->_kernelDirectory);
+	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(3, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
 	base->SetIOMap(0x60, true);
@@ -58,16 +58,17 @@ static void AkariEntryCont() {
 	Akari->Descriptor->_gdt->SetTSSIOMap(base->_iomap);
 
 	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, false, true, 3, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, 0, true, 0, Akari->Memory->_kernelDirectory);
 	Akari->Task->current->next = other;
 
 	/*
+	TRY enabling these: it doesn't work?!
 	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, false, true, 3, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, 3, true, 3, Akari->Memory->_kernelDirectory);
 	other->next = third;
 
 	AkariTaskSubsystem::Task *fourth = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, false, true, 3, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, 3, true, 3, Akari->Memory->_kernelDirectory);
 	third->next = fourth;
 	*/
 
@@ -78,7 +79,7 @@ static void AkariEntryCont() {
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->Memory->SwitchPageDirectory(base->_pageDir);
 
-	Akari->Task->SwitchToUsermode(0); // switches to usermode, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
+	Akari->Task->SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 
 	SubProcess();
 }
@@ -112,7 +113,7 @@ void SubProcessA(s32 n) {
 	}
 }
 
-static void ReportTaskVitals(struct modeswitch_registers *r, int id, bool userMode) {
+static void ReportTaskVitals(struct modeswitch_registers *r, int id, u8 cpl) {
 	Akari->Console->PutString("0x");
 	Akari->Console->PutInt(r->callback.eip, 16);
 	Akari->Console->PutString(", #");
@@ -125,7 +126,7 @@ static void ReportTaskVitals(struct modeswitch_registers *r, int id, bool userMo
 	Akari->Console->PutInt(r->callback.cs, 16);
 	Akari->Console->PutString(", EFLAGS 0x");
 	Akari->Console->PutInt(r->callback.eflags, 16);
-	if (userMode) {
+	if (cpl > 0) {
 		Akari->Console->PutString(", userESP 0x");
 		Akari->Console->PutInt(r->useresp, 16);
 		Akari->Console->PutString(", SS: 0x");
@@ -138,9 +139,9 @@ static void ReportTaskVitals(struct modeswitch_registers *r, int id, bool userMo
 // Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
 	Akari->Console->PutString("\nFrom: ");
-	ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_userMode);
+	ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_cpl);
 
-	if (!Akari->Task->current->_userMode) {
+	if (!Akari->Task->current->_cpl > 0) {
 		// update the tip of stack pointer so we can restore later
 		Akari->Task->current->_ks = (u32)r;
 	} else {
@@ -153,15 +154,15 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 
 	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
 	Akari->Memory->SwitchPageDirectory(Akari->Task->current->_pageDir);
-	if (Akari->Task->current->_userMode) {
+	if (Akari->Task->current->_cpl > 0) {
 		Akari->Descriptor->_gdt->SetTSSStack(Akari->Task->current->_utks + sizeof(struct modeswitch_registers));
 		Akari->Descriptor->_gdt->SetTSSIOMap(Akari->Task->current->_iomap);
 	}
 
-	r = (struct modeswitch_registers *)((!Akari->Task->current->_userMode) ? Akari->Task->current->_ks : Akari->Task->current->_utks);
+	r = (struct modeswitch_registers *)((!Akari->Task->current->_cpl > 0) ? Akari->Task->current->_ks : Akari->Task->current->_utks);
 
 	Akari->Console->PutString(".\nTo: ");
-	ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_userMode);
+	ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_cpl);
 	Akari->Console->PutString(".\n");
 
 	return (void *)r;

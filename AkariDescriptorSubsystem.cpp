@@ -7,12 +7,12 @@ AkariDescriptorSubsystem::AkariDescriptorSubsystem(): _gdt(0), _idt(0), _irqt(0)
 	_gdt = new GDT(10);
 	_gdt->SetGate(1, 0, 0xFFFFFFFF, 0, true);	// code (CS)
 	_gdt->SetGate(2, 0, 0xFFFFFFFF, 0, false);	// data (SS)
-	_gdt->SetGate(3, 0, 0xFFFFFFFF, 3, true);	// driver code (CS)
-	_gdt->SetGate(4, 0, 0xFFFFFFFF, 3, false);	// driver data (SS)
-	//_gdt->ClearGate(5);	// unused
-	//_gdt->ClearGate(6);	// unused
-	//_gdt->SetGate(7, 0, 0xFFFFFFFF, 3, true);	// user code (CS)
-	//_gdt->SetGate(8, 0, 0xFFFFFFFF, 3, false);	// user data (SS)
+	_gdt->SetGate(3, 0, 0xFFFFFFFF, 1, true);	// driver code (CS)
+	_gdt->SetGate(4, 0, 0xFFFFFFFF, 1, false);	// driver data (SS)
+	_gdt->ClearGate(5);	// unused (code)
+	_gdt->ClearGate(6);	// unused (data)
+	_gdt->SetGate(7, 0, 0xFFFFFFFF, 3, true);	// user code (CS)
+	_gdt->SetGate(8, 0, 0xFFFFFFFF, 3, false);	// user data (SS)
 	_gdt->WriteTSS(9, 0x10, 0x0);		// empty ESP in TSS for now.. changed later in execution
 	_gdt->Flush();
 	_gdt->FlushTSS(9);

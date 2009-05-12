@@ -17,12 +17,12 @@ class AkariTaskSubsystem : public AkariSubsystem {
 		const char *VersionManufacturer() const;
 		const char *VersionProduct() const;
 
-		static void SwitchToUsermode(u8 iopl);
+		static void SwitchRing(u8 cpl, u8 iopl);
 
 		class Task {
 			public:
-				static Task *BootstrapInitialTask(bool userMode, AkariMemorySubsystem::PageDirectory *pageDirBase);
-				static Task *CreateTask(u32 entry, bool userMode, bool interruptFlag, u8 iopl, AkariMemorySubsystem::PageDirectory *pageDirBase);
+				static Task *BootstrapInitialTask(u8 cpl, AkariMemorySubsystem::PageDirectory *pageDirBase);
+				static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, AkariMemorySubsystem::PageDirectory *pageDirBase);
 
 				bool GetIOMap(u8 port) const;
 				void SetIOMap(u8 port, bool enabled);
@@ -30,10 +30,10 @@ class AkariTaskSubsystem : public AkariSubsystem {
 				Task *next;
 
 			// protected:
-				Task(bool userMode);
+				Task(u8 cpl);
 
 				u32 _id;
-				bool _userMode;
+				u8 _cpl;
 
 				AkariMemorySubsystem::PageDirectory *_pageDir;
 
