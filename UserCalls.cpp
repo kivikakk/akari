@@ -17,11 +17,9 @@ namespace User {
 		Akari->Task->current->irqWait = irq;
 		Akari->Console->PutString("[<] ");
 
-		// irq0();	// do what the timer does. seems a fairly cheap (as in hackish) way to do things, though. スタックとか大丈夫かな
-		// the above blatently doesn't work. hm.
-
-		// this below code DOES, but isn't it the dirtiest hack ever?! also slow, since we don't return immediately.
-		__asm__ __volatile__("sti; hlt");
+		// causes the timer event to fire now. could this screw up our tick counting? hm. :-(
+		__asm__ __volatile__("int $0x20");
+		// tick counting is dumb anyway.
 
 		Akari->Console->PutString("[>] ");
 		Akari->Task->current->irqWait = 0;
