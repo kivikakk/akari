@@ -6,6 +6,7 @@
 namespace User {
 	namespace Task {
 		u32 GetProcessId();
+		void IrqWait(u32 irq);
 	}
 }
 

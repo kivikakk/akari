@@ -47,4 +47,5 @@
 DEFN_SYSCALL1(puts, 0, const char *);
 DEFN_SYSCALL2(putl, 1, u32, u8);
 DEFN_SYSCALL0(getProcessId, 2);
+DEFN_SYSCALL1(irqWait, 3, u32);
 

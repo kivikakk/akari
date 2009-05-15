@@ -85,8 +85,15 @@ static void AkariEntryCont() {
 }
 
 void KeyboardProcess() {
+	// clear kb buffer first... hm.
+	u8 scancode = AkariInB(0x60);
 	while (1) {
-		
+
+		syscall_puts("Kb(<) ");
+		syscall_irqWait(1);
+		syscall_puts("Kb(>) ");
+
+		scancode = AkariInB(0x60);
 	}
 }
 
@@ -95,9 +102,9 @@ void SubProcess() {
 	while (1) {
 		// Something computationally differing so that interrupting at regular intervals
 		// won't be at the same instruction.
-		syscall_puts("This is process #0x");
-		syscall_putl(syscall_getProcessId(), 16);
-		syscall_puts("reporting.\n");
+
+		// syscall_putl(syscall_getProcessId(), 16);
+		// syscall_puts(" ");
 
 		++a, --b;
 		if (a % 4 == 1) {

@@ -1,4 +1,5 @@
 #include <AkariDescriptorSubsystem.hpp>
+#include <AkariTaskSubsystem.hpp>
 #include <Akari.hpp>
 #include <interrupts.hpp>
 #include <debug.hpp>
@@ -189,5 +190,20 @@ void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
 void AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct callback_registers *regs) {
 	if (_routines[irq])
 		_routines[irq](regs);
+
+	// Check if there are any irqWait tasks.
+	AkariTaskSubsystem::Task *iter = Akari->Task->start;
+	while (iter) {
+		if (iter->irqWait == irq) {
+			// Looks like it's their turn. We append the current `iter` to the linked
+			// list made of ATS#priorityStart and the Task's own priorityNext's.
+			AkariTaskSubsystem::Task **append = &Akari->Task->priorityStart;
+			while (*append)
+				append = &(*append)->priorityNext;
+			*append = iter;
+			iter->priorityNext = 0;
+		}
+		iter = iter->next;
+	}
 }
 

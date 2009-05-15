@@ -1,7 +1,7 @@
 #include <AkariTaskSubsystem.hpp>
 #include <Akari.hpp>
 
-AkariTaskSubsystem::AkariTaskSubsystem(): current(0)
+AkariTaskSubsystem::AkariTaskSubsystem(): start(0), current(0), priorityStart(0)
 { }
 
 u8 AkariTaskSubsystem::VersionMajor() const { return 0; }
@@ -59,6 +59,10 @@ void AkariTaskSubsystem::SwitchRing(u8 cpl, u8 iopl) {
 	// note this works with our current stack... hm.
 }
 
+static inline AkariTaskSubsystem::Task *_NextTask(AkariTaskSubsystem::Task *t) {
+	return t->next ? t->next : Akari->Task->start;
+}
+
 void *AkariTaskSubsystem::CycleTask(void *r) {
 	if (!current->_cpl > 0) {
 		// update the tip of stack pointer so we can restore later
@@ -68,7 +72,32 @@ void *AkariTaskSubsystem::CycleTask(void *r) {
 		current->_utks = (u32)r;
 	}
 	
-	current = current->next ? current->next : start;
+	if (priorityStart) {
+		// We have something priority. We put it in without regard for irqWait,
+		// since it's probably an IRQ being fired that put it there ...
+
+		current = priorityStart;
+		priorityStart = current->priorityNext;
+		current->priorityNext = 0;
+	} else {
+		current = _NextTask(current);
+
+		// if the new current task is irqWait, loop until we find one which isn't.
+		// be sure not to be caught in an infinite loop by seeing if we get back to
+		// the same one again. (i.e. every task is irqWait)
+		// it intentionally will be able to loop back to the task we switched from. (though
+		// of course, it won't if it's irqWait ...)
+
+		if (current->irqWait) {
+			Task *newCurrent = current;
+			while (newCurrent->irqWait) {
+				Task *next = _NextTask(newCurrent);
+				ASSERT(next != current);
+				newCurrent = next;
+			}
+			current = newCurrent;
+		}
+	}
 
 	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
 	Akari->Memory->SwitchPageDirectory(current->_pageDir);
@@ -140,7 +169,7 @@ void AkariTaskSubsystem::Task::SetIOMap(u8 port, bool enabled) {
 		_iomap[port / 8] |= (1 << (port % 8));
 }
 
-AkariTaskSubsystem::Task::Task(u8 cpl): next(0), _id(0), _cpl(cpl), _pageDir(0), _ks(0), _utks(0) {
+AkariTaskSubsystem::Task::Task(u8 cpl): next(0), priorityNext(0), irqWait(0), _id(0), _cpl(cpl), _pageDir(0), _ks(0), _utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	_id = ++lastAssignedId;
 
