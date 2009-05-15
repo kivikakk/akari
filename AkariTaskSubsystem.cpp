@@ -79,6 +79,7 @@ void *AkariTaskSubsystem::CycleTask(void *r) {
 		current = priorityStart;
 		priorityStart = current->priorityNext;
 		current->priorityNext = 0;
+		Akari->Console->PutString("negotiate\n");
 	} else {
 		current = _NextTask(current);
 

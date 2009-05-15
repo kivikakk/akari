@@ -197,11 +197,15 @@ void AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct callback_registe
 		if (iter->irqWait == irq) {
 			// Looks like it's their turn. We append the current `iter` to the linked
 			// list made of ATS#priorityStart and the Task's own priorityNext's.
+			Akari->Console->PutString("made it thus far\n");
+
 			AkariTaskSubsystem::Task **append = &Akari->Task->priorityStart;
 			while (*append)
 				append = &(*append)->priorityNext;
 			*append = iter;
 			iter->priorityNext = 0;
+
+			Akari->Console->PutString("all the way here\n");
 		}
 		iter = iter->next;
 	}
