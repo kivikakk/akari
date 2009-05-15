@@ -21,8 +21,6 @@ void AkariSyscallSubsystem::AddSyscall(u16 num, void *fn) {
 }
 
 void AkariSyscallSubsystem::_handler(struct callback_registers *regs) {
-	Akari->Console->PutString("The floor?\n");
-
 	if (regs->eax >= AKARI_SYSCALL_MAXCALLS)
 		AkariPanic("System call greater than maximum requested. TODO: kill requesting process.");
 	if (!Akari->Syscall->_syscalls[regs->eax])
@@ -47,8 +45,5 @@ void AkariSyscallSubsystem::_handler(struct callback_registers *regs) {
             : "r" (regs->edi), "r" (regs->esi), "r" (regs->edx), "r" (regs->ecx), "r" (regs->ebx), "r" (call)
             : "%ebx");
 
-	Akari->Console->PutString("returning this value: ");
-	Akari->Console->PutInt(ret, 16);
-	Akari->Console->PutString("\n");
-    regs->eax = ret; // ??
+    regs->eax = ret;
 }

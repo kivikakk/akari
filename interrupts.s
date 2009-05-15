@@ -207,7 +207,6 @@ _isr1f:	cli
 	jmp isr_common
 
 _isr80:	cli
-	cli	#;; ???
 	push $0x00
 	push $0x80
 	jmp isr_common
@@ -294,7 +293,6 @@ _irqf:	cli
 	push $0x2f
 	jmp irq_common
 
-#; TODO: REDO this!
 .type isr_common, @function
 isr_common:
 	pusha

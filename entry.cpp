@@ -59,12 +59,10 @@ static void AkariEntryCont() {
 	Akari->Descriptor->_gdt->SetTSSIOMap(base->_iomap);
 
 	// another usermode task
-	/*
 	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::CreateTask(
 		(u32)&SubProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
 	other->SetIOMap(0x60, true);
 	Akari->Task->current->next = other;
-	*/
 	
 /*
 	// kernel-mode task
@@ -99,9 +97,9 @@ void SubProcess() {
 	while (1) {
 		// Something computationally differing so that interrupting at regular intervals
 		// won't be at the same instruction.
-		//syscall_puts("This is process #0x");
+		syscall_puts("This is process #0x");
 		syscall_putl(syscall_getProcessId(), 16);
-		//syscall_puts("reporting.\n");
+		syscall_puts("reporting.\n");
 
 		++a, --b;
 		SubProcessA(1);
