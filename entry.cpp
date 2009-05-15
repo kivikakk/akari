@@ -1,6 +1,7 @@
 #include <entry.hpp>
 #include <debug.hpp>
 #include <Akari.hpp>
+#include <UserGates.hpp>
 
 #define UKERNEL_STACK_POS	0xE0000000
 #define UKERNEL_STACK_SIZE	0x2000
@@ -26,6 +27,7 @@ void AkariEntry() {
 	Akari->Descriptor = new AkariDescriptorSubsystem();
 	Akari->Timer = new AkariTimerSubsystem();
 	Akari->Task = new AkariTaskSubsystem();
+	Akari->Syscall = new AkariSyscallSubsystem();
 
 	Akari->Timer->SetTimer(100);
 	Akari->Memory->SetPaging(true);
@@ -56,20 +58,25 @@ static void AkariEntryCont() {
 	Akari->Descriptor->_gdt->SetTSSStack(base->_utks + sizeof(struct modeswitch_registers));
 	Akari->Descriptor->_gdt->SetTSSIOMap(base->_iomap);
 
+	// another usermode task
 	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::CreateTask(
 		(u32)&SubProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
 	other->SetIOMap(0x60, true);
 	Akari->Task->current->next = other;
 	
+/*
+	// kernel-mode task
 	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, 0, true, 0, Akari->Memory->_kernelDirectory);
 	third->SetIOMap(0x60, true);
 	other->next = third;
 
+	// ring 1 task
 	AkariTaskSubsystem::Task *fourth = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, 1, true, 0, Akari->Memory->_kernelDirectory);
 	fourth->SetIOMap(0x60, true);
 	third->next = fourth;
+*/
 
 	Akari->Console->PutString("&SubProcess: &0x");
 	Akari->Console->PutInt((u32)&SubProcess, 16);
@@ -90,9 +97,7 @@ void SubProcess() {
 	while (1) {
 		// Something computationally differing so that interrupting at regular intervals
 		// won't be at the same instruction.
-		unsigned char r;
-		asm volatile("inb %1, %0" : "=a" (r) : "dN" (0x60));
-		//*((char *)0x9) = 4;
+		syscall_puts("OHAI! This is a call to kernel.\n");
 
 		++a, --b;
 		SubProcessA(1);
@@ -137,8 +142,8 @@ static void ReportTaskVitals(struct modeswitch_registers *r, int id, u8 cpl) {
 
 // Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
-	Akari->Console->PutString("\nFrom: ");
-	ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_cpl);
+	// Akari->Console->PutString("\nFrom: ");
+	// ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_cpl);
 
 	if (!Akari->Task->current->_cpl > 0) {
 		// update the tip of stack pointer so we can restore later
@@ -160,9 +165,9 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 
 	r = (struct modeswitch_registers *)((!Akari->Task->current->_cpl > 0) ? Akari->Task->current->_ks : Akari->Task->current->_utks);
 
-	Akari->Console->PutString(".\nTo: ");
-	ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_cpl);
-	Akari->Console->PutString(".\n");
+	// Akari->Console->PutString(".\nTo: ");
+	// ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_cpl);
+	// Akari->Console->PutString(".\n");
 
 	return (void *)r;
 }
