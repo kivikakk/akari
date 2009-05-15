@@ -11,7 +11,7 @@
 static void AkariEntryCont();
 void SubProcess();
 
-void KeyboardProcess();
+void KeyboardProcess();	// TmpKb
 
 multiboot_info_t *AkariMultiboot;
 
@@ -54,7 +54,6 @@ static void AkariEntryCont() {
 
 	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(
 		3, Akari->Memory->_kernelDirectory);
-	base->SetIOMap(0x60, true);
 	Akari->Task->start = Akari->Task->current = base;
 
 	Akari->Descriptor->_gdt->SetTSSStack(base->_utks + sizeof(struct modeswitch_registers));
@@ -64,6 +63,7 @@ static void AkariEntryCont() {
 	AkariTaskSubsystem::Task *kbdriver = AkariTaskSubsystem::Task::CreateTask(
 		(u32)&KeyboardProcess, 1, true, 0, Akari->Memory->_kernelDirectory);
 	kbdriver->SetIOMap(0x60, true);
+	kbdriver->SetIOMap(0x64, true);
 	Akari->Task->current->next = kbdriver;
 
 	// another usermode task
@@ -82,19 +82,6 @@ static void AkariEntryCont() {
 	Akari->Task->SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 
 	SubProcess();
-}
-
-void KeyboardProcess() {
-	// clear kb buffer first... hm.
-	u8 scancode = AkariInB(0x60);
-	while (1) {
-
-		syscall_puts("Kb(<) ");
-		syscall_irqWait(1);
-		syscall_puts("Kb(>) ");
-
-		scancode = AkariInB(0x60);
-	}
 }
 
 void SubProcess() { 

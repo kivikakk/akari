@@ -44,8 +44,10 @@
 
 // Here we define the user-mode functions, matching them to the number in the _syscalls array (see AkariSyscallSubsystem).
 
-DEFN_SYSCALL1(puts, 0, const char *);
-DEFN_SYSCALL2(putl, 1, u32, u8);
-DEFN_SYSCALL0(getProcessId, 2);
-DEFN_SYSCALL1(irqWait, 3, u32);
+DEFN_SYSCALL1(putc, 0, char);
+DEFN_SYSCALL1(puts, 1, const char *);
+DEFN_SYSCALL2(putl, 2, u32, u8);
+DEFN_SYSCALL0(getProcessId, 3);
+DEFN_SYSCALL1(irqWait, 4, u32);
+DEFN_SYSCALL1(panic, 5, const char *);
 

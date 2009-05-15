@@ -5,10 +5,12 @@
 AkariSyscallSubsystem::AkariSyscallSubsystem(): _syscalls_assigned(0) {
 	Akari->Descriptor->_idt->InstallHandler(0x80, &AkariSyscallSubsystem::_handler);
 
-	AddSyscall(0, (void *)&User::Puts);
-	AddSyscall(1, (void *)&User::Putl);
-	AddSyscall(2, (void *)&User::GetProcessId);
-	AddSyscall(3, (void *)&User::IrqWait);
+	AddSyscall(0, (void *)&User::Putc);
+	AddSyscall(1, (void *)&User::Puts);
+	AddSyscall(2, (void *)&User::Putl);
+	AddSyscall(3, (void *)&User::GetProcessId);
+	AddSyscall(4, (void *)&User::IrqWait);
+	AddSyscall(5, (void *)&User::Panic);
 }
 
 u8 AkariSyscallSubsystem::VersionMajor() const { return 0; }

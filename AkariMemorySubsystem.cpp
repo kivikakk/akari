@@ -41,8 +41,8 @@ void AkariMemorySubsystem::SetPlacementMode(u32 addr) {
  * @param mode Whether to turn paging on or off.
  */
 
-#define KERNEL_HEAP_PROMISC true
 // temp debug flag only, set to true if you want the kheap to be writeable from usermode!
+#define KERNEL_HEAP_PROMISC true
 
 void AkariMemorySubsystem::SetPaging(bool mode) {
 	ASSERT(mode);		// TODO support turning paging off [if ever required?! who knows! :)]
