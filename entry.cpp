@@ -51,26 +51,25 @@ static void AkariEntryCont() {
 	// usermode?, EFLAGS.IF, page_dir
 	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(3, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
-
 	base->SetIOMap(0x60, true);
 
 	Akari->Descriptor->_gdt->SetTSSStack(base->_utks + sizeof(struct modeswitch_registers));
 	Akari->Descriptor->_gdt->SetTSSIOMap(base->_iomap);
 
 	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, 0, true, 0, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
+	other->SetIOMap(0x60, true);
 	Akari->Task->current->next = other;
-
-	/*
-	TRY enabling these: it doesn't work?!
+	
 	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, 3, true, 3, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
+	third->SetIOMap(0x60, true);
 	other->next = third;
 
 	AkariTaskSubsystem::Task *fourth = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, 3, true, 3, Akari->Memory->_kernelDirectory);
+		(u32)&SubProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
+	fourth->SetIOMap(0x60, true);
 	third->next = fourth;
-	*/
 
 	Akari->Console->PutString("&SubProcess: &0x");
 	Akari->Console->PutInt((u32)&SubProcess, 16);
