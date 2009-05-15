@@ -19,6 +19,8 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 		static void SwitchRing(u8 cpl, u8 iopl);
 
+		void *CycleTask(void *r);
+
 		class Task {
 			public:
 				static Task *BootstrapInitialTask(u8 cpl, AkariMemorySubsystem::PageDirectory *pageDirBase);

@@ -59,6 +59,27 @@ void AkariTaskSubsystem::SwitchRing(u8 cpl, u8 iopl) {
 	// note this works with our current stack... hm.
 }
 
+void *AkariTaskSubsystem::CycleTask(void *r) {
+	if (!current->_cpl > 0) {
+		// update the tip of stack pointer so we can restore later
+		current->_ks = (u32)r;
+	} else {
+		// update utks pointer
+		current->_utks = (u32)r;
+	}
+	
+	current = current->next ? current->next : start;
+
+	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
+	Akari->Memory->SwitchPageDirectory(current->_pageDir);
+	if (current->_cpl > 0) {
+		Akari->Descriptor->_gdt->SetTSSStack(current->_utks + sizeof(struct modeswitch_registers));
+		Akari->Descriptor->_gdt->SetTSSIOMap(current->_iomap);
+	}
+
+	return (void *)((!current->_cpl > 0) ? current->_ks : current->_utks);
+}
+
 
 AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(u8 cpl, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	Task *nt = new Task(cpl);
