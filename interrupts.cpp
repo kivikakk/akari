@@ -25,27 +25,27 @@ static const char *isr_messages[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-void isr_handler(struct callback_registers r) {
-	ASSERT(r.int_no < 0x20 || r.int_no >= 0x30);
+void isr_handler(struct callback_registers *r) {
+	ASSERT(r->int_no < 0x20 || r->int_no >= 0x30);
 	// I guess this is right? What other IDTs are there? Hm.
 
-	if (!Akari->Descriptor->_idt->CallHandler(r.int_no, r)) {
+	if (!Akari->Descriptor->_idt->CallHandler(r->int_no, r)) {
 		// nothing to call!
 		Akari->Console->PutChar('\n');
-		Akari->Console->PutString((r.int_no < 32 && isr_messages[r.int_no]) ? isr_messages[r.int_no] : "[Intel reserved]");
+		Akari->Console->PutString((r->int_no < 32 && isr_messages[r->int_no]) ? isr_messages[r->int_no] : "[Intel reserved]");
 		Akari->Console->PutString(" exception occured!\n");
 
 		Akari->Console->PutString("EIP: ");
-		Akari->Console->PutInt(r.eip, 16);
+		Akari->Console->PutInt(r->eip, 16);
 		Akari->Console->PutString(", ESP: ");
-		Akari->Console->PutInt(r.esp, 16);
+		Akari->Console->PutInt(r->esp, 16);
 		Akari->Console->PutString(", EBP: ");
-		Akari->Console->PutInt(r.ebp, 16);
+		Akari->Console->PutInt(r->ebp, 16);
 		Akari->Console->PutString(", CS: ");
-		Akari->Console->PutInt(r.cs, 16);
+		Akari->Console->PutInt(r->cs, 16);
 		Akari->Console->PutString(", EFLAGS: ");
-		Akari->Console->PutInt(r.eflags, 16);
-		Akari->Console->PutString(", user ESP (may be garbage)//: ");
+		Akari->Console->PutInt(r->eflags, 16);
+		Akari->Console->PutString(", user ESP (may be garbage): ");
 		Akari->Console->PutInt(((struct modeswitch_registers *)&r)->useresp, 16);
 		Akari->Console->PutString("\n");
 

@@ -131,15 +131,15 @@ void AkariMemorySubsystem::Free(void *p) {
 	AkariPanic("AkariMemorySubsystem: tried to Free() in placement mode");
 }
 
-void AkariMemorySubsystem::PageFault(struct callback_registers r) {
+void AkariMemorySubsystem::PageFault(struct callback_registers *r) {
 	u32 faultingAddress;
 	__asm__ __volatile__("mov %%cr2, %0" : "=r" (faultingAddress));
 
-	bool notPresent =	!(r.err_code & 0x1);
-	bool writeOp = 		r.err_code & 0x2;
-	bool userMode = 	r.err_code & 0x4;
-	bool reserved = 	r.err_code & 0x8;
-	bool insFetch = 	r.err_code & 0x10;
+	bool notPresent =	!(r->err_code & 0x1);
+	bool writeOp = 		r->err_code & 0x2;
+	bool userMode = 	r->err_code & 0x4;
+	bool reserved = 	r->err_code & 0x8;
+	bool insFetch = 	r->err_code & 0x10;
 
 	Akari->Console->PutString("\nPage fault!\n");
 	if (notPresent) Akari->Console->PutString(" * Page wasn't present.\n");

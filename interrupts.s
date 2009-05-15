@@ -302,6 +302,9 @@ isr_common:
 	mov %ds, %ax
 	push %eax
 
+	mov %esp, %eax		#; stack from here *up*: ds, `pusha', task switch
+	push %eax			#; ptr to said stack becomes parameter for _irq_handler
+
 	mov $0x10, %ax		#; kernel data segment descriptor
 	mov %ax, %ds
 	mov %ax, %es
@@ -309,6 +312,8 @@ isr_common:
 	mov %ax, %gs
 
 	call _isr_handler
+
+	add $4, %esp
 
 	pop %eax
 	mov %ax, %ds

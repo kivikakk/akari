@@ -1,11 +1,14 @@
 #include <AkariSyscallSubsystem.hpp>
 #include <Akari.hpp>
 #include <UserIO.hpp>
+#include <UserTask.hpp>
 
 AkariSyscallSubsystem::AkariSyscallSubsystem(): _syscalls_assigned(0) {
 	Akari->Descriptor->_idt->InstallHandler(0x80, &AkariSyscallSubsystem::_handler);
 
 	AddSyscall(0, (void *)&User::IO::Puts);
+	AddSyscall(1, (void *)&User::IO::Putl);
+	AddSyscall(2, (void *)&User::Task::GetProcessId);
 }
 
 u8 AkariSyscallSubsystem::VersionMajor() const { return 0; }
@@ -17,12 +20,15 @@ void AkariSyscallSubsystem::AddSyscall(u16 num, void *fn) {
 	_syscalls[num] = fn;
 }
 
-void AkariSyscallSubsystem::_handler(struct callback_registers regs) {
-	if (regs.eax >= AKARI_SYSCALL_MAXCALLS || !Akari->Syscall->_syscalls[regs.eax]) {
-		return;
-	}
+void AkariSyscallSubsystem::_handler(struct callback_registers *regs) {
+	Akari->Console->PutString("The floor?\n");
 
-	void *call = Akari->Syscall->_syscalls[regs.eax];
+	if (regs->eax >= AKARI_SYSCALL_MAXCALLS)
+		AkariPanic("System call greater than maximum requested. TODO: kill requesting process.");
+	if (!Akari->Syscall->_syscalls[regs->eax])
+		AkariPanic("Non-existing system call requested.");
+
+	void *call = Akari->Syscall->_syscalls[regs->eax];
     int ret;
     asm volatile("  \
         push %1; \
@@ -38,8 +44,11 @@ void AkariSyscallSubsystem::_handler(struct callback_registers regs) {
         pop %%ebx; \
         "
             : "=a" (ret)
-            : "r" (regs.edi), "r" (regs.esi), "r" (regs.edx), "r" (regs.ecx), "r" (regs.ebx), "r" (call)
+            : "r" (regs->edi), "r" (regs->esi), "r" (regs->edx), "r" (regs->ecx), "r" (regs->ebx), "r" (call)
             : "%ebx");
 
-    regs.eax = ret; // ??
+	Akari->Console->PutString("returning this value: ");
+	Akari->Console->PutInt(ret, 16);
+	Akari->Console->PutString("\n");
+    regs->eax = ret; // ??
 }

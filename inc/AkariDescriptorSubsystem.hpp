@@ -86,8 +86,8 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 				void SetGate(u8, void (*)(), u16, u8);
 				void InstallHandler(u8, isr_handler_func_t);
 				void ClearHandler(u8);
-				bool CallHandler(u8, struct callback_registers);
-
+				bool CallHandler(u8, struct callback_registers *);
+ 
 			protected:
 				union Entry {
 					struct {
