@@ -50,10 +50,8 @@ void AkariConsoleSubsystem::PutStringN(const char *s, u32 n) {
 
 void AkariConsoleSubsystem::PutInt(u32 n, u8 base) {
 	ASSERT(base >= 2 && base <= 36);
-	
 	u32 index = 1, digits = 1;
 
-	// TODO include logic so we don't go 'one over' and need to divide later
 	while (n / index >= base)
 		index *= base, ++digits;
 

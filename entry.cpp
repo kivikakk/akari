@@ -64,7 +64,6 @@ static void AkariEntryCont() {
 	other->SetIOMap(0x60, true);
 	Akari->Task->current->next = other;
 	
-/*
 	// kernel-mode task
 	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::CreateTask(
 		(u32)&SubProcess, 0, true, 0, Akari->Memory->_kernelDirectory);
@@ -76,11 +75,6 @@ static void AkariEntryCont() {
 		(u32)&SubProcess, 1, true, 0, Akari->Memory->_kernelDirectory);
 	fourth->SetIOMap(0x60, true);
 	third->next = fourth;
-*/
-
-	Akari->Console->PutString("&SubProcess: &0x");
-	Akari->Console->PutInt((u32)&SubProcess, 16);
-	Akari->Console->PutString(".. doing sti.\n");
 
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->Memory->SwitchPageDirectory(base->_pageDir);
@@ -102,51 +96,16 @@ void SubProcess() {
 		syscall_puts("reporting.\n");
 
 		++a, --b;
-		SubProcessA(1);
 		if (a % 4 == 1) {
 			a += 3;
 			if (b % 2 == 1)
 				--b;
-		} else if (b % 7 == 2) {
-			SubProcessA(4);
 		}
 	}
 }
 
-void SubProcessA(s32 n) {
-	while (--n > 0) {
-		__asm__ __volatile__("nop");
-	}
-}
-
-static void ReportTaskVitals(struct modeswitch_registers *r, int id, u8 cpl) {
-	Akari->Console->PutString("0x");
-	Akari->Console->PutInt(r->callback.eip, 16);
-	Akari->Console->PutString(", #");
-	Akari->Console->PutInt(id, 16);
-	Akari->Console->PutString(", EBP 0x");
-	Akari->Console->PutInt(r->callback.ebp, 16);
-	Akari->Console->PutString(", ESP 0x");
-	Akari->Console->PutInt(r->callback.esp, 16);
-	Akari->Console->PutString(", CS 0x");
-	Akari->Console->PutInt(r->callback.cs, 16);
-	Akari->Console->PutString(", EFLAGS 0x");
-	Akari->Console->PutInt(r->callback.eflags, 16);
-	if (cpl > 0) {
-		Akari->Console->PutString(", userESP 0x");
-		Akari->Console->PutInt(r->useresp, 16);
-		Akari->Console->PutString(", SS: 0x");
-		Akari->Console->PutInt(r->ss, 16);
-	}
-	Akari->Console->PutString(", r at: 0x");
-	Akari->Console->PutInt((u32)r, 16);
-}
-
 // Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
-	// Akari->Console->PutString("\nFrom: ");
-	// ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_cpl);
-
 	if (!Akari->Task->current->_cpl > 0) {
 		// update the tip of stack pointer so we can restore later
 		Akari->Task->current->_ks = (u32)r;
@@ -166,10 +125,6 @@ void *AkariMicrokernel(struct modeswitch_registers *r) {
 	}
 
 	r = (struct modeswitch_registers *)((!Akari->Task->current->_cpl > 0) ? Akari->Task->current->_ks : Akari->Task->current->_utks);
-
-	// Akari->Console->PutString(".\nTo: ");
-	// ReportTaskVitals(r, Akari->Task->current->_id, Akari->Task->current->_cpl);
-	// Akari->Console->PutString(".\n");
 
 	return (void *)r;
 }
