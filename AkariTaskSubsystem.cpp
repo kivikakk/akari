@@ -56,7 +56,6 @@ void AkariTaskSubsystem::SwitchRing(u8 cpl, u8 iopl) {
 		iret; \
 	1:" : : "a" (0x10 + (0x11 * cpl)), "c" (iopl) : "%ebx");
 
-	// EIP ($1f), CS (1b), EFLAGS (eax), ESP (eax from before), SS (23)
 	// note this works with our current stack... hm.
 }
 
@@ -87,7 +86,7 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(u32 entry, u8 cpl
 		regs = (struct modeswitch_registers *)(nt->_utks);
 
 		regs->useresp = nt->_ks;
-		regs->ss = 0x23;		// dsと同じ.. ssがTSSにセットされ、dsは（後で）irq_timer_multitaskに手動によるセットされる
+		regs->ss = 0x10 + (cpl * 0x11);		// dsと同じ.. ssがTSSにセットされ、dsは（後で）irq_timer_multitaskに手動によるセットされる
 	} else {
 		nt->_ks -= sizeof(struct callback_registers);
 		regs = (struct modeswitch_registers *)(nt->_ks);
