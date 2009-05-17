@@ -311,7 +311,7 @@ isr_common:
 
 	call _isr_handler
 
-	mov %eax, %esp
+	add $4, %esp
 
 	pop %eax
 	mov %ax, %ds
@@ -332,6 +332,7 @@ irq_common:
 	push %eax
 
 	mov %esp, %eax		#; stack from here *up*: ds, `pusha', task switch
+	mov $0xE0000000, %esp
 	push %eax			#; ptr to said stack becomes parameter for _irq_handler
 
 	mov $0x10, %ax
@@ -363,7 +364,7 @@ irq_timer_multitask:
 	push %eax
 
 	mov %esp, %eax
-	mov $0xE0000000, %esp
+	mov $0xE0000000, %esp		#; XXX <- does this belong? As long as IRQs don't happen in the µkernel!
 	push %eax
 
 	mov $0x10, %ax

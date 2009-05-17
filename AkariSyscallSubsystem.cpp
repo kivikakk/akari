@@ -23,7 +23,7 @@ void AkariSyscallSubsystem::AddSyscall(u16 num, void *fn) {
 	_syscalls[num] = fn;
 }
 
-void *AkariSyscallSubsystem::_handler(struct modeswitch_registers *regs) {
+void AkariSyscallSubsystem::_handler(struct modeswitch_registers *regs) {
 	if (regs->callback.eax >= AKARI_SYSCALL_MAXCALLS)
 		AkariPanic("System call greater than maximum requested. TODO: kill requesting process.");
 	if (!Akari->Syscall->_syscalls[regs->callback.eax])
@@ -49,6 +49,4 @@ void *AkariSyscallSubsystem::_handler(struct modeswitch_registers *regs) {
             : "%ebx");
 
     regs->callback.eax = ret;
-
-	return regs;
 }

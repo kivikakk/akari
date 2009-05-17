@@ -138,11 +138,12 @@ void AkariDescriptorSubsystem::IDT::ClearHandler(u8 isr) {
 	InstallHandler(isr, 0);
 }
 
-void *AkariDescriptorSubsystem::IDT::CallHandler(u8 isr, struct modeswitch_registers *regs) {
+bool AkariDescriptorSubsystem::IDT::CallHandler(u8 isr, struct modeswitch_registers *regs) {
 	if (_routines[isr]) {
-		return _routines[isr](regs);
+		_routines[isr](regs);
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 void AkariDescriptorSubsystem::IDT::SetGate(u8 idt, void (*callback)(), u16 isrSegment, u8 flags) {
