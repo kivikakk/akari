@@ -22,13 +22,13 @@ void AkariSyscallSubsystem::AddSyscall(u16 num, void *fn) {
 	_syscalls[num] = fn;
 }
 
-void AkariSyscallSubsystem::_handler(struct callback_registers *regs) {
-	if (regs->eax >= AKARI_SYSCALL_MAXCALLS)
+void *AkariSyscallSubsystem::_handler(struct modeswitch_registers *regs) {
+	if (regs->callback.eax >= AKARI_SYSCALL_MAXCALLS)
 		AkariPanic("System call greater than maximum requested. TODO: kill requesting process.");
-	if (!Akari->Syscall->_syscalls[regs->eax])
+	if (!Akari->Syscall->_syscalls[regs->callback.eax])
 		AkariPanic("Non-existing system call requested.");
 
-	void *call = Akari->Syscall->_syscalls[regs->eax];
+	void *call = Akari->Syscall->_syscalls[regs->callback.eax];
     int ret;
     asm volatile("  \
         push %1; \
@@ -44,8 +44,10 @@ void AkariSyscallSubsystem::_handler(struct callback_registers *regs) {
         pop %%ebx; \
         "
             : "=a" (ret)
-            : "r" (regs->edi), "r" (regs->esi), "r" (regs->edx), "r" (regs->ecx), "r" (regs->ebx), "r" (call)
+            : "r" (regs->callback.edi), "r" (regs->callback.esi), "r" (regs->callback.edx), "r" (regs->callback.ecx), "r" (regs->callback.ebx), "r" (call)
             : "%ebx");
 
-    regs->eax = ret;
+    regs->callback.eax = ret;
+
+	return regs;
 }

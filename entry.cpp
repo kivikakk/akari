@@ -90,8 +90,8 @@ void SubProcess() {
 		// Something computationally differing so that interrupting at regular intervals
 		// won't be at the same instruction.
 
-		// syscall_putl(syscall_getProcessId(), 16);
-		// syscall_puts(" ");
+		syscall_putl(syscall_getProcessId(), 16);
+		syscall_puts(" ");
 
 		++a, --b;
 		if (a % 4 == 1) {

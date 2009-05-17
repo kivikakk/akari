@@ -311,7 +311,7 @@ isr_common:
 
 	call _isr_handler
 
-	add $4, %esp
+	mov %eax, %esp
 
 	pop %eax
 	mov %ax, %ds
@@ -342,7 +342,7 @@ irq_common:
 
 	call _irq_handler
 
-	add $4, %esp		#; clean up pointer
+	mov %eax, %esp
 
 	pop %eax
 	mov %ax, %ds		#; restore from stack, which _irq_handler may change

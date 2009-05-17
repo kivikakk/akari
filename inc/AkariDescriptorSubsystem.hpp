@@ -86,7 +86,7 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 				void SetGate(u8, void (*)(), u16, u8);
 				void InstallHandler(u8, isr_handler_func_t);
 				void ClearHandler(u8);
-				bool CallHandler(u8, struct callback_registers *);
+				void *CallHandler(u8, struct modeswitch_registers *);
  
 			protected:
 				union Entry {
@@ -116,7 +116,7 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 
 				void InstallHandler(u8, irq_handler_func_t);
 				void ClearHandler(u8);
-				void CallHandler(u8, struct callback_registers *);
+				void *CallHandler(u8, struct modeswitch_registers *);
 
 			protected:
 				irq_handler_func_t _routines[16];

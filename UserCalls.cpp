@@ -22,13 +22,16 @@ namespace User {
 
 		// causes the timer event to fire now. could this screw up our tick counting? hm. :-(
 		__asm__ __volatile__("int $0x20");
-
 		// tick counting is dumb anyway.
+
 		Akari->Task->current->irqWait = 0;
 	}
 
 	void Panic(const char *s) {
 		// TODO: check permission. should be ring 1 or 0, but at least definitely not 3.
+		// even ring 1 tasks should be able to die and come back up. that's the point, right?
+		// so ring 1 tasks panicking should, like ring 3 ones, just be killed off. (and
+		// the idea is that the system notes this and fixes it. yep) (TODO!)
 		AkariPanic(s);
 	}
 }

@@ -17,7 +17,7 @@ class AkariSyscallSubsystem : public AkariSubsystem {
 		void AddSyscall(u16 num, void *fn);
 
 	//protected:
-		static void _handler(struct callback_registers *);
+		static void *_handler(struct modeswitch_registers *);
 
 		void *_syscalls[AKARI_SYSCALL_MAXCALLS];
 		u16 _syscalls_assigned;

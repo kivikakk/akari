@@ -138,12 +138,11 @@ void AkariDescriptorSubsystem::IDT::ClearHandler(u8 isr) {
 	InstallHandler(isr, 0);
 }
 
-bool AkariDescriptorSubsystem::IDT::CallHandler(u8 isr, struct callback_registers *regs) {
+void *AkariDescriptorSubsystem::IDT::CallHandler(u8 isr, struct modeswitch_registers *regs) {
 	if (_routines[isr]) {
-		_routines[isr](regs);
-		return true;
+		return _routines[isr](regs);
 	}
-	return false;
+	return 0;
 }
 
 void AkariDescriptorSubsystem::IDT::SetGate(u8 idt, void (*callback)(), u16 isrSegment, u8 flags) {
@@ -187,23 +186,10 @@ void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
 	InstallHandler(irq, 0);
 }
 
-void AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct callback_registers *regs) {
+void *AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct modeswitch_registers *regs) {
 	if (_routines[irq])
-		_routines[irq](regs);
+		return _routines[irq](regs);
 
-	// Check if there are any irqWait tasks.
-	AkariTaskSubsystem::Task *iter = Akari->Task->start;
-	while (iter) {
-		if (iter->irqWait == irq) {
-			// Looks like it's their turn. We append the current `iter` to the linked
-			// list made of ATS#priorityStart and the Task's own priorityNext's.
-			AkariTaskSubsystem::Task **append = &Akari->Task->priorityStart;
-			while (*append)
-				append = &(*append)->priorityNext;
-			*append = iter;
-			iter->priorityNext = 0;
-		}
-		iter = iter->next;
-	}
+	return regs;
 }
 
