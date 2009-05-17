@@ -31,7 +31,8 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 				Task *next, *priorityNext;
 
-				u32 irqWait, irqListen, irqListenHits;
+				bool irqWaiting;
+				u32 irqListen, irqListenHits;
 
 			// protected:
 				Task(u8 cpl);

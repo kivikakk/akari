@@ -19,13 +19,13 @@ namespace User {
 
 	void IrqWait() {
 		if (Akari->Task->current->irqListenHits == 0) {
-			Akari->Task->current->irqWait = Akari->Task->current->irqListen;
+			Akari->Task->current->irqWaiting = true;
 
 			// causes the timer event to fire now. could this screw up our tick counting? hm. :-(
 			__asm__ __volatile__("int $0x20");
 			// tick counting is dumb anyway.
 
-			Akari->Task->current->irqWait = 0;
+			Akari->Task->current->irqWaiting = false;
 		}
 
 		Akari->Task->current->irqListenHits--;

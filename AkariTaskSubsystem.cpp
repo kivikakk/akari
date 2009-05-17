@@ -80,9 +80,9 @@ void AkariTaskSubsystem::CycleTask() {
 		// it intentionally will be able to loop back to the task we switched from. (though
 		// of course, it won't if it's irqWait ...)
 
-		if (current->irqWait) {
+		if (current->irqWaiting && !current->irqListenHits) {
 			Task *newCurrent = current;
-			while (newCurrent->irqWait) {
+			while (newCurrent->irqWaiting && !current->irqListenHits) {
 				Task *next = _NextTask(newCurrent);
 				ASSERT(next != current);
 				newCurrent = next;
@@ -173,7 +173,7 @@ void AkariTaskSubsystem::Task::SetIOMap(u8 port, bool enabled) {
 }
 
 AkariTaskSubsystem::Task::Task(u8 cpl):
-		next(0), priorityNext(0), irqWait(0), irqListen(0), irqListenHits(0),
+		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
 		_id(0), _cpl(cpl), _pageDir(0), _ks(0), _utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	_id = ++lastAssignedId;

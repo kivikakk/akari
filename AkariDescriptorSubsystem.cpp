@@ -193,13 +193,18 @@ void *AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct modeswitch_regi
 		if (iter->irqListen == irq) {
 			iter->irqListenHits++;
 			Akari->Console->PutChar('!');
+
+			// We're not using this out of a sort of an interest to see if we can deal with not
+			// returning immediately. It looks like it works, but at the same time, I'd say there
+			// are advantages to prioritising the I/O. Wait and see.
+
 			// Looks like it's their turn. We append the current `iter` to the linked
 			// list made of ATS#priorityStart and the Task's own priorityNext's.
-			AkariTaskSubsystem::Task **append = &Akari->Task->priorityStart;
-			while (*append)
-				append = &(*append)->priorityNext;
-			*append = iter;
-			iter->priorityNext = 0;
+			//AkariTaskSubsystem::Task **append = &Akari->Task->priorityStart;
+			//while (*append)
+				//append = &(*append)->priorityNext;
+			//*append = iter;
+			//iter->priorityNext = 0;
 		}
 		iter = iter->next;
 	}
@@ -217,7 +222,7 @@ void *AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct modeswitch_regi
 	}
 		
 
-	// XXX XXX TODO HACK OMG FIXME BBQ (see above)
+	// XXX XXX TODO HACK OMG FIXME BBQ (see above one-liner comment)
 	if (_routines[irq])
 		return _routines[irq](regs);
 
