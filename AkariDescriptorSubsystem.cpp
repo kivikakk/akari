@@ -188,24 +188,32 @@ void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
 
 void *AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct modeswitch_registers *regs) {
 	AkariTaskSubsystem::Task *iter = Akari->Task->start;
+	Akari->Console->PutChar('?');
 	while (iter) {
-	        if (iter->irqWait == irq) {
-	                // Looks like it's their turn. We append the current `iter` to the linked
-	                // list made of ATS#priorityStart and the Task's own priorityNext's.
-	                AkariTaskSubsystem::Task **append = &Akari->Task->priorityStart;
-	                while (*append)
-	                        append = &(*append)->priorityNext;
-	                *append = iter;
-	                iter->priorityNext = 0;
-	        }
-	        iter = iter->next;
+		if (iter->irqListen == irq) {
+			iter->irqListenHits++;
+			Akari->Console->PutChar('!');
+			// Looks like it's their turn. We append the current `iter` to the linked
+			// list made of ATS#priorityStart and the Task's own priorityNext's.
+			AkariTaskSubsystem::Task **append = &Akari->Task->priorityStart;
+			while (*append)
+				append = &(*append)->priorityNext;
+			*append = iter;
+			iter->priorityNext = 0;
+		}
+		iter = iter->next;
 	}
 
 	// If there's a priority, switch to it immediately. Crap. What do we do about handlers?!
 	if (Akari->Task->priorityStart) {
 		iter = Akari->Task->priorityStart;
-		Akari->Task->priorityStart = iter->next;
-		iter->next = 0;
+		Akari->Task->priorityStart = iter->priorityNext;
+		iter->priorityNext = 0;
+
+		// Task switch!
+		Akari->Task->SaveRegisterToTask(Akari->Task->current, regs);
+		Akari->Task->current = iter;
+		return Akari->Task->AssignInternalTask(Akari->Task->current);
 	}
 		
 

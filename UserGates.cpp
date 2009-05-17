@@ -48,6 +48,7 @@ DEFN_SYSCALL1(putc, 0, char);
 DEFN_SYSCALL1(puts, 1, const char *);
 DEFN_SYSCALL2(putl, 2, u32, u8);
 DEFN_SYSCALL0(getProcessId, 3);
-DEFN_SYSCALL1(irqWait, 4, u32);
-DEFN_SYSCALL1(panic, 5, const char *);
+DEFN_SYSCALL0(irqWait, 4);
+DEFN_SYSCALL1(irqListen, 5, u32);
+DEFN_SYSCALL1(panic, 6, const char *);
 

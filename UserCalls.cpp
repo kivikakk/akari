@@ -17,15 +17,25 @@ namespace User {
 		return Akari->Task->current->_id;
 	}
 
-	void IrqWait(u32 irq) {
-		Akari->Task->current->irqWait = irq;
+	void IrqWait() {
+		if (Akari->Task->current->irqListenHits == 0) {
+			Akari->Task->current->irqWait = Akari->Task->current->irqListen;
 
-		// causes the timer event to fire now. could this screw up our tick counting? hm. :-(
-		__asm__ __volatile__("int $0x20");
-		// tick counting is dumb anyway.
+			// causes the timer event to fire now. could this screw up our tick counting? hm. :-(
+			__asm__ __volatile__("int $0x20");
+			// tick counting is dumb anyway.
 
-		Akari->Task->current->irqWait = 0;
+			Akari->Task->current->irqWait = 0;
+		}
+
+		Akari->Task->current->irqListenHits--;
 	}
+
+	void IrqListen(u32 irq) {
+		Akari->Task->current->irqListen = irq;
+		Akari->Task->current->irqListenHits = 0;
+	}
+
 
 	void Panic(const char *s) {
 		// TODO: check permission. should be ring 1 or 0, but at least definitely not 3.

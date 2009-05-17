@@ -10,7 +10,8 @@ AkariSyscallSubsystem::AkariSyscallSubsystem(): _syscalls_assigned(0) {
 	AddSyscall(2, (void *)&User::Putl);
 	AddSyscall(3, (void *)&User::GetProcessId);
 	AddSyscall(4, (void *)&User::IrqWait);
-	AddSyscall(5, (void *)&User::Panic);
+	AddSyscall(5, (void *)&User::IrqListen);
+	AddSyscall(6, (void *)&User::Panic);
 }
 
 u8 AkariSyscallSubsystem::VersionMajor() const { return 0; }

@@ -8,7 +8,8 @@ namespace User {
 	void Puts(const char *s);
 	void Putl(u32 n, u8 base);
 	u32 GetProcessId();
-	void IrqWait(u32 irq);
+	void IrqWait();
+	void IrqListen(u32 irq);
 	void Panic(const char *s);
 }
 

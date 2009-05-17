@@ -172,7 +172,9 @@ void AkariTaskSubsystem::Task::SetIOMap(u8 port, bool enabled) {
 		_iomap[port / 8] |= (1 << (port % 8));
 }
 
-AkariTaskSubsystem::Task::Task(u8 cpl): next(0), priorityNext(0), irqWait(0), _id(0), _cpl(cpl), _pageDir(0), _ks(0), _utks(0) {
+AkariTaskSubsystem::Task::Task(u8 cpl):
+		next(0), priorityNext(0), irqWait(0), irqListen(0), irqListenHits(0),
+		_id(0), _cpl(cpl), _pageDir(0), _ks(0), _utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	_id = ++lastAssignedId;
 

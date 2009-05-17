@@ -16,7 +16,8 @@ DECL_SYSCALL1(putc, char);
 DECL_SYSCALL1(puts, const char *);
 DECL_SYSCALL2(putl, u32, u8);
 DECL_SYSCALL0(getProcessId);
-DECL_SYSCALL1(irqWait, u32);
+DECL_SYSCALL0(irqWait);
+DECL_SYSCALL1(irqListen, u32);
 DECL_SYSCALL1(panic, const char *);
 
 #endif
