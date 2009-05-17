@@ -104,5 +104,7 @@ void SubProcess() {
 
 // Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
-	return Akari->Task->CycleTask(r);
+	Akari->Task->SaveRegisterToTask(Akari->Task->current, r);
+	Akari->Task->CycleTask();
+	return Akari->Task->AssignInternalTask(Akari->Task->current);
 }

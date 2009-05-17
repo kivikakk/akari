@@ -63,15 +63,7 @@ static inline AkariTaskSubsystem::Task *_NextTask(AkariTaskSubsystem::Task *t) {
 	return t->next ? t->next : Akari->Task->start;
 }
 
-void *AkariTaskSubsystem::CycleTask(void *r) {
-	if (!current->_cpl > 0) {
-		// update the tip of stack pointer so we can restore later
-		current->_ks = (u32)r;
-	} else {
-		// update utks pointer
-		current->_utks = (u32)r;
-	}
-	
+void AkariTaskSubsystem::CycleTask() {
 	if (priorityStart) {
 		// We have something priority. We put it in without regard for irqWait,
 		// since it's probably an IRQ being fired that put it there ...
@@ -98,17 +90,28 @@ void *AkariTaskSubsystem::CycleTask(void *r) {
 			current = newCurrent;
 		}
 	}
-
-	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
-	Akari->Memory->SwitchPageDirectory(current->_pageDir);
-	if (current->_cpl > 0) {
-		Akari->Descriptor->_gdt->SetTSSStack(current->_utks + sizeof(struct modeswitch_registers));
-		Akari->Descriptor->_gdt->SetTSSIOMap(current->_iomap);
-	}
-
-	return (void *)((!current->_cpl > 0) ? current->_ks : current->_utks);
 }
 
+void AkariTaskSubsystem::SaveRegisterToTask(Task *dest, void *regs) {
+	if (!dest->_cpl > 0) {
+		// update the tip of stack pointer so we can restore later
+		dest->_ks = (u32)regs;
+	} else {
+		// update utks pointer
+		dest->_utks = (u32)regs;
+	}
+}
+
+void *AkariTaskSubsystem::AssignInternalTask(Task *task) {
+	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
+	Akari->Memory->SwitchPageDirectory(task->_pageDir);
+	if (task->_cpl > 0) {
+		Akari->Descriptor->_gdt->SetTSSStack(task->_utks + sizeof(struct modeswitch_registers));
+		Akari->Descriptor->_gdt->SetTSSIOMap(task->_iomap);
+	}
+
+	return (void *)((!task->_cpl > 0) ? task->_ks : task->_utks);
+}
 
 AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(u8 cpl, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	Task *nt = new Task(cpl);

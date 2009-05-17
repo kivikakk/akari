@@ -16,6 +16,8 @@ class AkariSyscallSubsystem : public AkariSubsystem {
 
 		void AddSyscall(u16 num, void *fn);
 
+		// void ReturnToTask(AkariTaskSubsystem::Task *task);
+
 	//protected:
 		static void *_handler(struct modeswitch_registers *);
 

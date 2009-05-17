@@ -187,6 +187,29 @@ void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
 }
 
 void *AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct modeswitch_registers *regs) {
+	AkariTaskSubsystem::Task *iter = Akari->Task->start;
+	while (iter) {
+	        if (iter->irqWait == irq) {
+	                // Looks like it's their turn. We append the current `iter` to the linked
+	                // list made of ATS#priorityStart and the Task's own priorityNext's.
+	                AkariTaskSubsystem::Task **append = &Akari->Task->priorityStart;
+	                while (*append)
+	                        append = &(*append)->priorityNext;
+	                *append = iter;
+	                iter->priorityNext = 0;
+	        }
+	        iter = iter->next;
+	}
+
+	// If there's a priority, switch to it immediately. Crap. What do we do about handlers?!
+	if (Akari->Task->priorityStart) {
+		iter = Akari->Task->priorityStart;
+		Akari->Task->priorityStart = iter->next;
+		iter->next = 0;
+	}
+		
+
+	// XXX XXX TODO HACK OMG FIXME BBQ (see above)
 	if (_routines[irq])
 		return _routines[irq](regs);
 
