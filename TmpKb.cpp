@@ -124,9 +124,11 @@ void KeyboardProcess() {
 					syscall_putc(scancode);
 				if (recording_mode) {
 					/* Add it to the buffer. */
-					if (keyboard_limit >= KEYBOARD_BUFFER_LENGTH)
-						syscall_panic("Keyboard buffer has overflowed!");
-					keyboard_buffer[(keyboard_index + keyboard_limit++) % KEYBOARD_BUFFER_LENGTH] = scancode;
+					if (keyboard_limit >= KEYBOARD_BUFFER_LENGTH) {
+						// syscall_panic("Keyboard buffer has overflowed!");
+					} else {
+						keyboard_buffer[(keyboard_index + keyboard_limit++) % KEYBOARD_BUFFER_LENGTH] = scancode;
+					}
 				}
 			}
 		}

@@ -2,6 +2,7 @@
 #define __AKARI_SYSCALL_SUBSYSTEM_HPP__
 
 #include <AkariSubsystem.hpp>
+#include <AkariTaskSubsystem.hpp>
 
 #define AKARI_SYSCALL_MAXCALLS 256
 
@@ -16,13 +17,16 @@ class AkariSyscallSubsystem : public AkariSubsystem {
 
 		void AddSyscall(u16 num, void *fn);
 
-		// void ReturnToTask(AkariTaskSubsystem::Task *task);
+		void ReturnToTask(AkariTaskSubsystem::Task *task);
+		void ReturnToNextTask();
 
 	//protected:
-		static void _handler(struct modeswitch_registers *);
+		static void *_handler(struct modeswitch_registers *);
 
 		void *_syscalls[AKARI_SYSCALL_MAXCALLS];
 		u16 _syscalls_assigned;
+
+		AkariTaskSubsystem::Task *_returnTask;
 };
 
 #endif

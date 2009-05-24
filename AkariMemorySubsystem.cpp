@@ -131,7 +131,7 @@ void AkariMemorySubsystem::Free(void *p) {
 	AkariPanic("AkariMemorySubsystem: tried to Free() in placement mode");
 }
 
-void AkariMemorySubsystem::PageFault(struct modeswitch_registers *r) {
+void *AkariMemorySubsystem::PageFault(struct modeswitch_registers *r) {
 	u32 faultingAddress;
 	__asm__ __volatile__("mov %%cr2, %0" : "=r" (faultingAddress));
 
@@ -154,6 +154,8 @@ void AkariMemorySubsystem::PageFault(struct modeswitch_registers *r) {
 
 	while (1)
 		__asm__ __volatile__("hlt");
+
+	return 0;
 }
 
 void AkariMemorySubsystem::SwitchPageDirectory(PageDirectory *dir) {

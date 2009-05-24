@@ -25,11 +25,12 @@ static const char *isr_messages[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-void isr_handler(struct modeswitch_registers *r) {
+void *isr_handler(struct modeswitch_registers *r) {
 	ASSERT(r->callback.int_no < 0x20 || r->callback.int_no >= 0x30);
 	// I guess this is right? What other IDTs are there? Hm.
 
-	if (!Akari->Descriptor->_idt->CallHandler(r->callback.int_no, r)) {
+	void *resume = Akari->Descriptor->_idt->CallHandler(r->callback.int_no, r);
+	if (!resume) {
 		// nothing to call!
 		Akari->Console->PutChar('\n');
 		Akari->Console->PutString((r->callback.int_no < 32 && isr_messages[r->callback.int_no]) ? isr_messages[r->callback.int_no] : "[Intel reserved]");
@@ -52,6 +53,8 @@ void isr_handler(struct modeswitch_registers *r) {
 		while (1)
 			__asm__ __volatile__("hlt");
 	}
+
+	return resume;
 }
 
 void *irq_handler(struct modeswitch_registers *r) {

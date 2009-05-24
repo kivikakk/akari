@@ -16,10 +16,10 @@ struct modeswitch_registers {
 } __attribute__((__packed__));
 
 /* This needs to go somewhere better, the structure needs to be verified, and its purpose verified */
-typedef void (*isr_handler_func_t)(struct modeswitch_registers *);
+typedef void *(*isr_handler_func_t)(struct modeswitch_registers *);
 typedef void *(*irq_handler_func_t)(struct modeswitch_registers *);
 
-extern "C" void isr_handler(struct modeswitch_registers *);
+extern "C" void *isr_handler(struct modeswitch_registers *);
 extern "C" void *irq_handler(struct modeswitch_registers *);
 
 extern "C" void isr0();

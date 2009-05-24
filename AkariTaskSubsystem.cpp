@@ -63,16 +63,17 @@ static inline AkariTaskSubsystem::Task *_NextTask(AkariTaskSubsystem::Task *t) {
 	return t->next ? t->next : Akari->Task->start;
 }
 
-void AkariTaskSubsystem::CycleTask() {
+AkariTaskSubsystem::Task *AkariTaskSubsystem::GetNextTask() {
 	if (priorityStart) {
 		// We have something priority. We put it in without regard for irqWait,
 		// since it's probably an IRQ being fired that put it there ...
 
-		current = priorityStart;
-		priorityStart = current->priorityNext;
-		current->priorityNext = 0;
+		Task *t = priorityStart;
+		priorityStart = t->priorityNext;
+		t->priorityNext = 0;
+		return t;
 	} else {
-		current = _NextTask(current);
+		Task *t = _NextTask(current);
 
 		// if the new current task is irqWait, loop until we find one which isn't.
 		// be sure not to be caught in an infinite loop by seeing if we get back to
@@ -80,19 +81,31 @@ void AkariTaskSubsystem::CycleTask() {
 		// it intentionally will be able to loop back to the task we switched from. (though
 		// of course, it won't if it's irqWait ...)
 
-		if (current->irqWaiting && !current->irqListenHits) {
-			Task *newCurrent = current;
-			while (newCurrent->irqWaiting && !current->irqListenHits) {
+		if (t->irqWaiting && !t->irqListenHits) {
+			Task *newCurrent = t;
+			while (newCurrent->irqWaiting && !t->irqListenHits) {
 				Task *next = _NextTask(newCurrent);
-				ASSERT(next != current);
+				ASSERT(next != t);
 				newCurrent = next;
 			}
-			current = newCurrent;
+			t = newCurrent;
 		}
+
+		return t;
 	}
 }
 
+void AkariTaskSubsystem::CycleTask() {
+	current = GetNextTask();
+}
+
 void AkariTaskSubsystem::SaveRegisterToTask(Task *dest, void *regs) {
+	// we're saving a task even though it's in a state not matching its CPL?
+	// This could happen if, say, it's in kernel mode, then interrupts or something.
+	// HACK: need to handle this situation properly, but for now, ensure
+	// internal consistency.
+	ASSERT(((((struct modeswitch_registers *)regs)->callback.cs - 0x08) / 0x11) == dest->_cpl);
+
 	if (!dest->_cpl > 0) {
 		// update the tip of stack pointer so we can restore later
 		dest->_ks = (u32)regs;
@@ -104,10 +117,16 @@ void AkariTaskSubsystem::SaveRegisterToTask(Task *dest, void *regs) {
 
 void *AkariTaskSubsystem::AssignInternalTask(Task *task) {
 	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
+	ASSERT(task);
 	Akari->Memory->SwitchPageDirectory(task->_pageDir);
 	if (task->_cpl > 0) {
 		Akari->Descriptor->_gdt->SetTSSStack(task->_utks + sizeof(struct modeswitch_registers));
 		Akari->Descriptor->_gdt->SetTSSIOMap(task->_iomap);
+	}
+
+	if (task->irqWaiting) {
+		task->irqWaiting = false;
+		task->irqListenHits--;
 	}
 
 	return (void *)((!task->_cpl > 0) ? task->_ks : task->_utks);

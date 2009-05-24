@@ -45,6 +45,7 @@ class AkariTaskSubsystem : public AkariSubsystem {
 				u8 _iomap[32];
 		};
 
+		Task *GetNextTask();
 		void CycleTask();
 		void SaveRegisterToTask(Task *dest, void *regs);
 		void *AssignInternalTask(Task *task);

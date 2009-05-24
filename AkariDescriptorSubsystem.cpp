@@ -138,12 +138,10 @@ void AkariDescriptorSubsystem::IDT::ClearHandler(u8 isr) {
 	InstallHandler(isr, 0);
 }
 
-bool AkariDescriptorSubsystem::IDT::CallHandler(u8 isr, struct modeswitch_registers *regs) {
-	if (_routines[isr]) {
-		_routines[isr](regs);
-		return true;
-	}
-	return false;
+void *AkariDescriptorSubsystem::IDT::CallHandler(u8 isr, struct modeswitch_registers *regs) {
+	if (_routines[isr])
+		return _routines[isr](regs);
+	return 0;
 }
 
 void AkariDescriptorSubsystem::IDT::SetGate(u8 idt, void (*callback)(), u16 isrSegment, u8 flags) {
@@ -189,11 +187,9 @@ void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
 
 void *AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct modeswitch_registers *regs) {
 	AkariTaskSubsystem::Task *iter = Akari->Task->start;
-	Akari->Console->PutChar('?');
 	while (iter) {
 		if (iter->irqListen == irq) {
 			iter->irqListenHits++;
-			Akari->Console->PutChar('!');
 
 			// We're not using this out of a sort of an interest to see if we can deal with not
 			// returning immediately. It looks like it works, but at the same time, I'd say there
@@ -201,11 +197,11 @@ void *AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct modeswitch_regi
 
 			// Looks like it's their turn. We append the current `iter` to the linked
 			// list made of ATS#priorityStart and the Task's own priorityNext's.
-			//AkariTaskSubsystem::Task **append = &Akari->Task->priorityStart;
-			//while (*append)
-				//append = &(*append)->priorityNext;
-			//*append = iter;
-			//iter->priorityNext = 0;
+			AkariTaskSubsystem::Task **append = &Akari->Task->priorityStart;
+			while (*append)
+				append = &(*append)->priorityNext;
+			*append = iter;
+			iter->priorityNext = 0;
 		}
 		iter = iter->next;
 	}
@@ -224,8 +220,10 @@ void *AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct modeswitch_regi
 		
 
 	// XXX XXX TODO HACK OMG FIXME BBQ (see above one-liner comment)
-	if (_routines[irq])
+	if (_routines[irq]) {
+		AkariPanic("lol");	// I'm assuming this isn't going to be called for now ...
 		return _routines[irq](regs);
+	}
 
 	return regs;
 }
