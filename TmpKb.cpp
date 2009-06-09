@@ -81,8 +81,7 @@ static s8 capslock_invert(s8 c) {
 void KeyboardProcess() {
 	syscall_irqListen(1);
 
-	// clear kb buffer first... hm.
-	u8 scancode = AkariInB(0x60);
+	u8 scancode;
 	while (1) {
 		syscall_irqWait();
 		scancode = AkariInB(0x60);
@@ -125,7 +124,7 @@ void KeyboardProcess() {
 				if (recording_mode) {
 					/* Add it to the buffer. */
 					if (keyboard_limit >= KEYBOARD_BUFFER_LENGTH) {
-						// syscall_panic("Keyboard buffer has overflowed!");
+						syscall_panic("Keyboard buffer has overflowed!");
 					} else {
 						keyboard_buffer[(keyboard_index + keyboard_limit++) % KEYBOARD_BUFFER_LENGTH] = scancode;
 					}
