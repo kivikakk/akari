@@ -6,6 +6,8 @@
 namespace POSIX {
 	extern "C" void *memset(void *, u8, u32);
 	extern "C" void *memcpy(void *, const void *, u32);
+
+	extern "C" u32 strlen(const char *);
 }
 
 #endif

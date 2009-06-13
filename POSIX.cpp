@@ -16,4 +16,11 @@ namespace POSIX {
 			*d++ = *s++;
 		return dest;
 	}
+
+	u32 strlen(const char *s) {
+		u32 n = 0;
+		while (*s++)
+			++n;
+		return n;
+	}
 }
