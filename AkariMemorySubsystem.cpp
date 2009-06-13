@@ -222,9 +222,9 @@ _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly
 	if (start & 0xFFFF)
 		start = (start & 0xFFFFF000) + 0x1000;
 
-	ASSERT(_index._size == 0);
+	ASSERT(_index.size() == 0);
 	_index.insert(Entry(start, end - start, true));
-	ASSERT(_index._size == 1);
+	ASSERT(_index.size() == 1);
 	ASSERT(_index[0].start == start);
 	ASSERT(_index[0].size == end - start);
 	ASSERT(_index[0].isHole);
@@ -300,9 +300,9 @@ bool AkariMemorySubsystem::Heap::IndexSort(const Entry &a, const Entry &b) {
 
 s32 AkariMemorySubsystem::Heap::SmallestHole(u32 n) const {
 	u32 it = 0;
-	ASSERT(_index._size > 0);
+	ASSERT(_index.size() > 0);
 
-	while (it < _index._size) {
+	while (it < _index.size()) {
 		const Entry &entry = _index[it];
 		if (!entry.isHole) {
 			++it; continue;
@@ -318,7 +318,7 @@ s32 AkariMemorySubsystem::Heap::SmallestHole(u32 n) const {
 
 s32 AkariMemorySubsystem::Heap::SmallestAlignedHole(u32 n) const {
 	u32 it = 0;
-	while (it < _index._size) {
+	while (it < _index.size()) {
 		const Entry &entry = _index[it];
 		if (!entry.isHole) {
 			++it; continue;

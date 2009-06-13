@@ -29,15 +29,20 @@ class AkariTaskSubsystem : public AkariSubsystem {
 				bool GetIOMap(u8 port) const;
 				void SetIOMap(u8 port, bool enabled);
 
+				// Task linked list.
 				Task *next, *priorityNext;
 
+				// IRQ listening controls.
 				bool irqWaiting;
 				u32 irqListen, irqListenHits;
 
-				u32 id; u8 cpl;
-
+				// GUID and other identifying information.
+				u32 id;
+				const char *registeredName;
+				
+				// Real task process data.
+				u8 cpl;
 				AkariMemorySubsystem::PageDirectory *pageDir;
-
 				u32 ks; u32 utks;
 				u8 iomap[32];
 

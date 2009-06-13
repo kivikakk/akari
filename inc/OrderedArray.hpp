@@ -18,6 +18,10 @@ class OrderedArray {
 			POSIX::memset(_array, 0, maxSize * sizeof(T));
 		}
 
+		const u32 size() const {
+			return _size;
+		}
+
 		const T &operator[](u32 index) const {
 			ASSERT(index < _size);
 			return _array[index];
@@ -56,8 +60,7 @@ class OrderedArray {
 			--_size;
 		}
 
-	// protected:
-	// XXX accessed directly by AMemorySubsystem. Accessor? Too slow?
+	protected:
 		T *_array;
 		u32 _size, _maxSize;
 		LessThanPredicate _lessThan;
