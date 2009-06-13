@@ -85,11 +85,8 @@ void KeyboardProcess() {
 
 	syscall_irqListen(1);
 
-	u8 scancode;
+	u8 scancode = AkariInB(0x60);
 	while (1) {
-		syscall_irqWait();
-		scancode = AkariInB(0x60);
-
 		if (scancode & 0x80) {
 			// release
 			scancode &= ~0x80;
@@ -135,6 +132,9 @@ void KeyboardProcess() {
 				}
 			}
 		}
+
+		syscall_irqWait();
+		scancode = AkariInB(0x60);
 	}
 }
 
