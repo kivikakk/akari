@@ -21,28 +21,38 @@ class HashTable {
 			return s;
 		}
 
-		const V &operator[](const K &index) const {
+		bool HasKey(const K &key) const {
 			_InternalItem *traverse = head;
 			while (traverse) {
-				if (traverse->key == index)
+				if (traverse->key == key)
+					return true;
+				traverse = traverse->next;
+			}
+			return false;
+		}
+
+		const V &operator[](const K &key) const {
+			_InternalItem *traverse = head;
+			while (traverse) {
+				if (traverse->key == key)
 					return traverse->value;
 				traverse = traverse->next;
 			}
-			return K();
+			return V();
 		}
 
-		V &operator[](const K &index) {
+		V &operator[](const K &key) {
 			_InternalItem **traverse = &head;
 			while (*traverse) {
-				if ((*traverse)->key == index)
+				if ((*traverse)->key == key)
 					return (*traverse)->value;
 
 				traverse = &(*traverse)->next;
 			}
 
 			_InternalItem *add = new _InternalItem();
-			add->key = index;
-			add->value = K();
+			add->key = key;
+			add->value = V();
 			add->next = 0;
 			*traverse = add;
 			
