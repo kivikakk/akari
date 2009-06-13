@@ -8,36 +8,36 @@ class AkariMemorySubsystem : public AkariSubsystem {
 	public:
 		AkariMemorySubsystem(u32);
 
-		u8 VersionMajor() const;
-		u8 VersionMinor() const;
-		const char *VersionManufacturer() const;
-		const char *VersionProduct() const;
+		u8 versionMajor() const;
+		u8 versionMinor() const;
+		const char *versionManufacturer() const;
+		const char *versionProduct() const;
 
-		void SetPlacementMode(u32);
-		void SetPaging(bool);
+		void setPlacementMode(u32);
+		void setPaging(bool);
 
-		void *Alloc(u32, u32 *phys=0);
-		void *AllocAligned(u32, u32 *phys=0);
-		void Free(void *);
+		void *alloc(u32, u32 *phys=0);
+		void *allocAligned(u32, u32 *phys=0);
+		void free(void *);
 	
 	// protected:
 	// XXX _activeDirectory is accessed from outside, as are these classes! Damn! Refactor!
 		static void *PageFault(struct modeswitch_registers *);
 
 		class PageDirectory;
-		void SwitchPageDirectory(PageDirectory *);
+		void switchPageDirectory(PageDirectory *);
 
-		void SetFrame(u32);
-		void ClearFrame(u32);
-		bool TestFrame(u32) const;
-		u32 FreeFrame() const;
+		void setFrame(u32);
+		void clearFrame(u32);
+		bool testFrame(u32) const;
+		u32 freeFrame() const;
 		
 		class Heap {
 			public:
 				Heap(u32, u32, u32, bool, bool);
 
-				void *Alloc(u32);
-				void *AllocAligned(u32);
+				void *alloc(u32);
+				void *allocAligned(u32);
 
 			protected:
 				class Entry {
@@ -50,8 +50,8 @@ class AkariMemorySubsystem : public AkariSubsystem {
 
 				static bool IndexSort(const Entry &, const Entry &);
 
-				s32 SmallestHole(u32) const;
-				s32 SmallestAlignedHole(u32) const;
+				s32 smallestHole(u32) const;
+				s32 smallestAlignedHole(u32) const;
 
 				OrderedArray<Entry> _index;
 				u32 _start, _end, _max;
@@ -60,8 +60,8 @@ class AkariMemorySubsystem : public AkariSubsystem {
 
 		class Page {
 			public:
-				void AllocAnyFrame(bool, bool);
-				void AllocFrame(u32, bool, bool);
+				void allocAnyFrame(bool, bool);
+				void allocFrame(u32, bool, bool);
 
 				union {
 					struct {
@@ -83,7 +83,7 @@ class AkariMemorySubsystem : public AkariSubsystem {
 			public:
 				static PageTable *Allocate(u32 *);
 
-				PageTable *Clone(u32 *) const;
+				PageTable *clone(u32 *) const;
 
 				Page pages[1024];
 		} __attribute__((__packed__));
@@ -92,8 +92,8 @@ class AkariMemorySubsystem : public AkariSubsystem {
 			public:
 				static PageDirectory *Allocate();
 
-				Page *GetPage(u32, bool);
-				PageDirectory *Clone() const;
+				Page *getPage(u32, bool);
+				PageDirectory *clone() const;
 
 				PageTable *tables[1024];
 				u32 tablePhysicals[1024];

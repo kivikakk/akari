@@ -31,11 +31,11 @@ void AkariEntry() {
 	Akari->Task = new AkariTaskSubsystem();
 	Akari->Syscall = new AkariSyscallSubsystem();
 
-	Akari->Timer->SetTimer(100);
-	Akari->Memory->SetPaging(true);
+	Akari->Timer->setTimer(100);
+	Akari->Memory->setPaging(true);
 	
 	// Give ourselves a normal stack. (n.b. this is from kernel heap!)
-	void *IdleTaskStack = Akari->Memory->AllocAligned(IDLE_STACK_SIZE);
+	void *IdleTaskStack = Akari->Memory->allocAligned(IDLE_STACK_SIZE);
 	// do we still need to flush the TLB?
 	__asm__ __volatile__("\
 		mov %%cr3, %%eax; \
@@ -50,20 +50,20 @@ void AkariEntry() {
 static void AkariEntryCont() {	
 	ASSERT(Akari->Memory->_activeDirectory == Akari->Memory->_kernelDirectory);
 	for (u32 i = UKERNEL_STACK_POS; i >= UKERNEL_STACK_POS - UKERNEL_STACK_SIZE; i -= 0x1000)
-		Akari->Memory->_activeDirectory->GetPage(i, true)->AllocAnyFrame(false, true);
+		Akari->Memory->_activeDirectory->getPage(i, true)->allocAnyFrame(false, true);
 
 	AkariTaskSubsystem::Task *base = AkariTaskSubsystem::Task::BootstrapInitialTask(
 		3, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
-	Akari->Descriptor->gdt->SetTSSStack(base->utks + sizeof(struct modeswitch_registers));
-	Akari->Descriptor->gdt->SetTSSIOMap(base->iomap);
+	Akari->Descriptor->gdt->setTSSStack(base->utks + sizeof(struct modeswitch_registers));
+	Akari->Descriptor->gdt->setTSSIOMap(base->iomap);
 
 	// Keyboard driver task
 	AkariTaskSubsystem::Task *kbdriver = AkariTaskSubsystem::Task::CreateTask(
 		(u32)&KeyboardProcess, 1, true, 0, Akari->Memory->_kernelDirectory);
-	kbdriver->SetIOMap(0x60, true);
-	kbdriver->SetIOMap(0x64, true);
+	kbdriver->setIOMap(0x60, true);
+	kbdriver->setIOMap(0x64, true);
 	Akari->Task->current->next = kbdriver;
 
 	// another usermode task
@@ -77,9 +77,9 @@ static void AkariEntryCont() {
 	other->next = third;
 
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
-	Akari->Memory->SwitchPageDirectory(base->pageDir);
+	Akari->Memory->switchPageDirectory(base->pageDir);
 
-	Akari->Task->SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
+	AkariTaskSubsystem::SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 
 	SubProcess();
 }
@@ -104,7 +104,7 @@ void SubProcess() {
 
 // Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
-	Akari->Task->SaveRegisterToTask(Akari->Task->current, r);
-	Akari->Task->CycleTask();
-	return Akari->Task->AssignInternalTask(Akari->Task->current);
+	Akari->Task->saveRegisterToTask(Akari->Task->current, r);
+	Akari->Task->cycleTask();
+	return Akari->Task->assignInternalTask(Akari->Task->current);
 }

@@ -6,37 +6,37 @@
 
 AkariDescriptorSubsystem::AkariDescriptorSubsystem(): gdt(0), idt(0), irqt(0) {
 	gdt = new GDT(10);
-	gdt->SetGate(1, 0, 0xFFFFFFFF, 0, true);	// code (CS)
-	gdt->SetGate(2, 0, 0xFFFFFFFF, 0, false);	// data (SS)
-	gdt->SetGate(3, 0, 0xFFFFFFFF, 1, true);	// driver code (CS)
-	gdt->SetGate(4, 0, 0xFFFFFFFF, 1, false);	// driver data (SS)
-	gdt->ClearGate(5);	// unused (code)
-	gdt->ClearGate(6);	// unused (data)
-	gdt->SetGate(7, 0, 0xFFFFFFFF, 3, true);	// user code (CS)
-	gdt->SetGate(8, 0, 0xFFFFFFFF, 3, false);	// user data (SS)
-	gdt->WriteTSS(9, 0x10, 0x0);		// empty ESP in TSS for now.. changed later in execution
-	gdt->Flush();
-	gdt->FlushTSS(9);
+	gdt->setGate(1, 0, 0xFFFFFFFF, 0, true);	// code (CS)
+	gdt->setGate(2, 0, 0xFFFFFFFF, 0, false);	// data (SS)
+	gdt->setGate(3, 0, 0xFFFFFFFF, 1, true);	// driver code (CS)
+	gdt->setGate(4, 0, 0xFFFFFFFF, 1, false);	// driver data (SS)
+	gdt->clearGate(5);	// unused (code)
+	gdt->clearGate(6);	// unused (data)
+	gdt->setGate(7, 0, 0xFFFFFFFF, 3, true);	// user code (CS)
+	gdt->setGate(8, 0, 0xFFFFFFFF, 3, false);	// user data (SS)
+	gdt->writeTSS(9, 0x10, 0x0);		// empty ESP in TSS for now.. changed later in execution
+	gdt->flush();
+	gdt->flushTSS(9);
 
 	idt = new IDT();
 
 	irqt = new IRQT(idt);
 }
 
-u8 AkariDescriptorSubsystem::VersionMajor() const { return 0; }
-u8 AkariDescriptorSubsystem::VersionMinor() const { return 1; }
-const char *AkariDescriptorSubsystem::VersionManufacturer() const { return "Akari"; }
-const char *AkariDescriptorSubsystem::VersionProduct() const { return "Akari Descriptor Table Manager"; }
+u8 AkariDescriptorSubsystem::versionMajor() const { return 0; }
+u8 AkariDescriptorSubsystem::versionMinor() const { return 1; }
+const char *AkariDescriptorSubsystem::versionManufacturer() const { return "Akari"; }
+const char *AkariDescriptorSubsystem::versionProduct() const { return "Akari Descriptor Table Manager"; }
 
 AkariDescriptorSubsystem::GDT::GDT(u32 n): _entryCount(n), _entries(0) {
 	_entries = new Entry[n];
 	_pointer.limit = (sizeof(Entry) * n - 1);
 	_pointer.base = (u32)_entries;
 
-	SetGate(0, 0, 0, 0, 0);
+	setGate(0, 0, 0, 0, 0);
 }
 
-void AkariDescriptorSubsystem::GDT::SetGateFields(s32 num, u32 base, u32 limit, u8 access, u8 granularity) {
+void AkariDescriptorSubsystem::GDT::setGateFields(s32 num, u32 base, u32 limit, u8 access, u8 granularity) {
 	ASSERT(num >= 0 && num < (s32)_entryCount);
 
 	_entries[num].base_low		= (base & 0xFFFF);
@@ -49,16 +49,16 @@ void AkariDescriptorSubsystem::GDT::SetGateFields(s32 num, u32 base, u32 limit, 
 	_entries[num].access		= access;
 }
 
-void AkariDescriptorSubsystem::GDT::SetGate(s32 num, u32 base, u32 limit, u8 dpl, bool code) {
+void AkariDescriptorSubsystem::GDT::setGate(s32 num, u32 base, u32 limit, u8 dpl, bool code) {
 	// access flag is like 0b1xx1yyyy, where yyyy = code?0xA:0x2 (just 'cause), and xx=DPL.
-	SetGateFields(num, base, limit, (code ? 0xA : 0x2) | (dpl << 5) | (0x9 << 4), 0xCF);
+	setGateFields(num, base, limit, (code ? 0xA : 0x2) | (dpl << 5) | (0x9 << 4), 0xCF);
 }
 
-void AkariDescriptorSubsystem::GDT::ClearGate(s32 num) {
-	SetGateFields(num, 0, 0, 0, 0);
+void AkariDescriptorSubsystem::GDT::clearGate(s32 num) {
+	setGateFields(num, 0, 0, 0, 0);
 }
 
-void AkariDescriptorSubsystem::GDT::WriteTSS(s32 num, u16 ss0, u32 esp0) {
+void AkariDescriptorSubsystem::GDT::writeTSS(s32 num, u16 ss0, u32 esp0) {
 	u32 base = (u32)&_tssEntry;
 	u32 limit = base + sizeof(TSSEntry);
 
@@ -75,10 +75,10 @@ void AkariDescriptorSubsystem::GDT::WriteTSS(s32 num, u16 ss0, u32 esp0) {
 	for (u16 i = 0; i < sizeof(_tssEntry.iomap); ++i)
 		_tssEntry.iomap[i] = 0xFF;
 
-	SetGateFields(num, base, limit, 0xE9, 0x00);
+	setGateFields(num, base, limit, 0xE9, 0x00);
 }
 
-void AkariDescriptorSubsystem::GDT::Flush() {
+void AkariDescriptorSubsystem::GDT::flush() {
 	__asm__ __volatile__("	\
 		movl %0, %%eax; \
 		lgdt (%%eax); \
@@ -92,15 +92,15 @@ void AkariDescriptorSubsystem::GDT::Flush() {
 	.flush:" : : "r" ((u32)&_pointer) : "eax");
 }
 
-void AkariDescriptorSubsystem::GDT::FlushTSS(s32 num) {
+void AkariDescriptorSubsystem::GDT::flushTSS(s32 num) {
 	__asm__ __volatile__("ltr %%ax" : : "a" ((num * 8) + 0x3));
 }
 
-void AkariDescriptorSubsystem::GDT::SetTSSStack(u32 addr) {
+void AkariDescriptorSubsystem::GDT::setTSSStack(u32 addr) {
 	_tssEntry.esp0 = addr;
 }
 
-void AkariDescriptorSubsystem::GDT::SetTSSIOMap(u8 *const &iomap) {
+void AkariDescriptorSubsystem::GDT::setTSSIOMap(u8 *const &iomap) {
 	POSIX::memcpy(_tssEntry.iomap, iomap, 32);
 }
 
@@ -111,7 +111,7 @@ AkariDescriptorSubsystem::IDT::IDT() {
 	for (u16 i = 0; i < 0x100; ++i)
 		_entries[i].ulong = 0;
 
-#define SET_IDT_GATE(n)	SetGate(0x##n, isr##n, 0x08, 0x8e)
+#define SET_IDT_GATE(n)	setGate(0x##n, isr##n, 0x08, 0x8e)
 	SET_IDT_GATE(0); SET_IDT_GATE(1); SET_IDT_GATE(2); SET_IDT_GATE(3);
 	SET_IDT_GATE(4); SET_IDT_GATE(5); SET_IDT_GATE(6); SET_IDT_GATE(7);
 	SET_IDT_GATE(8); SET_IDT_GATE(9); SET_IDT_GATE(a); SET_IDT_GATE(b);
@@ -129,22 +129,22 @@ AkariDescriptorSubsystem::IDT::IDT() {
 	__asm__ __volatile__("lidt %0" : : "m" (_pointer));
 }
 
-void AkariDescriptorSubsystem::IDT::InstallHandler(u8 isr, isr_handler_func_t callback) {
+void AkariDescriptorSubsystem::IDT::installHandler(u8 isr, isr_handler_func_t callback) {
 	ASSERT(isr >= 0 && isr <= 0xFF);
 	_routines[isr] = callback;
 }
 
-void AkariDescriptorSubsystem::IDT::ClearHandler(u8 isr) {
-	InstallHandler(isr, 0);
+void AkariDescriptorSubsystem::IDT::clearHandler(u8 isr) {
+	installHandler(isr, 0);
 }
 
-void *AkariDescriptorSubsystem::IDT::CallHandler(u8 isr, struct modeswitch_registers *regs) {
+void *AkariDescriptorSubsystem::IDT::callHandler(u8 isr, struct modeswitch_registers *regs) {
 	if (_routines[isr])
 		return _routines[isr](regs);
 	return 0;
 }
 
-void AkariDescriptorSubsystem::IDT::SetGate(u8 idt, void (*callback)(), u16 isrSegment, u8 flags) {
+void AkariDescriptorSubsystem::IDT::setGate(u8 idt, void (*callback)(), u16 isrSegment, u8 flags) {
 	_entries[idt].offset_low = (u32)callback & 0xFFFF;
 	_entries[idt].selector = isrSegment;
 	_entries[idt]._always_0 = 0;
@@ -164,7 +164,7 @@ AkariDescriptorSubsystem::IRQT::IRQT(IDT *idt): _idt(idt) {
 	AkariOutB(0x21, 0x00);
 	AkariOutB(0xA1, 0x00);
 
-#define SET_IRQ_GATE(n) idt->SetGate(0x2##n, irq##n, 0x08, 0x8e)
+#define SET_IRQ_GATE(n) idt->setGate(0x2##n, irq##n, 0x08, 0x8e)
 	SET_IRQ_GATE(0); SET_IRQ_GATE(1); SET_IRQ_GATE(2); SET_IRQ_GATE(3);
 	SET_IRQ_GATE(4); SET_IRQ_GATE(5); SET_IRQ_GATE(6); SET_IRQ_GATE(7);
 	SET_IRQ_GATE(8); SET_IRQ_GATE(9); SET_IRQ_GATE(a); SET_IRQ_GATE(b);
@@ -175,17 +175,17 @@ AkariDescriptorSubsystem::IRQT::IRQT(IDT *idt): _idt(idt) {
 		_routines[i] = 0;
 }
 
-void AkariDescriptorSubsystem::IRQT::InstallHandler(u8 irq, irq_handler_func_t callback) {
+void AkariDescriptorSubsystem::IRQT::installHandler(u8 irq, irq_handler_func_t callback) {
 	// you can't set IRQ 0 (timer) here - it's done manually. see interrupts.s
 	ASSERT(irq >= 1 && irq <= 0x0f);
 	_routines[irq] = callback;
 }
 
-void AkariDescriptorSubsystem::IRQT::ClearHandler(u8 irq) {
-	InstallHandler(irq, 0);
+void AkariDescriptorSubsystem::IRQT::clearHandler(u8 irq) {
+	installHandler(irq, 0);
 }
 
-void *AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct modeswitch_registers *regs) {
+void *AkariDescriptorSubsystem::IRQT::callHandler(u8 irq, struct modeswitch_registers *regs) {
 	AkariTaskSubsystem::Task *iter = Akari->Task->start;
 	while (iter) {
 		if (iter->irqListen == irq) {
@@ -213,9 +213,9 @@ void *AkariDescriptorSubsystem::IRQT::CallHandler(u8 irq, struct modeswitch_regi
 		iter->priorityNext = 0;
 
 		// Task switch!
-		Akari->Task->SaveRegisterToTask(Akari->Task->current, regs);
+		Akari->Task->saveRegisterToTask(Akari->Task->current, regs);
 		Akari->Task->current = iter;
-		return Akari->Task->AssignInternalTask(Akari->Task->current);
+		return Akari->Task->assignInternalTask(Akari->Task->current);
 	}
 		
 

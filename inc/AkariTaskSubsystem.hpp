@@ -17,10 +17,10 @@ class AkariTaskSubsystem : public AkariSubsystem {
 	public:
 		AkariTaskSubsystem();
 
-		u8 VersionMajor() const;
-		u8 VersionMinor() const;
-		const char *VersionManufacturer() const;
-		const char *VersionProduct() const;
+		u8 versionMajor() const;
+		u8 versionMinor() const;
+		const char *versionManufacturer() const;
+		const char *versionProduct() const;
 
 		static void SwitchRing(u8 cpl, u8 iopl);
 
@@ -29,8 +29,8 @@ class AkariTaskSubsystem : public AkariSubsystem {
 				static Task *BootstrapInitialTask(u8 cpl, AkariMemorySubsystem::PageDirectory *pageDirBase);
 				static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, AkariMemorySubsystem::PageDirectory *pageDirBase);
 
-				bool GetIOMap(u8 port) const;
-				void SetIOMap(u8 port, bool enabled);
+				bool getIOMap(u8 port) const;
+				void setIOMap(u8 port, bool enabled);
 
 				// Task linked list.
 				Task *next, *priorityNext;
@@ -62,10 +62,10 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 		};
 
-		Task *GetNextTask();
-		void CycleTask();
-		void SaveRegisterToTask(Task *dest, void *regs);
-		void *AssignInternalTask(Task *task);
+		Task *getNextTask();
+		void cycleTask();
+		void saveRegisterToTask(Task *dest, void *regs);
+		void *assignInternalTask(Task *task);
 
 		Task *start, *current;
 		Task *priorityStart;

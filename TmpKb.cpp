@@ -41,23 +41,23 @@ static u8 held_scancodes[16];     // held_scancodes is a 128-bit=16 bytes bitfie
 static unsigned long keyboard_index = 0, keyboard_limit = 0;                       // we assume keyboard_index to be within KEYBOARD_BUFFER_LENGTH, thus no need to modulo
 static s8 keyboard_buffer[KEYBOARD_BUFFER_LENGTH];
 
-static void waitforkb() {
+static void waitForKb() {
     while (1)
         if ((AkariInB(0x64) & 2) == 0)
             break;
 }
 
-static void update_leds() {
+static void updateLEDs() {
     u8 valuebyte =
         (scrolllock_down ? 1 : 0) |
         (numlock_down ? 2 : 0) |
         (capslock_down ? 4 : 0);
 
-    waitforkb(); AkariOutB(0x60, 0xed);
-    waitforkb(); AkariOutB(0x60, valuebyte);
+    waitForKb(); AkariOutB(0x60, 0xed);
+    waitForKb(); AkariOutB(0x60, valuebyte);
 }
 
-static s8 shift_character(s8 c) {
+static s8 shiftCharacter(s8 c) {
     if (c >= 'a' && c <= 'z')
         return c - 0x20;
     s8 *p = keyboard_us_shift_table;
@@ -69,7 +69,7 @@ static s8 shift_character(s8 c) {
     return c;
 }
 
-static s8 capslock_invert(s8 c) {
+static s8 capslockInvert(s8 c) {
     if (c >= 'a' && c <= 'z')
         return c - 0x20;
     if (c >= 'A' && c <= 'Z')
@@ -112,19 +112,19 @@ void KeyboardProcess() {
 				pressed_alt = true;
 			else if (scancode == 58) {
 				capslock_down = !capslock_down;
-				update_leds();
+				updateLEDs();
 			} else if (scancode == 69) {
 				numlock_down = !numlock_down;
-				update_leds();
+				updateLEDs();
 			} else if (scancode == 70) {
 				scrolllock_down = !scrolllock_down;
-				update_leds();
+				updateLEDs();
 			} else {
 				scancode = keyboard_us[scancode];
 				if (pressed_shift)
-					scancode = shift_character(scancode);
+					scancode = shiftCharacter(scancode);
 				if (capslock_down)
-					scancode = capslock_invert(scancode);
+					scancode = capslockInvert(scancode);
 				if (echo_mode)
 					syscall_putc(scancode);
 				if (recording_mode) {

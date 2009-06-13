@@ -7,12 +7,12 @@ class AkariTimerSubsystem : public AkariSubsystem {
 	public:
 		AkariTimerSubsystem();
 
-		u8 VersionMajor() const;
-		u8 VersionMinor() const;
-		const char *VersionManufacturer() const;
-		const char *VersionProduct() const;
+		u8 versionMajor() const;
+		u8 versionMinor() const;
+		const char *versionManufacturer() const;
+		const char *versionProduct() const;
 
-		void SetTimer(u16);
+		void setTimer(u16);
 };
 
 #endif

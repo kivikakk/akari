@@ -96,7 +96,7 @@ u32 ASCIIString::length() const {
 	return _dataLength;
 }
 
-const char *ASCIIString::GetCString() const {
+const char *ASCIIString::getCString() const {
 	static char *buffer = 0;
 	static u32 bufferLength = 0;	// includes NUL allocated
 

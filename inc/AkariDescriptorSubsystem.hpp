@@ -10,26 +10,26 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 	public:
 		AkariDescriptorSubsystem();
 
-		u8 VersionMajor() const;
-		u8 VersionMinor() const;
-		const char *VersionManufacturer() const;
-		const char *VersionProduct() const;
+		u8 versionMajor() const;
+		u8 versionMinor() const;
+		const char *versionManufacturer() const;
+		const char *versionProduct() const;
 
 		class GDT {
 			public:
 				GDT(u32);
 
-				void SetGateFields(s32 num, u32 base, u32 limit, u8 access, u8 granularity);
+				void setGateFields(s32 num, u32 base, u32 limit, u8 access, u8 granularity);
 
-				void SetGate(s32 num, u32 base, u32 limit, u8 dpl, bool code);
-				void ClearGate(s32 num);
-				void WriteTSS(s32 num, u16 ss0, u32 esp0);
+				void setGate(s32 num, u32 base, u32 limit, u8 dpl, bool code);
+				void clearGate(s32 num);
+				void writeTSS(s32 num, u16 ss0, u32 esp0);
 
-				void Flush();
-				void FlushTSS(s32);
+				void flush();
+				void flushTSS(s32);
 
-				void SetTSSStack(u32);
-				void SetTSSIOMap(u8 *const &);
+				void setTSSStack(u32);
+				void setTSSIOMap(u8 *const &);
 
 			protected:
 				struct Entry {
@@ -80,10 +80,10 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 			public:
 				IDT();
 
-				void SetGate(u8, void (*)(), u16, u8);
-				void InstallHandler(u8, isr_handler_func_t);
-				void ClearHandler(u8);
-				void *CallHandler(u8, struct modeswitch_registers *);
+				void setGate(u8, void (*)(), u16, u8);
+				void installHandler(u8, isr_handler_func_t);
+				void clearHandler(u8);
+				void *callHandler(u8, struct modeswitch_registers *);
  
 			protected:
 				union Entry {
@@ -111,9 +111,9 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 			public:
 				IRQT(IDT *);
 
-				void InstallHandler(u8, irq_handler_func_t);
-				void ClearHandler(u8);
-				void *CallHandler(u8, struct modeswitch_registers *);
+				void installHandler(u8, irq_handler_func_t);
+				void clearHandler(u8);
+				void *callHandler(u8, struct modeswitch_registers *);
 
 			protected:
 				irq_handler_func_t _routines[16];

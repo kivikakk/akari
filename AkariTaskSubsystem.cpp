@@ -5,10 +5,10 @@ AkariTaskSubsystem::AkariTaskSubsystem(): start(0), current(0), priorityStart(0)
 	registeredTasks = new HashTable<ASCIIString, Task *>();
 }
 
-u8 AkariTaskSubsystem::VersionMajor() const { return 0; }
-u8 AkariTaskSubsystem::VersionMinor() const { return 1; }
-const char *AkariTaskSubsystem::VersionManufacturer() const { return "Akari"; }
-const char *AkariTaskSubsystem::VersionProduct() const { return "Akari Task Manager"; }
+u8 AkariTaskSubsystem::versionMajor() const { return 0; }
+u8 AkariTaskSubsystem::versionMinor() const { return 1; }
+const char *AkariTaskSubsystem::versionManufacturer() const { return "Akari"; }
+const char *AkariTaskSubsystem::versionProduct() const { return "Akari Task Manager"; }
 
 void AkariTaskSubsystem::SwitchRing(u8 cpl, u8 iopl) {
 	// This code works by fashioning the stack to be right for a cross-privilege IRET into
@@ -64,7 +64,7 @@ static inline AkariTaskSubsystem::Task *_NextTask(AkariTaskSubsystem::Task *t) {
 	return t->next ? t->next : Akari->Task->start;
 }
 
-AkariTaskSubsystem::Task *AkariTaskSubsystem::GetNextTask() {
+AkariTaskSubsystem::Task *AkariTaskSubsystem::getNextTask() {
 	if (priorityStart) {
 		// We have something priority. We put it in without regard for irqWait,
 		// since it's probably an IRQ being fired that put it there ...
@@ -96,11 +96,11 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::GetNextTask() {
 	}
 }
 
-void AkariTaskSubsystem::CycleTask() {
-	current = GetNextTask();
+void AkariTaskSubsystem::cycleTask() {
+	current = getNextTask();
 }
 
-void AkariTaskSubsystem::SaveRegisterToTask(Task *dest, void *regs) {
+void AkariTaskSubsystem::saveRegisterToTask(Task *dest, void *regs) {
 	// we're saving a task even though it's in a state not matching its CPL?
 	// This could happen if, say, it's in kernel mode, then interrupts or something.
 	// HACK: need to handle this situation properly, but for now, ensure
@@ -116,13 +116,13 @@ void AkariTaskSubsystem::SaveRegisterToTask(Task *dest, void *regs) {
 	}
 }
 
-void *AkariTaskSubsystem::AssignInternalTask(Task *task) {
+void *AkariTaskSubsystem::assignInternalTask(Task *task) {
 	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
 	ASSERT(task);
-	Akari->Memory->SwitchPageDirectory(task->pageDir);
+	Akari->Memory->switchPageDirectory(task->pageDir);
 	if (task->cpl > 0) {
-		Akari->Descriptor->gdt->SetTSSStack(task->utks + sizeof(struct modeswitch_registers));
-		Akari->Descriptor->gdt->SetTSSIOMap(task->iomap);
+		Akari->Descriptor->gdt->setTSSStack(task->utks + sizeof(struct modeswitch_registers));
+		Akari->Descriptor->gdt->setTSSIOMap(task->iomap);
 	}
 
 	if (task->irqWaiting) {
@@ -136,26 +136,26 @@ void *AkariTaskSubsystem::AssignInternalTask(Task *task) {
 AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(u8 cpl, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	Task *nt = new Task(cpl);
 	if (cpl > 0)
-		nt->utks = (u32)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		nt->utks = (u32)Akari->Memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 	else {
 		AkariPanic("I haven't tested a non-user idle (initial) task. Uncomment this panic at your own peril.");
 		// i.e. you may need to add some code as deemed appropriate here. Current thoughts are that you may need to
 		// be careful about where you placed the stack.. probably not, but just check it all matches up?
 	}
 
-	nt->pageDir = pageDirBase->Clone();
+	nt->pageDir = pageDirBase->clone();
 
 	return nt;
 }
 
 AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	Task *nt = new Task(cpl);
-	nt->ks = (u32)Akari->Memory->AllocAligned(USER_TASK_STACK_SIZE) + USER_TASK_STACK_SIZE;
+	nt->ks = (u32)Akari->Memory->allocAligned(USER_TASK_STACK_SIZE) + USER_TASK_STACK_SIZE;
 
 	struct modeswitch_registers *regs = 0;
 
 	if (cpl > 0) {
-		nt->utks = (u32)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		nt->utks = (u32)Akari->Memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 		regs = (struct modeswitch_registers *)(nt->utks);
 
 		regs->useresp = nt->ks;
@@ -176,16 +176,16 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(u32 entry, u8 cpl
 	regs->callback.cs = 0x08 + (cpl * 0x11);			// note the low 2 bits are the CPL
 	regs->callback.eflags = (interruptFlag ? 0x200 : 0x0) | (iopl << 12);
 
-	nt->pageDir = pageDirBase->Clone();
+	nt->pageDir = pageDirBase->clone();
 
 	return nt;
 }
 
-bool AkariTaskSubsystem::Task::GetIOMap(u8 port) const {
+bool AkariTaskSubsystem::Task::getIOMap(u8 port) const {
 	return (iomap[port / 8] & (1 << (port % 8))) == 0;
 }
 
-void AkariTaskSubsystem::Task::SetIOMap(u8 port, bool enabled) {
+void AkariTaskSubsystem::Task::setIOMap(u8 port, bool enabled) {
 	if (enabled)
 		iomap[port / 8] &= ~(1 << (port % 8));
 	else

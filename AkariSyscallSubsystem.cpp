@@ -3,34 +3,34 @@
 #include <UserCalls.hpp>
 
 AkariSyscallSubsystem::AkariSyscallSubsystem(): _syscalls_assigned(0) {
-	Akari->Descriptor->idt->InstallHandler(0x80, &AkariSyscallSubsystem::_handler);
+	Akari->Descriptor->idt->installHandler(0x80, &AkariSyscallSubsystem::_handler);
 
-	AddSyscall(0, (void *)&User::Putc);
-	AddSyscall(1, (void *)&User::Puts);
-	AddSyscall(2, (void *)&User::Putl);
-	AddSyscall(3, (void *)&User::GetProcessId);
-	AddSyscall(4, (void *)&User::IrqWait);
-	AddSyscall(5, (void *)&User::IrqListen);
-	AddSyscall(6, (void *)&User::Panic);
-	AddSyscall(7, (void *)&User::RegisterName);
-	AddSyscall(8, (void *)&User::RegisterNode);
+	addSyscall(0, (void *)&User::putc);
+	addSyscall(1, (void *)&User::puts);
+	addSyscall(2, (void *)&User::putl);
+	addSyscall(3, (void *)&User::getProcessId);
+	addSyscall(4, (void *)&User::irqWait);
+	addSyscall(5, (void *)&User::irqListen);
+	addSyscall(6, (void *)&User::panic);
+	addSyscall(7, (void *)&User::registerName);
+	addSyscall(8, (void *)&User::registerNode);
 }
 
-u8 AkariSyscallSubsystem::VersionMajor() const { return 0; }
-u8 AkariSyscallSubsystem::VersionMinor() const { return 1; }
-const char *AkariSyscallSubsystem::VersionManufacturer() const { return "Akari"; }
-const char *AkariSyscallSubsystem::VersionProduct() const { return "Akari Syscall"; }
+u8 AkariSyscallSubsystem::versionMajor() const { return 0; }
+u8 AkariSyscallSubsystem::versionMinor() const { return 1; }
+const char *AkariSyscallSubsystem::versionManufacturer() const { return "Akari"; }
+const char *AkariSyscallSubsystem::versionProduct() const { return "Akari Syscall"; }
 
-void AkariSyscallSubsystem::AddSyscall(u16 num, void *fn) {
+void AkariSyscallSubsystem::addSyscall(u16 num, void *fn) {
 	_syscalls[num] = fn;
 }
 
-void AkariSyscallSubsystem::ReturnToTask(AkariTaskSubsystem::Task *task) {
+void AkariSyscallSubsystem::returnToTask(AkariTaskSubsystem::Task *task) {
 	_returnTask = task;
 }
 
-void AkariSyscallSubsystem::ReturnToNextTask() {
-	ReturnToTask(Akari->Task->GetNextTask());
+void AkariSyscallSubsystem::returnToNextTask() {
+	returnToTask(Akari->Task->getNextTask());
 }
 
 void *AkariSyscallSubsystem::_handler(struct modeswitch_registers *regs) {
@@ -63,9 +63,9 @@ void *AkariSyscallSubsystem::_handler(struct modeswitch_registers *regs) {
     regs->callback.eax = ret;
 
 	if (Akari->Syscall->_returnTask) {
-		Akari->Task->SaveRegisterToTask(Akari->Task->current, regs);
+		Akari->Task->saveRegisterToTask(Akari->Task->current, regs);
 		Akari->Task->current = Akari->Syscall->_returnTask;
-		return Akari->Task->AssignInternalTask(Akari->Task->current);
+		return Akari->Task->assignInternalTask(Akari->Task->current);
 	}
 
 	return regs;

@@ -10,15 +10,15 @@ class AkariSyscallSubsystem : public AkariSubsystem {
 	public:
 		AkariSyscallSubsystem();
 
-		u8 VersionMajor() const;
-		u8 VersionMinor() const;
-		const char *VersionManufacturer() const;
-		const char *VersionProduct() const;
+		u8 versionMajor() const;
+		u8 versionMinor() const;
+		const char *versionManufacturer() const;
+		const char *versionProduct() const;
 
-		void AddSyscall(u16 num, void *fn);
+		void addSyscall(u16 num, void *fn);
 
-		void ReturnToTask(AkariTaskSubsystem::Task *task);
-		void ReturnToNextTask();
+		void returnToTask(AkariTaskSubsystem::Task *task);
+		void returnToNextTask();
 
 	protected:
 		static void *_handler(struct modeswitch_registers *);

@@ -32,7 +32,7 @@ class HashTable {
 			return s;
 		}
 
-		bool HasKey(const K &key) const {
+		bool hasKey(const K &key) const {
 			_InternalItem *traverse = head;
 			while (traverse) {
 				if (traverse->key == key)

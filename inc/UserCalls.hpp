@@ -4,15 +4,15 @@
 #include <arch.hpp>
 
 namespace User {
-	void Putc(char c);
-	void Puts(const char *s);
-	void Putl(u32 n, u8 base);
-	u32 GetProcessId();
-	void IrqWait();
-	void IrqListen(u32 irq);
-	void Panic(const char *s);
-	bool RegisterName(const char *name);
-	u32 RegisterNode(const char *name);
+	void putc(char c);
+	void puts(const char *s);
+	void putl(u32 n, u8 base);
+	u32 getProcessId();
+	void irqWait();
+	void irqListen(u32 irq);
+	void panic(const char *s);
+	bool registerName(const char *name);
+	u32 registerNode(const char *name);
 }
 
 #endif

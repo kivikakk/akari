@@ -32,13 +32,13 @@ class HolyArray {
 		}
 
 		const T &operator[](u32 index) const {
-			ASSERT(_indexMap->HasKey(index));
+			ASSERT(_indexMap->hasKey(index));
 			u32 transformedIndex = (*_indexMap)[index];
 			return *_items[transformedIndex];
 		}
 
 		T &operator[](u32 index) {
-			ASSERT(_indexMap->HasKey(index));
+			ASSERT(_indexMap->hasKey(index));
 			u32 transformedIndex = (*_indexMap)[index];
 			return *_items[transformedIndex];
 		}
@@ -55,11 +55,11 @@ class HolyArray {
 					if (_usageMap[i] != 0xFFFFFFFF) {
 						// There's a gap.
 						for (u32 j = 0; j < 32; ++j) {
-							if (_usageMap[i] & (1 << j) == 0) {
+							if ((_usageMap[i] & (1 << j)) == 0) {
 								_usageMap[i] |= (1 << j);
 								_items[i * 32 + j] = new T(item);
 								(*_indexMap)[index] = i * 32 + j;
-								return i * 32 + j;
+								return;
 							}
 						}
 					}

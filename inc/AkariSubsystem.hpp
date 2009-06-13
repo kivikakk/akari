@@ -8,10 +8,10 @@ class AkariSubsystem {
 		AkariSubsystem();
 		virtual ~AkariSubsystem();
 
-		virtual u8 VersionMajor() const = 0;
-		virtual u8 VersionMinor() const = 0;
-		virtual const char *VersionManufacturer() const = 0;
-		virtual const char *VersionProduct() const = 0;
+		virtual u8 versionMajor() const = 0;
+		virtual u8 versionMinor() const = 0;
+		virtual const char *versionManufacturer() const = 0;
+		virtual const char *versionProduct() const = 0;
 };
 
 #endif

@@ -15,7 +15,7 @@ AkariKernel *AkariKernel::Construct(u32 addr, u32 upperMemory) {
 	kernel->Memory = new ((void *)addr) AkariMemorySubsystem(upperMemory);
 	addr += sizeof(AkariMemorySubsystem);
 
-	kernel->Memory->SetPlacementMode(addr);
+	kernel->Memory->setPlacementMode(addr);
 
 	return kernel;
 }

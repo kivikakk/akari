@@ -8,27 +8,27 @@ class AkariConsoleSubsystem : public AkariSubsystem {
 	public:
 		AkariConsoleSubsystem();
 
-		u8 VersionMajor() const;
-		u8 VersionMinor() const;
-		const char *VersionManufacturer() const;
-		const char *VersionProduct() const;
+		u8 versionMajor() const;
+		u8 versionMinor() const;
+		const char *versionManufacturer() const;
+		const char *versionProduct() const;
 
-		void Clear();
-		void PutChar(s8);
-		void PutString(const char *);
-		void PutStringN(const char *, u32);
-		void PutInt(u32, u8);
+		void clear();
+		void putChar(s8);
+		void putString(const char *);
+		void putStringN(const char *, u32);
+		void putInt(u32, u8);
 
 	protected:
-		u8 _CursorX, _CursorY;
+		u8 _cursorX, _cursorY;
 
-		void _Scroll();
+		void _scroll();
 
-		void _ShiftCursor();
-		void _ShiftCursorTab();
-		void _ShiftCursorNewline();
+		void _shiftCursor();
+		void _shiftCursorTab();
+		void _shiftCursorNewline();
 
-		void _UpdateCursor() const;
+		void _updateCursor() const;
 };
 
 #endif

@@ -22,7 +22,7 @@ class ASCIIString {
 
 		bool empty() const;
 		u32 length() const;
-		const char *GetCString() const;
+		const char *getCString() const;
 
 	protected:
 		char *_data;
