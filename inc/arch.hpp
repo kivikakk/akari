@@ -4,6 +4,7 @@
 // These are specific to my architecture, and will need to be expanded
 // to a proper system later.
 
+typedef __SIZE_TYPE__ size_t;
 typedef unsigned long u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
@@ -21,9 +22,9 @@ extern "C" u16 AkariInW(u16);
 
 // Compiler-specific things.
 extern "C" void __cxa_pure_virtual();
-void *operator new(u32);
-void *operator new[](u32);
-void *operator new(u32, void *);
+void *operator new(size_t);
+void *operator new[](size_t);
+void *operator new(size_t, void *);
 void operator delete(void *);
 void operator delete[](void *);
 
