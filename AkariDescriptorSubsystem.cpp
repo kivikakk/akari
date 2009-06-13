@@ -4,23 +4,23 @@
 #include <interrupts.hpp>
 #include <debug.hpp>
 
-AkariDescriptorSubsystem::AkariDescriptorSubsystem(): _gdt(0), _idt(0), _irqt(0) {
-	_gdt = new GDT(10);
-	_gdt->SetGate(1, 0, 0xFFFFFFFF, 0, true);	// code (CS)
-	_gdt->SetGate(2, 0, 0xFFFFFFFF, 0, false);	// data (SS)
-	_gdt->SetGate(3, 0, 0xFFFFFFFF, 1, true);	// driver code (CS)
-	_gdt->SetGate(4, 0, 0xFFFFFFFF, 1, false);	// driver data (SS)
-	_gdt->ClearGate(5);	// unused (code)
-	_gdt->ClearGate(6);	// unused (data)
-	_gdt->SetGate(7, 0, 0xFFFFFFFF, 3, true);	// user code (CS)
-	_gdt->SetGate(8, 0, 0xFFFFFFFF, 3, false);	// user data (SS)
-	_gdt->WriteTSS(9, 0x10, 0x0);		// empty ESP in TSS for now.. changed later in execution
-	_gdt->Flush();
-	_gdt->FlushTSS(9);
+AkariDescriptorSubsystem::AkariDescriptorSubsystem(): gdt(0), idt(0), irqt(0) {
+	gdt = new GDT(10);
+	gdt->SetGate(1, 0, 0xFFFFFFFF, 0, true);	// code (CS)
+	gdt->SetGate(2, 0, 0xFFFFFFFF, 0, false);	// data (SS)
+	gdt->SetGate(3, 0, 0xFFFFFFFF, 1, true);	// driver code (CS)
+	gdt->SetGate(4, 0, 0xFFFFFFFF, 1, false);	// driver data (SS)
+	gdt->ClearGate(5);	// unused (code)
+	gdt->ClearGate(6);	// unused (data)
+	gdt->SetGate(7, 0, 0xFFFFFFFF, 3, true);	// user code (CS)
+	gdt->SetGate(8, 0, 0xFFFFFFFF, 3, false);	// user data (SS)
+	gdt->WriteTSS(9, 0x10, 0x0);		// empty ESP in TSS for now.. changed later in execution
+	gdt->Flush();
+	gdt->FlushTSS(9);
 
-	_idt = new IDT();
+	idt = new IDT();
 
-	_irqt = new IRQT(_idt);
+	irqt = new IRQT(idt);
 }
 
 u8 AkariDescriptorSubsystem::VersionMajor() const { return 0; }
@@ -164,7 +164,7 @@ AkariDescriptorSubsystem::IRQT::IRQT(IDT *idt): _idt(idt) {
 	AkariOutB(0x21, 0x00);
 	AkariOutB(0xA1, 0x00);
 
-#define SET_IRQ_GATE(n) _idt->SetGate(0x2##n, irq##n, 0x08, 0x8e)
+#define SET_IRQ_GATE(n) idt->SetGate(0x2##n, irq##n, 0x08, 0x8e)
 	SET_IRQ_GATE(0); SET_IRQ_GATE(1); SET_IRQ_GATE(2); SET_IRQ_GATE(3);
 	SET_IRQ_GATE(4); SET_IRQ_GATE(5); SET_IRQ_GATE(6); SET_IRQ_GATE(7);
 	SET_IRQ_GATE(8); SET_IRQ_GATE(9); SET_IRQ_GATE(a); SET_IRQ_GATE(b);

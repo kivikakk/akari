@@ -19,6 +19,7 @@ DECL_SYSCALL0(getProcessId);
 DECL_SYSCALL0(irqWait);
 DECL_SYSCALL1(irqListen, u32);
 DECL_SYSCALL1(panic, const char *);
+DECL_SYSCALL1(registerName, const char *);
 
 #endif
 

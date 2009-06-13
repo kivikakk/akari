@@ -29,7 +29,7 @@ void *isr_handler(struct modeswitch_registers *r) {
 	ASSERT(r->callback.int_no < 0x20 || r->callback.int_no >= 0x30);
 	// I guess this is right? What other IDTs are there? Hm.
 
-	void *resume = Akari->Descriptor->_idt->CallHandler(r->callback.int_no, r);
+	void *resume = Akari->Descriptor->idt->CallHandler(r->callback.int_no, r);
 	if (!resume) {
 		// nothing to call!
 		Akari->Console->PutChar('\n');
@@ -64,6 +64,6 @@ void *irq_handler(struct modeswitch_registers *r) {
 		AkariOutB(0xA0, 0x20);		// EOI to slave IRQ controller
 	AkariOutB(0x20, 0x20);			// EOI to master IRQ controller
 
-	return Akari->Descriptor->_irqt->CallHandler(r->callback.int_no - 0x20, r);
+	return Akari->Descriptor->irqt->CallHandler(r->callback.int_no - 0x20, r);
 }
 

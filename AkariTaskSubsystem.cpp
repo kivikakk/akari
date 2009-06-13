@@ -104,24 +104,24 @@ void AkariTaskSubsystem::SaveRegisterToTask(Task *dest, void *regs) {
 	// This could happen if, say, it's in kernel mode, then interrupts or something.
 	// HACK: need to handle this situation properly, but for now, ensure
 	// internal consistency.
-	ASSERT(((((struct modeswitch_registers *)regs)->callback.cs - 0x08) / 0x11) == dest->_cpl);
+	ASSERT(((((struct modeswitch_registers *)regs)->callback.cs - 0x08) / 0x11) == dest->cpl);
 
-	if (!dest->_cpl > 0) {
+	if (!dest->cpl > 0) {
 		// update the tip of stack pointer so we can restore later
-		dest->_ks = (u32)regs;
+		dest->ks = (u32)regs;
 	} else {
 		// update utks pointer
-		dest->_utks = (u32)regs;
+		dest->utks = (u32)regs;
 	}
 }
 
 void *AkariTaskSubsystem::AssignInternalTask(Task *task) {
 	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
 	ASSERT(task);
-	Akari->Memory->SwitchPageDirectory(task->_pageDir);
-	if (task->_cpl > 0) {
-		Akari->Descriptor->_gdt->SetTSSStack(task->_utks + sizeof(struct modeswitch_registers));
-		Akari->Descriptor->_gdt->SetTSSIOMap(task->_iomap);
+	Akari->Memory->SwitchPageDirectory(task->pageDir);
+	if (task->cpl > 0) {
+		Akari->Descriptor->gdt->SetTSSStack(task->utks + sizeof(struct modeswitch_registers));
+		Akari->Descriptor->gdt->SetTSSIOMap(task->iomap);
 	}
 
 	if (task->irqWaiting) {
@@ -129,39 +129,39 @@ void *AkariTaskSubsystem::AssignInternalTask(Task *task) {
 		task->irqListenHits--;
 	}
 
-	return (void *)((!task->_cpl > 0) ? task->_ks : task->_utks);
+	return (void *)((!task->cpl > 0) ? task->ks : task->utks);
 }
 
 AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(u8 cpl, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	Task *nt = new Task(cpl);
 	if (cpl > 0)
-		nt->_utks = (u32)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		nt->utks = (u32)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 	else {
 		AkariPanic("I haven't tested a non-user idle (initial) task. Uncomment this panic at your own peril.");
 		// i.e. you may need to add some code as deemed appropriate here. Current thoughts are that you may need to
 		// be careful about where you placed the stack.. probably not, but just check it all matches up?
 	}
 
-	nt->_pageDir = pageDirBase->Clone();
+	nt->pageDir = pageDirBase->Clone();
 
 	return nt;
 }
 
 AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, AkariMemorySubsystem::PageDirectory *pageDirBase) {
 	Task *nt = new Task(cpl);
-	nt->_ks = (u32)Akari->Memory->AllocAligned(USER_TASK_STACK_SIZE) + USER_TASK_STACK_SIZE;
+	nt->ks = (u32)Akari->Memory->AllocAligned(USER_TASK_STACK_SIZE) + USER_TASK_STACK_SIZE;
 
 	struct modeswitch_registers *regs = 0;
 
 	if (cpl > 0) {
-		nt->_utks = (u32)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
-		regs = (struct modeswitch_registers *)(nt->_utks);
+		nt->utks = (u32)Akari->Memory->AllocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		regs = (struct modeswitch_registers *)(nt->utks);
 
-		regs->useresp = nt->_ks;
+		regs->useresp = nt->ks;
 		regs->ss = 0x10 + (cpl * 0x11);		// dsと同じ.. ssがTSSにセットされ、dsは（後で）irq_timer_multitaskに手動によるセットされる
 	} else {
-		nt->_ks -= sizeof(struct callback_registers);
-		regs = (struct modeswitch_registers *)(nt->_ks);
+		nt->ks -= sizeof(struct callback_registers);
+		regs = (struct modeswitch_registers *)(nt->ks);
 	}
 
 	// only set ->callback.* here, as it may not be a proper modeswitch_registers if cpl==0
@@ -175,28 +175,28 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::CreateTask(u32 entry, u8 cpl
 	regs->callback.cs = 0x08 + (cpl * 0x11);			// note the low 2 bits are the CPL
 	regs->callback.eflags = (interruptFlag ? 0x200 : 0x0) | (iopl << 12);
 
-	nt->_pageDir = pageDirBase->Clone();
+	nt->pageDir = pageDirBase->Clone();
 
 	return nt;
 }
 
 bool AkariTaskSubsystem::Task::GetIOMap(u8 port) const {
-	return (_iomap[port / 8] & (1 << (port % 8))) == 0;
+	return (iomap[port / 8] & (1 << (port % 8))) == 0;
 }
 
 void AkariTaskSubsystem::Task::SetIOMap(u8 port, bool enabled) {
 	if (enabled)
-		_iomap[port / 8] &= ~(1 << (port % 8));
+		iomap[port / 8] &= ~(1 << (port % 8));
 	else
-		_iomap[port / 8] |= (1 << (port % 8));
+		iomap[port / 8] |= (1 << (port % 8));
 }
 
 AkariTaskSubsystem::Task::Task(u8 cpl):
 		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
-		_id(0), _cpl(cpl), _pageDir(0), _ks(0), _utks(0) {
+		id(0), cpl(cpl), pageDir(0), ks(0), utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
-	_id = ++lastAssignedId;
+	id = ++lastAssignedId;
 
 	for (u8 i = 0; i < 32; ++i)
-		_iomap[i] = 0xFF;
+		iomap[i] = 0xFF;
 }

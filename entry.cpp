@@ -56,8 +56,8 @@ static void AkariEntryCont() {
 		3, Akari->Memory->_kernelDirectory);
 	Akari->Task->start = Akari->Task->current = base;
 
-	Akari->Descriptor->_gdt->SetTSSStack(base->_utks + sizeof(struct modeswitch_registers));
-	Akari->Descriptor->_gdt->SetTSSIOMap(base->_iomap);
+	Akari->Descriptor->gdt->SetTSSStack(base->utks + sizeof(struct modeswitch_registers));
+	Akari->Descriptor->gdt->SetTSSIOMap(base->iomap);
 
 	// Keyboard driver task
 	AkariTaskSubsystem::Task *kbdriver = AkariTaskSubsystem::Task::CreateTask(
@@ -77,7 +77,7 @@ static void AkariEntryCont() {
 	other->next = third;
 
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
-	Akari->Memory->SwitchPageDirectory(base->_pageDir);
+	Akari->Memory->SwitchPageDirectory(base->pageDir);
 
 	Akari->Task->SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 

@@ -11,6 +11,7 @@ namespace User {
 	void IrqWait();
 	void IrqListen(u32 irq);
 	void Panic(const char *s);
+	bool RegisterName(const char *name);
 }
 
 #endif

@@ -65,7 +65,7 @@ void AkariMemorySubsystem::SetPaging(bool mode) {
 	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
 		_kernelDirectory->GetPage(i, true)->AllocAnyFrame(false, KERNEL_HEAP_PROMISC);
 
-	Akari->Descriptor->_idt->InstallHandler(14, this->PageFault);
+	Akari->Descriptor->idt->InstallHandler(14, this->PageFault);
 
 	SwitchPageDirectory(_kernelDirectory);
 	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, false, !(KERNEL_HEAP_PROMISC));

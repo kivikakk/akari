@@ -3,7 +3,7 @@
 #include <UserCalls.hpp>
 
 AkariSyscallSubsystem::AkariSyscallSubsystem(): _syscalls_assigned(0) {
-	Akari->Descriptor->_idt->InstallHandler(0x80, &AkariSyscallSubsystem::_handler);
+	Akari->Descriptor->idt->InstallHandler(0x80, &AkariSyscallSubsystem::_handler);
 
 	AddSyscall(0, (void *)&User::Putc);
 	AddSyscall(1, (void *)&User::Puts);
@@ -12,6 +12,7 @@ AkariSyscallSubsystem::AkariSyscallSubsystem(): _syscalls_assigned(0) {
 	AddSyscall(4, (void *)&User::IrqWait);
 	AddSyscall(5, (void *)&User::IrqListen);
 	AddSyscall(6, (void *)&User::Panic);
+	AddSyscall(7, (void *)&User::RegisterName);
 }
 
 u8 AkariSyscallSubsystem::VersionMajor() const { return 0; }

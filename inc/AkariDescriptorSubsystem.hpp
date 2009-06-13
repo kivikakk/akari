@@ -15,9 +15,6 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 		const char *VersionManufacturer() const;
 		const char *VersionProduct() const;
 
-	//protected:
-	// XXX - _idt, _irqt is used publicly... whoops
-
 		class GDT {
 			public:
 				GDT(u32);
@@ -123,9 +120,9 @@ class AkariDescriptorSubsystem : public AkariSubsystem {
 				IDT *_idt;
 		};
 
-		GDT *_gdt;
-		IDT *_idt;
-		IRQT *_irqt;
+		GDT *gdt;
+		IDT *idt;
+		IRQT *irqt;
 };
 
 #endif

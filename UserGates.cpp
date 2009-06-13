@@ -51,4 +51,5 @@ DEFN_SYSCALL0(getProcessId, 3);
 DEFN_SYSCALL0(irqWait, 4);
 DEFN_SYSCALL1(irqListen, 5, u32);
 DEFN_SYSCALL1(panic, 6, const char *);
+DEFN_SYSCALL1(registerName, 7, const char *);
 

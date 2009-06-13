@@ -34,15 +34,16 @@ class AkariTaskSubsystem : public AkariSubsystem {
 				bool irqWaiting;
 				u32 irqListen, irqListenHits;
 
-			// protected:
+				u32 id; u8 cpl;
+
+				AkariMemorySubsystem::PageDirectory *pageDir;
+
+				u32 ks; u32 utks;
+				u8 iomap[32];
+
+			protected:
 				Task(u8 cpl);
 
-				u32 _id; u8 _cpl;
-
-				AkariMemorySubsystem::PageDirectory *_pageDir;
-
-				u32 _ks; u32 _utks;
-				u8 _iomap[32];
 		};
 
 		Task *GetNextTask();

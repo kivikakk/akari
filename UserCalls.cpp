@@ -14,7 +14,7 @@ namespace User {
 		Akari->Console->PutInt(n, base);
 	}
 	u32 GetProcessId() {
-		return Akari->Task->current->_id;
+		return Akari->Task->current->id;
 	}
 
 	void IrqWait() {
@@ -40,6 +40,10 @@ namespace User {
 		// so ring 1 tasks panicking should, like ring 3 ones, just be killed off. (and
 		// the idea is that the system notes this and fixes it. yep) (TODO!)
 		AkariPanic(s);
+	}
+
+	bool RegisterName(const char *name) {
+		return true;
 	}
 }
 
