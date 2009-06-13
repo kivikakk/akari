@@ -1,8 +1,9 @@
 #include <AkariTaskSubsystem.hpp>
 #include <Akari.hpp>
 
-AkariTaskSubsystem::AkariTaskSubsystem(): start(0), current(0), priorityStart(0)
-{ }
+AkariTaskSubsystem::AkariTaskSubsystem(): start(0), current(0), priorityStart(0) {
+	registeredTasks = new HashTable<ASCIIString, Task *>();
+}
 
 u8 AkariTaskSubsystem::VersionMajor() const { return 0; }
 u8 AkariTaskSubsystem::VersionMinor() const { return 1; }
