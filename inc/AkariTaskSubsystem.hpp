@@ -4,6 +4,7 @@
 #include <AkariSubsystem.hpp>
 #include <AkariMemorySubsystem.hpp>
 #include <interrupts.hpp>
+#include <HashTable.hpp>
 
 // user task kernel stack is used for state when it's
 // pre-empted, and for system calls, etc.
@@ -58,6 +59,7 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 		Task *start, *current;
 		Task *priorityStart;
+		HashTable<const char *, Task *> *registeredTasks;
 };
 
 #endif
