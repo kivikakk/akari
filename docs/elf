@@ -1,0 +1,3 @@
+As it turns out, almost all the sections are `progbits', apart from .shstrtab and .strtab (they're string tables) and .symtab (symbol table). Pretty straight forward.
+
+.text, .data, .rodata - all progbits.
