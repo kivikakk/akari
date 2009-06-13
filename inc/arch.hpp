@@ -25,6 +25,7 @@ void *operator new(u32);
 void *operator new[](u32);
 void *operator new(u32, void *);
 void operator delete(void *);
+void operator delete[](void *);
 
 #endif
 

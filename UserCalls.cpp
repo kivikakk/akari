@@ -1,5 +1,6 @@
 #include <UserCalls.hpp>
 #include <Akari.hpp>
+#include <POSIX.hpp>
 
 namespace User {
 	void Putc(char c) {
@@ -43,6 +44,11 @@ namespace User {
 	}
 
 	bool RegisterName(const char *name) {
+		if (Akari->Task->registeredTasks->HasKey(name))
+			return false;
+
+		(*Akari->Task->registeredTasks)[name] = Akari->Task->current;
+		Akari->Task->current->registeredName = name;
 		return true;
 	}
 }

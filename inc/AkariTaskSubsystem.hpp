@@ -5,6 +5,7 @@
 #include <AkariMemorySubsystem.hpp>
 #include <interrupts.hpp>
 #include <HashTable.hpp>
+#include <Strings.hpp>
 
 // user task kernel stack is used for state when it's
 // pre-empted, and for system calls, etc.
@@ -39,7 +40,7 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 				// GUID and other identifying information.
 				u32 id;
-				const char *registeredName;
+				ASCIIString registeredName;
 				
 				// Real task process data.
 				u8 cpl;
@@ -59,7 +60,7 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 		Task *start, *current;
 		Task *priorityStart;
-		HashTable<const char *, Task *> *registeredTasks;
+		HashTable<ASCIIString, Task *> *registeredTasks;
 };
 
 #endif

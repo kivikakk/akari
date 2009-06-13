@@ -48,3 +48,9 @@ void operator delete(void *p) {
 	return Akari->Memory->Free(p);
 }
 
+void operator delete[](void *p) {
+	// These assertions seem quite wasteful.
+	ASSERT(Akari);
+	ASSERT(Akari->Memory);
+	return Akari->Memory->Free(p);
+}
