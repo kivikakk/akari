@@ -15,6 +15,8 @@ class ASCIIString {
 		bool operator ==(const ASCIIString &) const;
 		bool operator ==(const char *) const;
 
+		bool operator !() const;
+
 		char operator[](u32 n) const;
 		char &operator[](u32 n);
 

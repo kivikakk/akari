@@ -51,5 +51,14 @@ namespace User {
 		Akari->Task->current->registeredName = name;
 		return true;
 	}
+
+	u32 RegisterNode(const char *name) {
+		if (!Akari->Task->current->registeredName) {
+			// TODO: just kill the process, don't kill the system.
+			// TODO: is this correct behaviour? Or could we have registered nodes
+			// on no particular name? Why not?.. think about it.
+			AkariPanic("name not registered - cannot register node");
+		}
+	}
 }
 

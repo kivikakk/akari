@@ -74,6 +74,10 @@ bool ASCIIString::operator ==(const char *r) const {
 	return true;
 }
 
+bool ASCIIString::operator !() const {
+	return empty();
+}
+
 char ASCIIString::operator[](u32 n) const {
 	ASSERT(n < _dataLength);
 	return _data[n];

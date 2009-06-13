@@ -20,7 +20,7 @@ class AkariSyscallSubsystem : public AkariSubsystem {
 		void ReturnToTask(AkariTaskSubsystem::Task *task);
 		void ReturnToNextTask();
 
-	//protected:
+	protected:
 		static void *_handler(struct modeswitch_registers *);
 
 		void *_syscalls[AKARI_SYSCALL_MAXCALLS];

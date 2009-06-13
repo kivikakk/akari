@@ -13,6 +13,7 @@ AkariSyscallSubsystem::AkariSyscallSubsystem(): _syscalls_assigned(0) {
 	AddSyscall(5, (void *)&User::IrqListen);
 	AddSyscall(6, (void *)&User::Panic);
 	AddSyscall(7, (void *)&User::RegisterName);
+	AddSyscall(8, (void *)&User::RegisterNode);
 }
 
 u8 AkariSyscallSubsystem::VersionMajor() const { return 0; }
