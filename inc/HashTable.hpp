@@ -1,12 +1,23 @@
 #ifndef __HASH_TABLE_HPP__
 #define __HASH_TABLE_HPP__
 
+// Note this is not in fact a hash table, just an associative array.
+// We should make it a hash table in the future, though.
 // TODO: we need to actually make a decent lookup mechanism for this. Currently very slow.
 
 template <typename K, typename V>
 class HashTable {
 	public:
 		HashTable(): head(0) {
+		}
+
+		~HashTable() {
+			_InternalItem *traverse = head, *next;
+			while (traverse) {
+				next = traverse->next;
+				delete traverse;
+				traverse = next;
+			}
 		}
 
 		const u32 size() const {

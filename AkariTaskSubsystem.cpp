@@ -192,6 +192,8 @@ void AkariTaskSubsystem::Task::SetIOMap(u8 port, bool enabled) {
 		iomap[port / 8] |= (1 << (port % 8));
 }
 
+AkariTaskSubsystem::Task::Node::Node() { }
+
 AkariTaskSubsystem::Task::Task(u8 cpl):
 		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
 		id(0), registeredName(), cpl(cpl), pageDir(0), ks(0), utks(0) {
@@ -200,4 +202,7 @@ AkariTaskSubsystem::Task::Task(u8 cpl):
 
 	for (u8 i = 0; i < 32; ++i)
 		iomap[i] = 0xFF;
+
+	nodesByName = new HashTable<ASCIIString, Node *>();
+	nodesByIndex = new HolyArray<Node *>(16);
 }
