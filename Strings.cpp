@@ -12,6 +12,11 @@ ASCIIString::ASCIIString(const char *&src) {
 	operator =(src);
 }
 
+ASCIIString::~ASCIIString() {
+	if (_data)
+		delete [] data;
+}
+
 ASCIIString &ASCIIString::operator =(const ASCIIString &src) {
 	if (_data)
 		delete [] _data;

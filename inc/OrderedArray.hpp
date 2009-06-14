@@ -18,6 +18,10 @@ class OrderedArray {
 			POSIX::memset(_array, 0, maxSize * sizeof(T));
 		}
 
+		~OrderedArray() {
+			// I'm assuming we don't want to remove array, as we didn't allocate it ourselves.
+		}
+
 		const u32 size() const {
 			return _size;
 		}

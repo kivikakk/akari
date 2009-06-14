@@ -3,11 +3,13 @@
 
 #include <arch.hpp>
 
+// TODO in the future: COW?
 class ASCIIString {
 	public:
 		ASCIIString();
 		ASCIIString(const ASCIIString &);
 		ASCIIString(const char *&);
+		~ASCIIString();
 		
 		ASCIIString &operator =(const ASCIIString &);
 		ASCIIString &operator =(const char *&);
