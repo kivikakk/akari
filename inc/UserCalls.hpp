@@ -12,7 +12,7 @@ namespace User {
 	void irqListen(u32 irq);
 	void panic(const char *s);
 	bool registerName(const char *name);
-	u32 registerNode(const char *name);
+	bool registerNode(const char *name);
 }
 
 #endif

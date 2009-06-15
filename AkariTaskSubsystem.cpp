@@ -204,5 +204,4 @@ AkariTaskSubsystem::Task::Task(u8 cpl):
 		iomap[i] = 0xFF;
 
 	nodesByName = new HashTable<ASCIIString, Node *>();
-	nodesByIndex = new HolyArray<Node *>(16);
 }

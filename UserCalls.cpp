@@ -52,7 +52,7 @@ namespace User {
 		return true;
 	}
 
-	u32 registerNode(const char *name) {
+	bool registerNode(const char *name) {
 		if (!Akari->Task->current->registeredName) {
 			// TODO: just kill the process, don't kill the system.
 			// TODO: is this correct behaviour? Or could we have registered nodes
@@ -67,7 +67,7 @@ namespace User {
 		AkariTaskSubsystem::Task::Node *node = new AkariTaskSubsystem::Task::Node();
 
 		(*Akari->Task->current->nodesByName)[name] = node;
-		return Akari->Task->current->nodesByIndex->insert(node);
+		return true;
 	}
 }
 

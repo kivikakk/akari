@@ -14,7 +14,7 @@ ASCIIString::ASCIIString(const char *&src) {
 
 ASCIIString::~ASCIIString() {
 	if (_data)
-		delete [] data;
+		delete [] _data;
 }
 
 ASCIIString &ASCIIString::operator =(const ASCIIString &src) {

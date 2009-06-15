@@ -6,7 +6,7 @@
 #include <interrupts.hpp>
 #include <HashTable.hpp>
 #include <Strings.hpp>
-#include <HolyArray.hpp>
+#include <List.hpp>
 
 // user task kernel stack is used for state when it's
 // pre-empted, and for system calls, etc.
@@ -52,10 +52,14 @@ class AkariTaskSubsystem : public AkariSubsystem {
 				class Node {
 					public:
 						Node();
+
+						void registerListener();
+
+					protected:
+						LinkedList<u32> _listeners;
 				};
 
 				HashTable<ASCIIString, Node *> *nodesByName;
-				HolyArray<Node *> *nodesByIndex;
 
 			protected:
 				Task(u8 cpl);
