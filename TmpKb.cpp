@@ -83,7 +83,7 @@ void KeyboardProcess() {
 		syscall_panic("could not register system.io.keyboard");
 	}
 
-	bool success = (bool)(syscall_registerNode("input") & 0xFF);
+	bool success = SYSCALL_BOOL(syscall_registerNode("input"));
 	if (!success) {
 		syscall_panic("could not register system.io.keyboard:input");
 	}
