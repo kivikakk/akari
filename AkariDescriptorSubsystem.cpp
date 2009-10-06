@@ -220,6 +220,8 @@ void *AkariDescriptorSubsystem::IRQT::callHandler(u8 irq, struct modeswitch_regi
 		
 
 	// XXX XXX TODO HACK OMG FIXME BBQ (see above one-liner comment)
+	// Possible conflict between an application wanting to listen for an IRQ, and a routine
+	// being installed. Douuuuuuuushiyou
 	if (_routines[irq]) {
 		AkariPanic("lol");	// I'm assuming this isn't going to be called for now ...
 		return _routines[irq](regs);

@@ -13,6 +13,7 @@ namespace User {
 	void panic(const char *s);
 	bool registerName(const char *name);
 	bool registerNode(const char *name);
+	void exit();
 }
 
 #endif

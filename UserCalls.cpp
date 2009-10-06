@@ -69,5 +69,23 @@ namespace User {
 		(*Akari->Task->current->nodesByName)[name] = node;
 		return true;
 	}
+
+	void exit() {
+		Akari->Syscall->returnToNextTask();
+		// Find the Task* which refers to Akari->Task->current, and get it to skip it.
+		AkariTaskSubsystem::Task **scanner = &Akari->Task->start;
+		while (*scanner != Akari->Task->current) {
+			scanner = &(*scanner)->next;
+		}
+
+		Akari->Console->putString("exit(): 0x");
+		Akari->Console->putInt((u32)*scanner, 16);
+		Akari->Console->putString(" -> 0x");
+		Akari->Console->putInt((u32)(*scanner)->next, 16);
+		Akari->Console->putString("\n");
+
+		*scanner = (*scanner)->next;
+		// Gone! XXX what happens when the last task exists!? Everything probably goes to hell ...
+	}
 }
 

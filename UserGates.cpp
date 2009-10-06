@@ -53,4 +53,4 @@ DEFN_SYSCALL1(irqListen, 5, u32);
 DEFN_SYSCALL1(panic, 6, const char *);
 DEFN_SYSCALL1(registerName, 7, const char *);
 DEFN_SYSCALL1(registerNode, 8, const char *);
-
+DEFN_SYSCALL0(exit, 9);

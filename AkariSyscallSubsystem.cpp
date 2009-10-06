@@ -14,6 +14,7 @@ AkariSyscallSubsystem::AkariSyscallSubsystem(): _syscalls_assigned(0) {
 	addSyscall(6, (void *)&User::panic);
 	addSyscall(7, (void *)&User::registerName);
 	addSyscall(8, (void *)&User::registerNode);
+	addSyscall(9, (void *)&User::exit);
 }
 
 u8 AkariSyscallSubsystem::versionMajor() const { return 0; }
@@ -30,7 +31,12 @@ void AkariSyscallSubsystem::returnToTask(AkariTaskSubsystem::Task *task) {
 }
 
 void AkariSyscallSubsystem::returnToNextTask() {
-	returnToTask(Akari->Task->getNextTask());
+	AkariTaskSubsystem::Task *nextTask = Akari->Task->getNextTask();
+	if (nextTask == Akari->Task->current) {
+		AkariPanic("TODO: let no 'active' processes being running. i.e. have the ukernel HLT or similar.");
+	}
+		
+	returnToTask(nextTask);
 }
 
 void *AkariSyscallSubsystem::_handler(struct modeswitch_registers *regs) {

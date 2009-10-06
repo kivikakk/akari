@@ -118,6 +118,8 @@ void AkariTaskSubsystem::saveRegisterToTask(Task *dest, void *regs) {
 
 void *AkariTaskSubsystem::assignInternalTask(Task *task) {
 	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
+	
+	// TODO: let task be NUL and just HLT until an interrupt/timer/...?
 	ASSERT(task);
 	Akari->Memory->switchPageDirectory(task->pageDir);
 	if (task->cpl > 0) {

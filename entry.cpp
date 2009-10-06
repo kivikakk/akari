@@ -12,6 +12,7 @@ static void AkariEntryCont();
 void SubProcess();
 
 void KeyboardProcess();	// TmpKb
+void ShellProcess();	// TmpShell
 
 multiboot_info_t *AkariMultiboot;
 
@@ -67,39 +68,26 @@ static void AkariEntryCont() {
 	Akari->Task->current->next = kbdriver;
 
 	// another usermode task
-	AkariTaskSubsystem::Task *other = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
-	kbdriver->next = other;
+	AkariTaskSubsystem::Task *shell = AkariTaskSubsystem::Task::CreateTask(
+		(u32)&ShellProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
+	kbdriver->next = shell;
+	//
+	// one more for good measure.
+	AkariTaskSubsystem::Task *shell2 = AkariTaskSubsystem::Task::CreateTask(
+		(u32)&ShellProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
+	shell->next = shell2;
 	
-	// kernel-mode task
-	AkariTaskSubsystem::Task *third = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&SubProcess, 0, true, 0, Akari->Memory->_kernelDirectory);
-	other->next = third;
-
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->Memory->switchPageDirectory(base->pageDir);
 
 	AkariTaskSubsystem::SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 
-	SubProcess();
-}
+	// idle task.
+	while(1)
+		asm volatile("hlt");
 
-void SubProcess() { 
-	u32 a = 0, b = 0;
-	while (1) {
-		// Something computationally differing so that interrupting at regular intervals
-		// won't be at the same instruction.
-
-		// syscall_putl(syscall_getProcessId(), 16);
-		// syscall_puts(" ");
-
-		++a, --b;
-		if (a % 4 == 1) {
-			a += 3;
-			if (b % 2 == 1)
-				--b;
-		}
-	}
+	// syscall_exit();
+	// Akari->Console->putString("??????? task");
 }
 
 // Returns how much the stack needs to be shifted.
