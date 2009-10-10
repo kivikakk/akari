@@ -76,6 +76,8 @@ static s8 capslockInvert(s8 c) {
 
 
 void KeyboardProcess() {
+	for (int i = 0; i < 1000000; ++i);
+
 	if (!SYSCALL_BOOL(syscall_registerName("system.io.keyboard")))
 		syscall_panic("could not register system.io.keyboard");
 
