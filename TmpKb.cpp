@@ -1,7 +1,6 @@
 #include <Akari.hpp>
 #include <arch.hpp>
 #include <UserGates.hpp>
-#define KEYBOARD_BUFFER_LENGTH 0x1000
 
 static s8 keyboard_us[] = {
 	0, 27, '1', '2', '3', '4', '5', '6', '7', '8',  // 0~9
@@ -34,12 +33,10 @@ static s8 keyboard_us_shift_table[] = {
 	0
 };
 
-static bool echo_mode = true, recording_mode = true;
+static bool echo_mode = true;
 static bool capslock_down = false, numlock_down = false, scrolllock_down = false;
 static bool pressed_ctrl = false, pressed_alt = false, pressed_shift = false;
 static u8 held_scancodes[16];     // held_scancodes is a 128-bit=16 bytes bitfield static
-static unsigned long keyboard_index = 0, keyboard_limit = 0;                       // we assume keyboard_index to be within KEYBOARD_BUFFER_LENGTH, thus no need to modulo
-static s8 keyboard_buffer[KEYBOARD_BUFFER_LENGTH];
 
 static void waitForKb() {
     while (1)
@@ -132,14 +129,9 @@ void KeyboardProcess() {
 					scancode = capslockInvert(scancode);
 				if (echo_mode)
 					syscall_putc(scancode);
-				if (recording_mode) {
-					/* Add it to the buffer. */
-					if (keyboard_limit >= KEYBOARD_BUFFER_LENGTH) {
-						syscall_panic("Keyboard buffer has overflowed!");
-					} else {
-						keyboard_buffer[(keyboard_index + keyboard_limit++) % KEYBOARD_BUFFER_LENGTH] = scancode;
-					}
-				}
+
+				// Now actually dispatch this.
+				syscall_writeNode("system.io.keyboard", "input", writer, (const char *)&scancode, 1);
 			}
 		}
 
