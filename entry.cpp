@@ -13,7 +13,7 @@ void SubProcess();
 
 void KeyboardProcess();	// TmpKb
 void ShellProcess();	// TmpShell
-void IdleProcess();		// TmpIdle
+void IdleProcess();
 
 multiboot_info_t *AkariMultiboot;
 
@@ -85,6 +85,10 @@ static void AkariEntryCont() {
 
 	// We have a proper (kernel-mode) idle task we spawn above that hlts.
 	syscall_exit();
+}
+
+void IdleProcess() {
+	while (1) asm volatile("hlt");
 }
 
 // Returns how much the stack needs to be shifted.
