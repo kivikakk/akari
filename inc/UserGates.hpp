@@ -26,6 +26,7 @@ DECL_SYSCALL3(obtainNodeWriter, const char *, const char *, bool);
 DECL_SYSCALL2(obtainNodeListener, const char *, const char *);
 DECL_SYSCALL5(readNode, const char *, const char *, u32, char *, u32);
 DECL_SYSCALL5(writeNode, const char *, const char *, u32, const char *, u32);
+DECL_SYSCALL0(defer);
 
 #define SYSCALL_BOOL(x) ((bool)((x) & 0xFF))
 

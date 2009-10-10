@@ -33,7 +33,7 @@ static s8 keyboard_us_shift_table[] = {
 	0
 };
 
-static bool echo_mode = true;
+static bool echo_mode = false;
 static bool capslock_down = false, numlock_down = false, scrolllock_down = false;
 static bool pressed_ctrl = false, pressed_alt = false, pressed_shift = false;
 static u8 held_scancodes[16];     // held_scancodes is a 128-bit=16 bytes bitfield static

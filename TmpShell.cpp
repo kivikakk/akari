@@ -11,6 +11,20 @@ void ShellProcess() {
 	syscall_putl(listener, 16);
 	syscall_puts(".\n");
 
+	char kbbuf[1024];
+
+	while (true) {
+		u32 incoming = syscall_readNode("system.io.keyboard", "input", listener, kbbuf, 1024);
+		if (!incoming) {
+			//syscall_defer();
+		} else {
+			syscall_puts("Heard from kb: ");
+			kbbuf[incoming] = 0;
+			syscall_puts(kbbuf);
+			syscall_putc('\n');
+		}
+	}
+
 	syscall_exit();
 }
 

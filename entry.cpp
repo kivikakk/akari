@@ -94,7 +94,7 @@ static void AkariEntryCont() {
 }
 
 void IdleProcess() {
-	while (1) asm volatile("hlt");
+	while (true) asm volatile("hlt");
 }
 
 // Returns how much the stack needs to be shifted.

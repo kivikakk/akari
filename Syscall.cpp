@@ -20,6 +20,7 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(11, (void *)&User::obtainNodeListener);
 	addSyscall(12, (void *)&User::readNode);
 	addSyscall(13, (void *)&User::writeNode);
+	addSyscall(14, (void *)&User::defer);
 }
 
 u8 Syscall::versionMajor() const { return 0; }

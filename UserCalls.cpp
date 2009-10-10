@@ -147,5 +147,9 @@ namespace User {
 		target->writeAllListeners(buffer, n);
 		return n;		// what else?!
 	}
+
+	void defer() {
+			Akari->syscall->returnToNextTask();
+	}
 }
 
