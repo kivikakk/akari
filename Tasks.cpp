@@ -2,7 +2,7 @@
 #include <Akari.hpp>
 
 Tasks::Tasks(): start(0), current(0), priorityStart(0) {
-	registeredTasks = new HashTable<ASCIIString, Task *>();
+	registeredTasks = new HashTable<Symbol, Task *>();
 }
 
 u8 Tasks::versionMajor() const { return 0; }
@@ -252,5 +252,5 @@ Tasks::Task::Task(u8 cpl):
 	for (u8 i = 0; i < 32; ++i)
 		iomap[i] = 0xFF;
 
-	nodesByName = new HashTable<ASCIIString, Node *>();
+	nodesByName = new HashTable<Symbol, Node *>();
 }

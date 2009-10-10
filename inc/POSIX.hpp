@@ -8,6 +8,7 @@ namespace POSIX {
 	extern "C" void *memcpy(void *, const void *, u32);
 
 	extern "C" u32 strlen(const char *);
+	extern "C" s32 strcmp(const char *s1, const char *s2);
 }
 
 #endif

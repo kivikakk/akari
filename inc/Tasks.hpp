@@ -7,6 +7,7 @@
 #include <HashTable.hpp>
 #include <Strings.hpp>
 #include <List.hpp>
+#include <Symbol.hpp>
 
 // user task kernel stack is used for state when it's
 // pre-empted, and for system calls, etc.
@@ -41,7 +42,7 @@ class Tasks : public Subsystem {
 
 				// GUID and other identifying information.
 				u32 id;
-				ASCIIString registeredName;
+				Symbol registeredName;
 				
 				// Real task process data.
 				u8 cpl;
@@ -68,7 +69,7 @@ class Tasks : public Subsystem {
 						u32 _nextId();
 				};
 
-				HashTable<ASCIIString, Node *> *nodesByName;
+				HashTable<Symbol, Node *> *nodesByName;
 
 			protected:
 				Task(u8 cpl);
@@ -82,7 +83,7 @@ class Tasks : public Subsystem {
 
 		Task *start, *current;
 		Task *priorityStart;
-		HashTable<ASCIIString, Task *> *registeredTasks;
+		HashTable<Symbol, Task *> *registeredTasks;
 };
 
 #endif

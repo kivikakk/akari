@@ -22,6 +22,8 @@ DECL_SYSCALL1(panic, const char *);
 DECL_SYSCALL1(registerName, const char *);
 DECL_SYSCALL1(registerNode, const char *);
 DECL_SYSCALL0(exit);
+DECL_SYSCALL3(obtainNodeWriter, const char *, const char *, bool);
+DECL_SYSCALL2(obtainNodeListener, const char *, const char *);
 
 #define SYSCALL_BOOL(x) ((bool)((x) & 0xFF))
 

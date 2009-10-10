@@ -14,6 +14,8 @@ namespace User {
 	bool registerName(const char *name);
 	bool registerNode(const char *name);
 	void exit();
+	u32 obtainNodeWriter(const char *name, const char *node, bool exclusive);
+	u32 obtainNodeListener(const char *name, const char *node);
 }
 
 #endif

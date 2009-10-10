@@ -85,6 +85,10 @@ void KeyboardProcess() {
 	if (!SYSCALL_BOOL(syscall_registerNode("input")))
 		syscall_panic("could not register system.io.keyboard:input");
 
+	u32 writer = syscall_obtainNodeWriter("system.io.keyboard", "input", true);
+	if (writer == (u32)-1)
+		syscall_panic("could not obtain writer on system.io.keyboard:input");
+
 	syscall_irqListen(1);
 
 	u8 scancode = AkariInB(0x60);

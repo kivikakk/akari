@@ -15,6 +15,8 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(7, (void *)&User::registerName);
 	addSyscall(8, (void *)&User::registerNode);
 	addSyscall(9, (void *)&User::exit);
+	addSyscall(10, (void *)&User::obtainNodeWriter);
+	addSyscall(11, (void *)&User::obtainNodeListener);
 }
 
 u8 Syscall::versionMajor() const { return 0; }

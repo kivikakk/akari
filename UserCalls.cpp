@@ -87,5 +87,33 @@ namespace User {
 		*scanner = (*scanner)->next;
 		// Gone! XXX what happens when the last task exists!? Everything probably goes to hell ...
 	}
+
+	u32 obtainNodeWriter(const char *name, const char *node, bool exclusive) {
+		Symbol sName(name), sNode(node);
+
+		if (!Akari->tasks->registeredTasks->hasKey(sName))
+			return -1;
+
+		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
+		if (!task->nodesByName->hasKey(sNode))
+			return -1;
+
+		Tasks::Task::Node *target = (*task->nodesByName)[sNode];
+		return target->registerWriter(exclusive);
+	}
+
+	u32 obtainNodeListener(const char *name, const char *node) {
+		Symbol sName(name), sNode(node);
+
+		if (!Akari->tasks->registeredTasks->hasKey(sName))
+			return -1;
+
+		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
+		if (!task->nodesByName->hasKey(sNode))
+			return -1;
+
+		Tasks::Task::Node *target = (*task->nodesByName)[sNode];
+		return target->registerListener();
+	}
 }
 
