@@ -27,16 +27,10 @@ namespace POSIX {
 	}
 
 	s32 strcmp(const char *s1, const char *s2) {
-		Akari->console->putString("Comparing ");
-		Akari->console->putString(s1);
-		Akari->console->putString(" and ");
-		Akari->console->putString(s2);
-		Akari->console->putString(".\n");
-		AkariHalt();
-
 		while (*s1 && *s2) {
 			if (*s1 < *s2) return -1;
 			if (*s1 > *s2) return 1;
+			++s1, ++s2;
 		}
 		// One or both may be NUL.
 		if (*s1 < *s2) return -1;

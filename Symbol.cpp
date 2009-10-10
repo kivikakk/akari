@@ -1,5 +1,7 @@
 #include <Symbol.hpp>
 #include <POSIX.hpp>
+#include <Akari.hpp>
+#include <Console.hpp>
 
 Symbol::Symbol(): _content(0)
 { }
@@ -17,7 +19,6 @@ bool Symbol::operator ==(const Symbol &r) const {
 	if (!_content) return !r._content;
 	if (!r._content) return false;
 
-	if (_content && _content) return false;
 	return (POSIX::strcmp(_content, r._content) == 0);
 }
 

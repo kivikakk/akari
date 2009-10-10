@@ -37,16 +37,12 @@ class HashTable {
 
 		bool hasKey(const K &key) const {
 			_InternalItem *traverse = head;
-			Akari->console->putString("hasKey? ");
 			while (traverse) {
-				Akari->console->putString(".");
 				if (traverse->key == key) {
-					Akari->console->putString("! :-)\n");
 					return true;
 				}
 				traverse = traverse->next;
 			}
-			Akari->console->putString("! :-(\n");
 			return false;
 		}
 

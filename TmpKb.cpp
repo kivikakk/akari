@@ -89,6 +89,8 @@ void KeyboardProcess() {
 	if (writer == (u32)-1)
 		syscall_panic("could not obtain writer on system.io.keyboard:input");
 
+	syscall_puts("Kb all good.\n");
+
 	syscall_irqListen(1);
 
 	u8 scancode = AkariInB(0x60);
