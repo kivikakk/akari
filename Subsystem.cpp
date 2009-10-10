@@ -1,7 +1,7 @@
-#include <AkariSubsystem.hpp>
+#include <Subsystem.hpp>
 
-AkariSubsystem::AkariSubsystem()
+Subsystem::Subsystem()
 { }
 
-AkariSubsystem::~AkariSubsystem()
+Subsystem::~Subsystem()
 { }

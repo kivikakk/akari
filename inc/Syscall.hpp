@@ -1,14 +1,14 @@
-#ifndef __AKARI_SYSCALL_SUBSYSTEM_HPP__
-#define __AKARI_SYSCALL_SUBSYSTEM_HPP__
+#ifndef __SYSCALL_HPP__
+#define __SYSCALL_HPP__
 
-#include <AkariSubsystem.hpp>
-#include <AkariTaskSubsystem.hpp>
+#include <Subsystem.hpp>
+#include <Tasks.hpp>
 
 #define AKARI_SYSCALL_MAXCALLS 256
 
-class AkariSyscallSubsystem : public AkariSubsystem {
+class Syscall : public Subsystem {
 	public:
-		AkariSyscallSubsystem();
+		Syscall();
 
 		u8 versionMajor() const;
 		u8 versionMinor() const;
@@ -17,7 +17,7 @@ class AkariSyscallSubsystem : public AkariSubsystem {
 
 		void addSyscall(u16 num, void *fn);
 
-		void returnToTask(AkariTaskSubsystem::Task *task);
+		void returnToTask(Tasks::Task *task);
 		void returnToNextTask();
 
 	protected:
@@ -26,7 +26,7 @@ class AkariSyscallSubsystem : public AkariSubsystem {
 		void *_syscalls[AKARI_SYSCALL_MAXCALLS];
 		u16 _syscalls_assigned;
 
-		AkariTaskSubsystem::Task *_returnTask;
+		Tasks::Task *_returnTask;
 };
 
 #endif

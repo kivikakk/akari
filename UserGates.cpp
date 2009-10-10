@@ -42,7 +42,7 @@
         return a; \
     }
 
-// Here we define the user-mode functions, matching them to the number in the _syscalls array (see AkariSyscallSubsystem).
+// Here we define the user-mode functions, matching them to the number in the _syscalls array (see Syscall).
 
 DEFN_SYSCALL1(putc, 0, char);
 DEFN_SYSCALL1(puts, 1, const char *);

@@ -1,9 +1,9 @@
-#include <AkariSyscallSubsystem.hpp>
+#include <Syscall.hpp>
 #include <Akari.hpp>
 #include <UserCalls.hpp>
 
-AkariSyscallSubsystem::AkariSyscallSubsystem(): _syscalls_assigned(0) {
-	Akari->Descriptor->idt->installHandler(0x80, &AkariSyscallSubsystem::_handler);
+Syscall::Syscall(): _syscalls_assigned(0) {
+	Akari->descriptor->idt->installHandler(0x80, &Syscall::_handler);
 
 	addSyscall(0, (void *)&User::putc);
 	addSyscall(1, (void *)&User::puts);
@@ -17,37 +17,37 @@ AkariSyscallSubsystem::AkariSyscallSubsystem(): _syscalls_assigned(0) {
 	addSyscall(9, (void *)&User::exit);
 }
 
-u8 AkariSyscallSubsystem::versionMajor() const { return 0; }
-u8 AkariSyscallSubsystem::versionMinor() const { return 1; }
-const char *AkariSyscallSubsystem::versionManufacturer() const { return "Akari"; }
-const char *AkariSyscallSubsystem::versionProduct() const { return "Akari Syscall"; }
+u8 Syscall::versionMajor() const { return 0; }
+u8 Syscall::versionMinor() const { return 1; }
+const char *Syscall::versionManufacturer() const { return "Akari"; }
+const char *Syscall::versionProduct() const { return "Akari Syscall"; }
 
-void AkariSyscallSubsystem::addSyscall(u16 num, void *fn) {
+void Syscall::addSyscall(u16 num, void *fn) {
 	_syscalls[num] = fn;
 }
 
-void AkariSyscallSubsystem::returnToTask(AkariTaskSubsystem::Task *task) {
+void Syscall::returnToTask(Tasks::Task *task) {
 	_returnTask = task;
 }
 
-void AkariSyscallSubsystem::returnToNextTask() {
-	AkariTaskSubsystem::Task *nextTask = Akari->Task->getNextTask();
-	if (nextTask == Akari->Task->current) {
+void Syscall::returnToNextTask() {
+	Tasks::Task *nextTask = Akari->tasks->getNextTask();
+	if (nextTask == Akari->tasks->current) {
 		AkariPanic("TODO: let no 'active' processes being running. i.e. have the ukernel HLT or similar.");
 	}
 		
 	returnToTask(nextTask);
 }
 
-void *AkariSyscallSubsystem::_handler(struct modeswitch_registers *regs) {
+void *Syscall::_handler(struct modeswitch_registers *regs) {
 	if (regs->callback.eax >= AKARI_SYSCALL_MAXCALLS)
 		AkariPanic("System call greater than maximum requested. TODO: kill requesting process.");
-	if (!Akari->Syscall->_syscalls[regs->callback.eax])
+	if (!Akari->syscall->_syscalls[regs->callback.eax])
 		AkariPanic("Non-existing system call requested.");
 
-	Akari->Syscall->_returnTask = 0;
+	Akari->syscall->_returnTask = 0;
 
-	void *call = Akari->Syscall->_syscalls[regs->callback.eax];
+	void *call = Akari->syscall->_syscalls[regs->callback.eax];
     int ret;
     asm volatile("  \
         push %1; \
@@ -68,10 +68,10 @@ void *AkariSyscallSubsystem::_handler(struct modeswitch_registers *regs) {
 
     regs->callback.eax = ret;
 
-	if (Akari->Syscall->_returnTask) {
-		Akari->Task->saveRegisterToTask(Akari->Task->current, regs);
-		Akari->Task->current = Akari->Syscall->_returnTask;
-		return Akari->Task->assignInternalTask(Akari->Task->current);
+	if (Akari->syscall->_returnTask) {
+		Akari->tasks->saveRegisterToTask(Akari->tasks->current, regs);
+		Akari->tasks->current = Akari->syscall->_returnTask;
+		return Akari->tasks->assignInternalTask(Akari->tasks->current);
 	}
 
 	return regs;

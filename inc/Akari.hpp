@@ -1,35 +1,35 @@
 #ifndef __AKARI_HPP__
 #define __AKARI_HPP__
 
-#include <AkariMemorySubsystem.hpp>
-#include <AkariConsoleSubsystem.hpp>
-#include <AkariDescriptorSubsystem.hpp>
-#include <AkariTimerSubsystem.hpp>
-#include <AkariTaskSubsystem.hpp>
-#include <AkariSyscallSubsystem.hpp>
+#include <Memory.hpp>
+#include <Console.hpp>
+#include <Descriptor.hpp>
+#include <Timer.hpp>
+#include <Tasks.hpp>
+#include <Syscall.hpp>
 
 /**
  * The base class for the kernel services.
  */
 
-class AkariKernel {
+class Kernel {
 	public:
-		static AkariKernel *Construct(u32, u32);
+		static Kernel *Construct(u32, u32);
 
-		// TODO: linked list of AkariSubsystems so we can iterate them generically.
+		// TODO: linked list of Subsystems so we can iterate them generically.
 
-		AkariMemorySubsystem *Memory;
-		AkariConsoleSubsystem *Console;
-		AkariDescriptorSubsystem *Descriptor;
-		AkariTimerSubsystem *Timer;
-		AkariTaskSubsystem *Task;
-		AkariSyscallSubsystem *Syscall;
+		Memory *memory;
+		Console *console;
+		Descriptor *descriptor;
+		Timer *timer;
+		Tasks *tasks;
+		Syscall *syscall;
 	
 	protected:
-		AkariKernel();
+		Kernel();
 };
 
-extern AkariKernel *Akari;
+extern Kernel *Akari;
 
 #endif
 

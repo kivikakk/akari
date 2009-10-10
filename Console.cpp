@@ -1,4 +1,4 @@
-#include <AkariConsoleSubsystem.hpp>
+#include <Console.hpp>
 #include <debug.hpp>
 
 #define SCREEN_VMEM	0xb8000
@@ -9,16 +9,16 @@
 
 #define SCREEN_BLANK	0x0720
 
-AkariConsoleSubsystem::AkariConsoleSubsystem() {
+Console::Console() {
 	clear();
 }
 
-u8 AkariConsoleSubsystem::versionMajor() const { return 0; }
-u8 AkariConsoleSubsystem::versionMinor() const { return 1; }
-const char *AkariConsoleSubsystem::versionManufacturer() const { return "Akari"; }
-const char *AkariConsoleSubsystem::versionProduct() const { return "Akari Console"; }
+u8 Console::versionMajor() const { return 0; }
+u8 Console::versionMinor() const { return 1; }
+const char *Console::versionManufacturer() const { return "Akari"; }
+const char *Console::versionProduct() const { return "Akari Console"; }
 
-void AkariConsoleSubsystem::clear() {
+void Console::clear() {
 	u16 *i = (u16 *)SCREEN_VMEM;
 
 	for (u16 j = 0; j < 80 * 25; ++j, ++i)
@@ -28,7 +28,7 @@ void AkariConsoleSubsystem::clear() {
 	_updateCursor();
 }
 
-void AkariConsoleSubsystem::putChar(s8 c) {
+void Console::putChar(s8 c) {
 	switch (c) {
 		case '\n':	_shiftCursorNewline(); break;
 		case '\t':	_shiftCursorTab(); break;
@@ -38,17 +38,17 @@ void AkariConsoleSubsystem::putChar(s8 c) {
 	}
 }
 
-void AkariConsoleSubsystem::putString(const char *s) {
+void Console::putString(const char *s) {
 	while (*s)
 		putChar(*s++);
 }
 
-void AkariConsoleSubsystem::putStringN(const char *s, u32 n) {
+void Console::putStringN(const char *s, u32 n) {
 	while (*s && n)
 		putChar(*s++), --n;
 }
 
-void AkariConsoleSubsystem::putInt(u32 n, u8 base) {
+void Console::putInt(u32 n, u8 base) {
 	ASSERT(base >= 2 && base <= 36);
 	u32 index = 1, digits = 1;
 
@@ -67,7 +67,7 @@ void AkariConsoleSubsystem::putInt(u32 n, u8 base) {
 	} while (index >= 1);
 }
 
-void AkariConsoleSubsystem::_scroll() {
+void Console::_scroll() {
 	u16 i;
 	while (_cursorY > 24) {
 		for (i = 0; i < 24 * 80; ++i)
@@ -78,7 +78,7 @@ void AkariConsoleSubsystem::_scroll() {
 	}
 }
 
-void AkariConsoleSubsystem::_shiftCursor() {
+void Console::_shiftCursor() {
 	if (++_cursorX >= 80) {
 		_cursorX = 0;
 		++_cursorY;
@@ -87,7 +87,7 @@ void AkariConsoleSubsystem::_shiftCursor() {
 		_updateCursor();
 }
 
-void AkariConsoleSubsystem::_shiftCursorTab() {
+void Console::_shiftCursorTab() {
 	if ((_cursorX = _cursorX - (_cursorX % 8) + 8) >= 80) {
 		_cursorX = 0;
 		++_cursorY;
@@ -96,14 +96,14 @@ void AkariConsoleSubsystem::_shiftCursorTab() {
 		_updateCursor();
 }
 
-void AkariConsoleSubsystem::_shiftCursorNewline() {
+void Console::_shiftCursorNewline() {
 	_cursorX = 0;
 	++_cursorY;
 	_scroll();
 	_updateCursor();
 }
 
-void AkariConsoleSubsystem::_updateCursor() const {
+void Console::_updateCursor() const {
 	u16 index = _cursorX + 80 * _cursorY;
 	AkariOutB(PORT_CURSOR_IDX, PORT_CURSOR_MSB_IDX);
 	AkariOutB(PORT_CURSOR_DATA, (index >> 8) & 0xFF);

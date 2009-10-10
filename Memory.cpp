@@ -1,9 +1,9 @@
-#include <AkariMemorySubsystem.hpp>
+#include <Memory.hpp>
 #include <Akari.hpp>
 #include <POSIX.hpp>
 #include <debug.hpp>
 #include <entry.hpp>
-#include <memory.hpp>
+#include <physmem.hpp>
 
 // Index into _frames, and the bit offset within a single entry
 #define INDEX_BIT(n)	((n)/(8*4))
@@ -18,17 +18,17 @@
 // minimum size of a heap
 #define HEAP_MIN_SIZE		0x500000
 
-AkariMemorySubsystem::AkariMemorySubsystem(u32 upperMemory):
+Memory::Memory(u32 upperMemory):
 _upperMemory(upperMemory), _placementAddress(0), _frames(0), _frameCount(0), _heap(0),
 _kernelDirectory(0), _activeDirectory(0)
 { }
 
-u8 AkariMemorySubsystem::versionMajor() const { return 0; }
-u8 AkariMemorySubsystem::versionMinor() const { return 1; }
-const char *AkariMemorySubsystem::versionManufacturer() const { return "Akari"; }
-const char *AkariMemorySubsystem::versionProduct() const { return "Akari Memory Heap"; }
+u8 Memory::versionMajor() const { return 0; }
+u8 Memory::versionMinor() const { return 1; }
+const char *Memory::versionManufacturer() const { return "Akari"; }
+const char *Memory::versionProduct() const { return "Akari Memory Heap"; }
 
-void AkariMemorySubsystem::setPlacementMode(u32 addr) {
+void Memory::setPlacementMode(u32 addr) {
 	ASSERT(!_placementAddress);
 
 	_placementAddress = addr;
@@ -44,7 +44,7 @@ void AkariMemorySubsystem::setPlacementMode(u32 addr) {
 // temp debug flag only, set to true if you want the kheap to be writeable from usermode!
 #define KERNEL_HEAP_PROMISC true
 
-void AkariMemorySubsystem::setPaging(bool mode) {
+void Memory::setPaging(bool mode) {
 	ASSERT(mode);		// TODO support turning paging off [if ever required?! who knows! :)]
 
 	_frameCount = (0x100000 + _upperMemory * 1024) / 0x1000;
@@ -65,7 +65,7 @@ void AkariMemorySubsystem::setPaging(bool mode) {
 	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
 		_kernelDirectory->getPage(i, true)->allocAnyFrame(false, KERNEL_HEAP_PROMISC);
 
-	Akari->Descriptor->idt->installHandler(14, this->PageFault);
+	Akari->descriptor->idt->installHandler(14, this->PageFault);
 
 	switchPageDirectory(_kernelDirectory);
 	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, false, !(KERNEL_HEAP_PROMISC));
@@ -75,7 +75,7 @@ void AkariMemorySubsystem::setPaging(bool mode) {
 	// SwitchPageDirectory(_activeDirectory);
 }
 
-void *AkariMemorySubsystem::alloc(u32 n, u32 *phys) {
+void *Memory::alloc(u32 n, u32 *phys) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
 		void *addr = _heap->alloc(n);
@@ -97,7 +97,7 @@ void *AkariMemorySubsystem::alloc(u32 n, u32 *phys) {
 	return (void *)addr;
 }
 
-void *AkariMemorySubsystem::allocAligned(u32 n, u32 *phys) {
+void *Memory::allocAligned(u32 n, u32 *phys) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
 		void *addr = _heap->allocAligned(n);
@@ -122,17 +122,17 @@ void *AkariMemorySubsystem::allocAligned(u32 n, u32 *phys) {
 	return (void *)addr;
 }
 
-void AkariMemorySubsystem::free(void *p) {
+void Memory::free(void *p) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
 		// AkariPanic("implement Free() for heaps");
 		return;
 	}
 	
-	AkariPanic("AkariMemorySubsystem: tried to Free() in placement mode");
+	AkariPanic("Memory: tried to Free() in placement mode");
 }
 
-void *AkariMemorySubsystem::PageFault(struct modeswitch_registers *r) {
+void *Memory::PageFault(struct modeswitch_registers *r) {
 	u32 faultingAddress;
 	__asm__ __volatile__("mov %%cr2, %0" : "=r" (faultingAddress));
 
@@ -142,16 +142,16 @@ void *AkariMemorySubsystem::PageFault(struct modeswitch_registers *r) {
 	bool reserved = 	r->callback.err_code & 0x8;
 	bool insFetch = 	r->callback.err_code & 0x10;
 
-	Akari->Console->putString("\nPage fault!\n");
-	if (notPresent) Akari->Console->putString(" * Page wasn't present.\n");
-	if (writeOp) 	Akari->Console->putString(" * Write operation.\n");
-	if (userMode) 	Akari->Console->putString(" * From user-mode.\n");
-	if (reserved) 	Akari->Console->putString(" * Clobbered reserved bits in page.\n");
-	if (insFetch) 	Akari->Console->putString(" * On instruction fetch.\n");
+	Akari->console->putString("\nPage fault!\n");
+	if (notPresent) Akari->console->putString(" * Page wasn't present.\n");
+	if (writeOp) 	Akari->console->putString(" * Write operation.\n");
+	if (userMode) 	Akari->console->putString(" * From user-mode.\n");
+	if (reserved) 	Akari->console->putString(" * Clobbered reserved bits in page.\n");
+	if (insFetch) 	Akari->console->putString(" * On instruction fetch.\n");
 
-	Akari->Console->putString("Address: 0x");
-	Akari->Console->putInt(faultingAddress, 16);
-	Akari->Console->putChar('\n');
+	Akari->console->putString("Address: 0x");
+	Akari->console->putInt(faultingAddress, 16);
+	Akari->console->putChar('\n');
 
 	while (1)
 		__asm__ __volatile__("hlt");
@@ -159,7 +159,7 @@ void *AkariMemorySubsystem::PageFault(struct modeswitch_registers *r) {
 	return 0;
 }
 
-void AkariMemorySubsystem::switchPageDirectory(PageDirectory *dir) {
+void Memory::switchPageDirectory(PageDirectory *dir) {
 	u32 phys = dir->physicalAddr;
 	_activeDirectory = dir;
 
@@ -175,28 +175,28 @@ void AkariMemorySubsystem::switchPageDirectory(PageDirectory *dir) {
 	// XXX do we always necessarily want to use $8 with ljmp here?
 }
 
-void AkariMemorySubsystem::setFrame(u32 addr) {
+void Memory::setFrame(u32 addr) {
 	u32 frame = addr / 0x1000;
 	u32 idx = INDEX_BIT(frame), off = OFFSET_BIT(frame);
 	ASSERT(idx < INDEX_BIT(_frameCount));
 	_frames[idx] |= (1 << off);
 }
 
-void AkariMemorySubsystem::clearFrame(u32 addr) {
+void Memory::clearFrame(u32 addr) {
 	u32 frame = addr / 0x1000;
 	u32 idx = INDEX_BIT(frame), off = OFFSET_BIT(frame);
 	ASSERT(idx < INDEX_BIT(_frameCount));
 	_frames[idx] &= ~(1 << off);
 }
 
-bool AkariMemorySubsystem::testFrame(u32 addr) const {
+bool Memory::testFrame(u32 addr) const {
 	u32 frame = addr / 0x1000;
 	u32 idx = INDEX_BIT(frame), off = OFFSET_BIT(frame);
 	ASSERT(idx < INDEX_BIT(_frameCount));
 	return (_frames[idx] & (1 << off));
 }
 
-u32 AkariMemorySubsystem::freeFrame() const {
+u32 Memory::freeFrame() const {
 	for (u32 i = 0; i < INDEX_BIT(_frameCount); ++i)
 		if (_frames[i] != 0xFFFFFFFF) {
 			for (u32 j = 0; j < 32; ++j)
@@ -210,7 +210,7 @@ u32 AkariMemorySubsystem::freeFrame() const {
 
 // Heap
 
-AkariMemorySubsystem::Heap::Heap(u32 start, u32 end, u32 max, bool supervisor, bool readonly):
+Memory::Heap::Heap(u32 start, u32 end, u32 max, bool supervisor, bool readonly):
 _index((Entry *)start, HEAP_INDEX_SIZE, IndexSort),
 _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly)
 {
@@ -231,7 +231,7 @@ _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly
 	ASSERT(_index[0].isHole);
 }
 
-void *AkariMemorySubsystem::Heap::alloc(u32 n) {
+void *Memory::Heap::alloc(u32 n) {
 	s32 it = smallestHole(n);
 	ASSERT(it >= 0);		// TODO: resize instead
 
@@ -253,7 +253,7 @@ void *AkariMemorySubsystem::Heap::alloc(u32 n) {
 	return (void *)dataStart;
 }
 
-void *AkariMemorySubsystem::Heap::allocAligned(u32 n) {
+void *Memory::Heap::allocAligned(u32 n) {
 	s32 it = smallestAlignedHole(n);
 	ASSERT(it >= 0);		// TODO: resize instead
 
@@ -291,15 +291,15 @@ void *AkariMemorySubsystem::Heap::allocAligned(u32 n) {
 	return (void *)dataStart;
 }
 
-AkariMemorySubsystem::Heap::Entry::Entry(u32 start, u32 size, bool isHole):
+Memory::Heap::Entry::Entry(u32 start, u32 size, bool isHole):
 start(start), size(size), isHole(isHole)
 { }
 
-bool AkariMemorySubsystem::Heap::IndexSort(const Entry &a, const Entry &b) {
+bool Memory::Heap::IndexSort(const Entry &a, const Entry &b) {
 	return a.size < b.size;
 }
 
-s32 AkariMemorySubsystem::Heap::smallestHole(u32 n) const {
+s32 Memory::Heap::smallestHole(u32 n) const {
 	u32 it = 0;
 	ASSERT(_index.size() > 0);
 
@@ -317,7 +317,7 @@ s32 AkariMemorySubsystem::Heap::smallestHole(u32 n) const {
 	return -1;
 }
 
-s32 AkariMemorySubsystem::Heap::smallestAlignedHole(u32 n) const {
+s32 Memory::Heap::smallestAlignedHole(u32 n) const {
 	u32 it = 0;
 	while (it < _index.size()) {
 		const Entry &entry = _index[it];
@@ -343,21 +343,21 @@ s32 AkariMemorySubsystem::Heap::smallestAlignedHole(u32 n) const {
 
 // Page
 
-void AkariMemorySubsystem::Page::allocAnyFrame(bool kernel, bool writeable) {
+void Memory::Page::allocAnyFrame(bool kernel, bool writeable) {
 	ASSERT(!pageAddress);
 
-	u32 addr = Akari->Memory->freeFrame();
-	Akari->Memory->setFrame(addr);
+	u32 addr = Akari->memory->freeFrame();
+	Akari->memory->setFrame(addr);
 	present = true;
 	readwrite = writeable;
 	user = !kernel;
 	pageAddress = addr / 0x1000;
 }
 
-void AkariMemorySubsystem::Page::allocFrame(u32 addr, bool kernel, bool writeable) {
+void Memory::Page::allocFrame(u32 addr, bool kernel, bool writeable) {
 	ASSERT(!pageAddress);
 
-	Akari->Memory->setFrame(addr);
+	Akari->memory->setFrame(addr);
 	present = true;
 	readwrite = writeable;
 	user = !kernel;
@@ -366,13 +366,13 @@ void AkariMemorySubsystem::Page::allocFrame(u32 addr, bool kernel, bool writeabl
 
 // PageTable
 
-AkariMemorySubsystem::PageTable *AkariMemorySubsystem::PageTable::Allocate(u32 *phys) {
-	PageTable *table = (PageTable *)Akari->Memory->allocAligned(sizeof(PageTable), phys);
+Memory::PageTable *Memory::PageTable::Allocate(u32 *phys) {
+	PageTable *table = (PageTable *)Akari->memory->allocAligned(sizeof(PageTable), phys);
 	POSIX::memset(table, 0, sizeof(PageTable));
 	return table;
 }
 
-AkariMemorySubsystem::PageTable *AkariMemorySubsystem::PageTable::clone(u32 *phys) const {
+Memory::PageTable *Memory::PageTable::clone(u32 *phys) const {
 	// TODO: review this
 	PageTable *t = PageTable::Allocate(phys);
 
@@ -397,10 +397,10 @@ AkariMemorySubsystem::PageTable *AkariMemorySubsystem::PageTable::clone(u32 *phy
 
 // PageDirectory
 
-AkariMemorySubsystem::PageDirectory *AkariMemorySubsystem::PageDirectory::Allocate() {
+Memory::PageDirectory *Memory::PageDirectory::Allocate() {
 	u32 phys;
 
-	PageDirectory *dir = (PageDirectory *)Akari->Memory->allocAligned(sizeof(PageDirectory), &phys);
+	PageDirectory *dir = (PageDirectory *)Akari->memory->allocAligned(sizeof(PageDirectory), &phys);
 	POSIX::memset(dir, 0, sizeof(PageDirectory));
 	u32 off = (u32)dir->tablePhysicals - (u32)dir;
 	dir->physicalAddr = phys + off;						// check above
@@ -408,7 +408,7 @@ AkariMemorySubsystem::PageDirectory *AkariMemorySubsystem::PageDirectory::Alloca
 	return dir;
 }
 
-AkariMemorySubsystem::Page *AkariMemorySubsystem::PageDirectory::getPage(u32 addr, bool make) {
+Memory::Page *Memory::PageDirectory::getPage(u32 addr, bool make) {
 	addr /= 0x1000;
 
 	u32 idx = addr / 1024, entry = addr % 1024;
@@ -424,14 +424,14 @@ AkariMemorySubsystem::Page *AkariMemorySubsystem::PageDirectory::getPage(u32 add
 	return 0;
 }
 
-AkariMemorySubsystem::PageDirectory *AkariMemorySubsystem::PageDirectory::clone() const {
+Memory::PageDirectory *Memory::PageDirectory::clone() const {
 	// TODO: review this code
 	PageDirectory *d = PageDirectory::Allocate();
 
 	for (u32 i = 0; i < 1024; ++i) {
 		if (!tables[i])
 			continue;
-		if (Akari->Memory->_kernelDirectory->tables[i] == tables[i]) {
+		if (Akari->memory->_kernelDirectory->tables[i] == tables[i]) {
 			// kernel has this table, so just link it
 			d->tables[i] = tables[i];
 			d->tablePhysicals[i] = tablePhysicals[i];

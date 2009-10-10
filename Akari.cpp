@@ -1,21 +1,21 @@
 #include <Akari.hpp>
 #include <debug.hpp>
 
-AkariKernel *Akari;
+Kernel *Akari;
 
-AkariKernel::AkariKernel(): Memory(0), Console(0), Descriptor(0), Timer(0), Syscall(0) {
+Kernel::Kernel(): memory(0), console(0), descriptor(0), timer(0), tasks(0), syscall(0) {
 }
 
 /**
- * Constructs an AkariKernel, using the given address as the current placement address.
+ * Constructs an Kernel, using the given address as the current placement address.
  */
-AkariKernel *AkariKernel::Construct(u32 addr, u32 upperMemory) {
-	AkariKernel *kernel = new ((void *)addr) AkariKernel();
-	addr += sizeof(AkariKernel);
-	kernel->Memory = new ((void *)addr) AkariMemorySubsystem(upperMemory);
-	addr += sizeof(AkariMemorySubsystem);
+Kernel *Kernel::Construct(u32 addr, u32 upperMemory) {
+	Kernel *kernel = new ((void *)addr) Kernel();
+	addr += sizeof(Kernel);
+	kernel->memory = new ((void *)addr) Memory(upperMemory);
+	addr += sizeof(Memory);
 
-	kernel->Memory->setPlacementMode(addr);
+	kernel->memory->setPlacementMode(addr);
 
 	return kernel;
 }

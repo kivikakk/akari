@@ -1,14 +1,14 @@
-#ifndef __AKARI_DESCRIPTOR_SUBSYSTEM_HPP__
-#define __AKARI_DESCRIPTOR_SUBSYSTEM_HPP__
+#ifndef __DESCRIPTOR_HPP__
+#define __DESCRIPTOR_HPP__
 
-#include <AkariSubsystem.hpp>
+#include <Subsystem.hpp>
 #include <interrupts.hpp>
 
 // the subsystem itself
 
-class AkariDescriptorSubsystem : public AkariSubsystem {
+class Descriptor : public Subsystem {
 	public:
-		AkariDescriptorSubsystem();
+		Descriptor();
 
 		u8 versionMajor() const;
 		u8 versionMinor() const;

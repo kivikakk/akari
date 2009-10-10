@@ -92,7 +92,7 @@ void KeyboardProcess() {
 
 	u8 scancode = AkariInB(0x60);
 	while (1) {
-		Akari->Console->putString("This is the Captain speaking.");
+		Akari->console->putString("This is the Captain speaking.");
 		if (scancode & 0x80) {
 			// release
 			scancode &= ~0x80;

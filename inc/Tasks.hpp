@@ -1,8 +1,8 @@
-#ifndef __AKARI_TASK_SUBSYSTEM_HPP__
-#define __AKARI_TASK_SUBSYSTEM_HPP__
+#ifndef __TASKS_HPP__
+#define __TASKS_HPP__
 
-#include <AkariSubsystem.hpp>
-#include <AkariMemorySubsystem.hpp>
+#include <Subsystem.hpp>
+#include <Memory.hpp>
 #include <interrupts.hpp>
 #include <HashTable.hpp>
 #include <Strings.hpp>
@@ -13,9 +13,9 @@
 #define USER_TASK_KERNEL_STACK_SIZE	0x2000
 #define USER_TASK_STACK_SIZE	0x4000
 
-class AkariTaskSubsystem : public AkariSubsystem {
+class Tasks : public Subsystem {
 	public:
-		AkariTaskSubsystem();
+		Tasks();
 
 		u8 versionMajor() const;
 		u8 versionMinor() const;
@@ -26,8 +26,8 @@ class AkariTaskSubsystem : public AkariSubsystem {
 
 		class Task {
 			public:
-				static Task *BootstrapInitialTask(u8 cpl, AkariMemorySubsystem::PageDirectory *pageDirBase);
-				static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, AkariMemorySubsystem::PageDirectory *pageDirBase);
+				static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);
+				static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase);
 
 				bool getIOMap(u8 port) const;
 				void setIOMap(u8 port, bool enabled);
@@ -45,7 +45,7 @@ class AkariTaskSubsystem : public AkariSubsystem {
 				
 				// Real task process data.
 				u8 cpl;
-				AkariMemorySubsystem::PageDirectory *pageDir;
+				Memory::PageDirectory *pageDir;
 				u32 ks; u32 utks;
 				u8 iomap[32];
 

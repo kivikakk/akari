@@ -1,12 +1,12 @@
-#ifndef __AKARI_MEMORY_SUBSYSTEM_HPP__
-#define __AKARI_MEMORY_SUBSYSTEM_HPP__
+#ifndef __MEMORY_HPP__
+#define __MEMORY_HPP__
 
-#include <AkariSubsystem.hpp>
+#include <Subsystem.hpp>
 #include <OrderedArray.hpp>
 
-class AkariMemorySubsystem : public AkariSubsystem {
+class Memory : public Subsystem {
 	public:
-		AkariMemorySubsystem(u32);
+		Memory(u32);
 
 		u8 versionMajor() const;
 		u8 versionMinor() const;

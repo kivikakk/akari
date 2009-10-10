@@ -1,12 +1,12 @@
-#ifndef __AKARI_SUBSYSTEM_HPP__
-#define __AKARI_SUBSYSTEM_HPP__
+#ifndef __SUBSYSTEM_HPP__
+#define __SUBSYSTEM_HPP__
 
 #include <arch.hpp>
 
-class AkariSubsystem {
+class Subsystem {
 	public:
-		AkariSubsystem();
-		virtual ~AkariSubsystem();
+		Subsystem();
+		virtual ~Subsystem();
 
 		virtual u8 versionMajor() const = 0;
 		virtual u8 versionMinor() const = 0;

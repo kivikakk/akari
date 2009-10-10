@@ -1,11 +1,11 @@
-#ifndef __AKARI_TIMER_SUBSYSTEM_HPP__
-#define __AKARI_TIMER_SUBSYSTEM_HPP__
+#ifndef __TIMER_HPP__
+#define __TIMER_HPP__
 
-#include <AkariSubsystem.hpp>
+#include <Subsystem.hpp>
 
-class AkariTimerSubsystem : public AkariSubsystem {
+class Timer : public Subsystem {
 	public:
-		AkariTimerSubsystem();
+		Timer();
 
 		u8 versionMajor() const;
 		u8 versionMinor() const;

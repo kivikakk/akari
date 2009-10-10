@@ -1,12 +1,12 @@
-#ifndef __AKARI_CONSOLE_SUBSYSTEM_HPP__
-#define __AKARI_CONSOLE_SUBSYSTEM_HPP__
+#ifndef __CONSOLE_HPP__
+#define __CONSOLE_HPP__
 
-#include <AkariSubsystem.hpp>
+#include <Subsystem.hpp>
 
 // Direct implementation.
-class AkariConsoleSubsystem : public AkariSubsystem {
+class Console : public Subsystem {
 	public:
-		AkariConsoleSubsystem();
+		Console();
 
 		u8 versionMajor() const;
 		u8 versionMinor() const;
