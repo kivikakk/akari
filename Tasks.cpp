@@ -238,7 +238,7 @@ void Tasks::Task::Node::writeAllListeners(const char *buffer, u32 n) {
 }
 
 bool Tasks::Task::Node::hasWriter(u32 id) const {
-	for (const LinkedList<u32>::iterator it = _writers.begin(); it != _writers.end(); ++it) {
+	for (LinkedList<u32>::iterator it = _writers.begin(); it != _writers.end(); ++it) {
 		if (*it == id)
 			return true;
 	}
@@ -246,7 +246,7 @@ bool Tasks::Task::Node::hasWriter(u32 id) const {
 }
 
 bool Tasks::Task::Node::hasListener(u32 id) const {
-	for (const LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
+	for (LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
 		if (it->_id == id)
 			return true;
 	}

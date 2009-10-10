@@ -40,8 +40,9 @@ class LinkedList {
 					return iterator(_data->next);
 				}
 
-				iterator operator ++() const {
-					return next();
+				iterator &operator ++() {
+					_data = _data->next;
+					return *this;
 				}
 
 			protected:
