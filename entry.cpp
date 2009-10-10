@@ -13,6 +13,7 @@ void SubProcess();
 
 void KeyboardProcess();	// TmpKb
 void ShellProcess();	// TmpShell
+void IdleProcess();		// TmpIdle
 
 multiboot_info_t *AkariMultiboot;
 
@@ -60,34 +61,30 @@ static void AkariEntryCont() {
 	Akari->Descriptor->gdt->setTSSStack(base->utks + sizeof(struct modeswitch_registers));
 	Akari->Descriptor->gdt->setTSSIOMap(base->iomap);
 
+	// Idle task
+	AkariTaskSubsystem::Task *idle = AkariTaskSubsystem::Task::CreateTask(
+		(u32)&IdleProcess, 0, true, 0, Akari->Memory->_kernelDirectory);
+	Akari->Task->current->next = idle;
+
 	// Keyboard driver task
 	AkariTaskSubsystem::Task *kbdriver = AkariTaskSubsystem::Task::CreateTask(
 		(u32)&KeyboardProcess, 1, true, 0, Akari->Memory->_kernelDirectory);
 	kbdriver->setIOMap(0x60, true);
 	kbdriver->setIOMap(0x64, true);
-	Akari->Task->current->next = kbdriver;
+	idle->next = kbdriver;
 
-	// another usermode task
+	// Hello shell!
 	AkariTaskSubsystem::Task *shell = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&ShellProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
+		(u32)&ShellProcess, 0, true, 0, Akari->Memory->_kernelDirectory);
 	kbdriver->next = shell;
-	//
-	// one more for good measure.
-	AkariTaskSubsystem::Task *shell2 = AkariTaskSubsystem::Task::CreateTask(
-		(u32)&ShellProcess, 3, true, 0, Akari->Memory->_kernelDirectory);
-	shell->next = shell2;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->Memory->switchPageDirectory(base->pageDir);
 
 	AkariTaskSubsystem::SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 
-	// idle task.
-	while(1)
-		asm volatile("hlt");
-
-	// syscall_exit();
-	// Akari->Console->putString("??????? task");
+	// We have a proper (kernel-mode) idle task we spawn above that hlts.
+	syscall_exit();
 }
 
 // Returns how much the stack needs to be shifted.

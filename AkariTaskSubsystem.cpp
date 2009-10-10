@@ -140,9 +140,12 @@ AkariTaskSubsystem::Task *AkariTaskSubsystem::Task::BootstrapInitialTask(u8 cpl,
 	if (cpl > 0)
 		nt->utks = (u32)Akari->Memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 	else {
-		AkariPanic("I haven't tested a non-user idle (initial) task. Uncomment this panic at your own peril.");
+		// nt->ks = (u32)Akari->Memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		AkariPanic("I haven't tested a non-user initial task. Uncomment this panic at your own peril.");
 		// i.e. you may need to add some code as deemed appropriate here. Current thoughts are that you may need to
 		// be careful about where you placed the stack.. probably not, but just check it all matches up?
+		// ALSO NOTE WELL: SwitchRing does a range of important things like enabling interrupts,
+		// which is good for, you know, multitasking. So if you're going to do this, be careful ...
 	}
 
 	nt->pageDir = pageDirBase->clone();
