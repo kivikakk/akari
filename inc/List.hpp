@@ -28,6 +28,14 @@ class LinkedList {
 					 return *_data->item;
 				}
 
+				T *&operator ->() {
+					return _data->item;
+				}
+
+				T *const &operator ->() const {
+					return _data->item;
+				}
+
 				iterator next() const {
 					return iterator(_data->next);
 				}

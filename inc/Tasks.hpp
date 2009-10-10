@@ -61,9 +61,18 @@ class Tasks : public Subsystem {
 						bool hasListener(u32 id) const;
 
 					protected:
+						class Listener {
+							friend class Node;
+							public:
+								Listener(u32 id);
+
+							protected:
+								u32 _id;
+						};
+
 						bool _exclusive;
 						LinkedList<u32> _writers;
-						LinkedList<u32> _listeners;
+						LinkedList<Listener> _listeners;
 
 						u32 _wl_id;
 						u32 _nextId();

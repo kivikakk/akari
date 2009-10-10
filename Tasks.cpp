@@ -220,7 +220,7 @@ u32 Tasks::Task::Node::registerWriter(bool exclusive) {
 
 u32 Tasks::Task::Node::registerListener() {
 	u32 id = _nextId();
-	_writers.push_back(id);
+	_listeners.push_back(Listener(id));
 	return id;
 }
 
@@ -233,12 +233,15 @@ bool Tasks::Task::Node::hasWriter(u32 id) const {
 }
 
 bool Tasks::Task::Node::hasListener(u32 id) const {
-	for (const LinkedList<u32>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
-		if (*it == id)
+	for (const LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
+		if (it->_id == id)
 			return true;
 	}
 	return false;
 }
+
+Tasks::Task::Node::Listener::Listener(u32 id): _id(id)
+{ }
 
 u32 Tasks::Task::Node::_nextId() {
 	return ++_wl_id;

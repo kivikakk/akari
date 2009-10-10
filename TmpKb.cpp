@@ -86,8 +86,10 @@ void KeyboardProcess() {
 		syscall_panic("could not register system.io.keyboard:input");
 
 	u32 writer = syscall_obtainNodeWriter("system.io.keyboard", "input", true);
-	if (writer == (u32)-1)
+	if (writer == (u32)-1) {
+		// This shouldn't be possible if we just initialised the damn thing.
 		syscall_panic("could not obtain writer on system.io.keyboard:input");
+	}
 
 	syscall_puts("Kb all good.\n");
 
