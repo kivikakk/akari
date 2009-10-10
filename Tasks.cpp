@@ -240,8 +240,26 @@ bool Tasks::Task::Node::hasListener(u32 id) const {
 	return false;
 }
 
-Tasks::Task::Node::Listener::Listener(u32 id): _id(id)
+Tasks::Task::Node::Listener::Listener(u32 id): _id(id), _buffer(0), _buflen(0)
 { }
+
+void Tasks::Task::Node::Listener::append(const char *data) {
+	// HACK: hacky little appending string reallocing stupid buffer.
+	// Write a proper appending buffer (with smarts) and refactor it later.
+	if (!_buffer) {
+		_buflen = POSIX::strlen(data);
+		_buffer = new char[_buflen + 1];
+		POSIX::strcpy(_buffer, data);
+	} else {
+		u32 datalen = POSIX::strlen(data);
+		char *newbuf = new char[_buflen + datalen + 1];
+		POSIX::strcpy(newbuf, _buffer);
+		POSIX::strcpy(newbuf + _buflen, data);
+		delete [] _buffer;
+		_buffer = newbuf;
+		_buflen += datalen;
+	}
+}
 
 u32 Tasks::Task::Node::_nextId() {
 	return ++_wl_id;

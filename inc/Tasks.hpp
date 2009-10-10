@@ -66,8 +66,12 @@ class Tasks : public Subsystem {
 							public:
 								Listener(u32 id);
 
+								void append(const char *data);
+
 							protected:
 								u32 _id;
+								char *_buffer;
+								u32 _buflen;
 						};
 
 						bool _exclusive;

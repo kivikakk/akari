@@ -37,4 +37,12 @@ namespace POSIX {
 		if (*s1 > *s2) return 1;
 		return 0;
 	}
+
+	char *strcpy(char *dest, const char *src) {
+		char *orig = dest;
+		while (*src)
+			*dest++ = *src++;
+		*dest = 0;
+		return orig;
+	}
 }
