@@ -1,5 +1,6 @@
 #include <Tasks.hpp>
 #include <Akari.hpp>
+#include <Descriptor.hpp>
 
 Tasks::Tasks(): start(0), current(0), priorityStart(0) {
 	registeredTasks = new HashTable<Symbol, Task *>();

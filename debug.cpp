@@ -14,7 +14,11 @@ void AkariPanic(const char *message) {
 	while (*message)
 		*((s8 *)i++) = *message++;
 	
-	while(true)
+	AkariHalt();
+}
+
+void AkariHalt() {
+	while (true)
 		asm volatile("hlt");
 }
 

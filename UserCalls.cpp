@@ -1,6 +1,11 @@
 #include <UserCalls.hpp>
 #include <Akari.hpp>
 #include <POSIX.hpp>
+#include <Symbol.hpp>
+#include <debug.hpp>
+#include <Console.hpp>
+#include <Tasks.hpp>
+#include <Syscall.hpp>
 
 namespace User {
 	void putc(char c) {
@@ -44,15 +49,17 @@ namespace User {
 	}
 
 	bool registerName(const char *name) {
-		if (Akari->tasks->registeredTasks->hasKey(name))
+		Symbol sName(name);
+		if (Akari->tasks->registeredTasks->hasKey(sName))
 			return false;
 
-		(*Akari->tasks->registeredTasks)[name] = Akari->tasks->current;
-		Akari->tasks->current->registeredName = name;
+		(*Akari->tasks->registeredTasks)[sName] = Akari->tasks->current;
+		Akari->tasks->current->registeredName = sName;
 		return true;
 	}
 
-	bool registerNode(const char *name) {
+	bool registerNode(const char *node) {
+		Symbol sNode(node);
 		if (!Akari->tasks->current->registeredName) {
 			// TODO: just kill the process, don't kill the system.
 			// TODO: is this correct behaviour? Or could we have registered nodes
@@ -60,13 +67,13 @@ namespace User {
 			AkariPanic("name not registered - cannot register node");
 		}
 
-		if (Akari->tasks->current->nodesByName->hasKey(name)) {
+		if (Akari->tasks->current->nodesByName->hasKey(node)) {
 			AkariPanic("node already registered - cannot register atop it");
 		}
 
-		Tasks::Task::Node *node = new Tasks::Task::Node();
+		Tasks::Task::Node *target = new Tasks::Task::Node();
 
-		(*Akari->tasks->current->nodesByName)[name] = node;
+		(*Akari->tasks->current->nodesByName)[sNode] = target;
 		return true;
 	}
 
@@ -91,12 +98,16 @@ namespace User {
 	u32 obtainNodeWriter(const char *name, const char *node, bool exclusive) {
 		Symbol sName(name), sNode(node);
 
-		if (!Akari->tasks->registeredTasks->hasKey(sName))
+		if (!Akari->tasks->registeredTasks->hasKey(sName)) {
+			AkariHalt();
 			return -1;
+		}
 
 		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
-		if (!task->nodesByName->hasKey(sNode))
+		if (!task->nodesByName->hasKey(sNode)) {
+			AkariPanic("y");
 			return -1;
+		}
 
 		Tasks::Task::Node *target = (*task->nodesByName)[sNode];
 		return target->registerWriter(exclusive);

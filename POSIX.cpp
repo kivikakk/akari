@@ -1,5 +1,7 @@
 #include <POSIX.hpp>
+#include <Console.hpp>
 #include <Akari.hpp>
+#include <debug.hpp>
 
 namespace POSIX {
 	void *memset(void *mem, u8 c, u32 n) {
@@ -25,6 +27,13 @@ namespace POSIX {
 	}
 
 	s32 strcmp(const char *s1, const char *s2) {
+		Akari->console->putString("Comparing ");
+		Akari->console->putString(s1);
+		Akari->console->putString(" and ");
+		Akari->console->putString(s2);
+		Akari->console->putString(".\n");
+		AkariHalt();
+
 		while (*s1 && *s2) {
 			if (*s1 < *s2) return -1;
 			if (*s1 > *s2) return 1;

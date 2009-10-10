@@ -1,4 +1,6 @@
 #include <Memory.hpp>
+#include <Console.hpp>
+#include <Descriptor.hpp>
 #include <Akari.hpp>
 #include <POSIX.hpp>
 #include <debug.hpp>

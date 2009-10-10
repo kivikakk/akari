@@ -1,5 +1,8 @@
 #include <Akari.hpp>
 #include <interrupts.hpp>
+#include <Console.hpp>
+#include <Descriptor.hpp>
+#include <debug.hpp>
 
 static const char *isr_messages[] = {
     "Division by zero",

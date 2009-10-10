@@ -1,6 +1,7 @@
 #include <arch.hpp>
 #include <debug.hpp>
 #include <Akari.hpp>
+#include <Memory.hpp>
 
 void AkariOutB(u16 port, u8 data) {
 	asm volatile("outb %1, %0" : : "dN" (port), "a" (data));

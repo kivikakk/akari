@@ -1,6 +1,7 @@
 #include <Syscall.hpp>
 #include <Akari.hpp>
 #include <UserCalls.hpp>
+#include <Descriptor.hpp>
 
 Syscall::Syscall(): _syscalls_assigned(0) {
 	Akari->descriptor->idt->installHandler(0x80, &Syscall::_handler);

@@ -1,4 +1,7 @@
 #include <Akari.hpp>
+#include <Memory.hpp>
+#include <Console.hpp>
+#include <Descriptor.hpp>
 #include <debug.hpp>
 
 Kernel *Akari;

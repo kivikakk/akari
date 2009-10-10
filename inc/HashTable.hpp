@@ -1,6 +1,9 @@
 #ifndef __HASH_TABLE_HPP__
 #define __HASH_TABLE_HPP__
 
+#include <Akari.hpp>
+#include <Console.hpp>
+
 // Note this is not in fact a hash table, just an associative array.
 // We should make it a hash table in the future, though.
 // TODO: we need to actually make a decent lookup mechanism for this. Currently very slow.
@@ -34,11 +37,16 @@ class HashTable {
 
 		bool hasKey(const K &key) const {
 			_InternalItem *traverse = head;
+			Akari->console->putString("hasKey? ");
 			while (traverse) {
-				if (traverse->key == key)
+				Akari->console->putString(".");
+				if (traverse->key == key) {
+					Akari->console->putString("! :-)\n");
 					return true;
+				}
 				traverse = traverse->next;
 			}
+			Akari->console->putString("! :-(\n");
 			return false;
 		}
 

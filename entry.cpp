@@ -2,6 +2,12 @@
 #include <debug.hpp>
 #include <Akari.hpp>
 #include <UserGates.hpp>
+#include <Tasks.hpp>
+#include <Memory.hpp>
+#include <Descriptor.hpp>
+#include <Console.hpp>
+#include <Timer.hpp>
+#include <Syscall.hpp>
 
 #define UKERNEL_STACK_POS	0xE0000000
 #define UKERNEL_STACK_SIZE	0x2000

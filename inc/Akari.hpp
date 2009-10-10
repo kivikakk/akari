@@ -1,17 +1,18 @@
 #ifndef __AKARI_HPP__
 #define __AKARI_HPP__
 
-#include <Memory.hpp>
-#include <Console.hpp>
-#include <Descriptor.hpp>
-#include <Timer.hpp>
-#include <Tasks.hpp>
-#include <Syscall.hpp>
+#include <arch.hpp>
+
+class Memory;
+class Console;
+class Descriptor;
+class Timer;
+class Tasks;
+class Syscall;
 
 /**
  * The base class for the kernel services.
  */
-
 class Kernel {
 	public:
 		static Kernel *Construct(u32, u32);

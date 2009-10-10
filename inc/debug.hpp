@@ -10,6 +10,7 @@
 #endif
 
 extern "C" __attribute__((noreturn)) void AkariPanic(const char *);
+extern "C" __attribute__((noreturn)) void AkariHalt();
 
 #endif
 
