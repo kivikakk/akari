@@ -95,36 +95,45 @@ namespace User {
 		// Gone! XXX what happens when the last task exists!? Everything probably goes to hell ...
 	}
 
-	u32 obtainNodeWriter(const char *name, const char *node, bool exclusive) {
+	static inline Tasks::Task::Node *getNode(const char *name, const char *node) {
 		Symbol sName(name), sNode(node);
 
-		if (!Akari->tasks->registeredTasks->hasKey(sName)) {
-			AkariHalt();
-			return -1;
-		}
+		if (!Akari->tasks->registeredTasks->hasKey(sName))
+			return 0;
 
 		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
-		if (!task->nodesByName->hasKey(sNode)) {
-			AkariPanic("y");
-			return -1;
-		}
+		if (!task->nodesByName->hasKey(sNode))
+			return 0;
 
-		Tasks::Task::Node *target = (*task->nodesByName)[sNode];
+		return (*task->nodesByName)[sNode];
+	}
+
+	u32 obtainNodeWriter(const char *name, const char *node, bool exclusive) {
+		Tasks::Task::Node *target = getNode(name, node);
+		if (!target) return -1;
 		return target->registerWriter(exclusive);
 	}
 
 	u32 obtainNodeListener(const char *name, const char *node) {
-		Symbol sName(name), sNode(node);
-
-		if (!Akari->tasks->registeredTasks->hasKey(sName))
-			return -1;
-
-		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
-		if (!task->nodesByName->hasKey(sNode))
-			return -1;
-
-		Tasks::Task::Node *target = (*task->nodesByName)[sNode];
+		Tasks::Task::Node *target = getNode(name, node);
+		if (!target) return -1;
 		return target->registerListener();
+	}
+
+	u32 readListener(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
+		if (n == 0) return 0;
+		
+		Tasks::Task::Node *target = getNode(name, node);
+		Tasks::Task::Node::Listener &l = target->getListener(listener);
+
+		u32 len = l.length();
+		if (len == 0) return 0;
+		
+		if (len > n) len = n;
+		POSIX::memcpy(buffer, l.view(), len);
+		l.cut(len);
+
+		return len;
 	}
 }
 

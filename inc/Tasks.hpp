@@ -53,20 +53,26 @@ class Tasks : public Subsystem {
 				class Node {
 					public:
 						Node();
+						class Listener;
 
 						u32 registerWriter(bool exclusive);
 						u32 registerListener();
+						Listener &getListener(u32 id);
 
 						bool hasWriter(u32 id) const;
 						bool hasListener(u32 id) const;
 
-					protected:
 						class Listener {
 							friend class Node;
 							public:
 								Listener(u32 id);
 
 								void append(const char *data);
+								void reset();
+								void cut(u32 n);
+
+								const char *view() const;
+								u32 length() const;
 
 							protected:
 								u32 _id;
@@ -74,6 +80,7 @@ class Tasks : public Subsystem {
 								u32 _buflen;
 						};
 
+					protected:
 						bool _exclusive;
 						LinkedList<u32> _writers;
 						LinkedList<Listener> _listeners;

@@ -217,11 +217,18 @@ u32 Tasks::Task::Node::registerWriter(bool exclusive) {
 	return id;
 }
 
-
 u32 Tasks::Task::Node::registerListener() {
 	u32 id = _nextId();
 	_listeners.push_back(Listener(id));
 	return id;
+}
+
+Tasks::Task::Node::Listener &Tasks::Task::Node::getListener(u32 id) {
+	for (LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
+		if (it->_id == id)
+			return *it;
+	}
+	AkariPanic("No matching listener - TODO: something more useful.");
 }
 
 bool Tasks::Task::Node::hasWriter(u32 id) const {
@@ -259,6 +266,40 @@ void Tasks::Task::Node::Listener::append(const char *data) {
 		_buffer = newbuf;
 		_buflen += datalen;
 	}
+}
+
+void Tasks::Task::Node::Listener::reset() {
+	if (_buffer) {
+		delete [] _buffer;
+		_buffer = 0;
+		_buflen = 0;
+	}
+}
+
+void Tasks::Task::Node::Listener::cut(u32 n) {
+	if (!_buffer) return;
+	if (_buflen <= n) {
+		delete [] _buffer;
+		_buffer = 0;
+		_buflen = 0;
+	} else {
+		// Not using strcpy since in the future we probably
+		// will have no guarantee that it won't collapse if
+		// using overlapping regions!
+		char *rp = _buffer + n, *wp = _buffer;
+		while (*rp)
+			*wp++ = *rp++;
+		*wp = 0;
+		_buflen -= n;
+	}
+}
+
+const char *Tasks::Task::Node::Listener::view() const {
+	return _buffer;
+}
+
+u32 Tasks::Task::Node::Listener::length() const {
+	return _buflen;
 }
 
 u32 Tasks::Task::Node::_nextId() {

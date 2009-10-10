@@ -16,6 +16,7 @@ namespace User {
 	void exit();
 	u32 obtainNodeWriter(const char *name, const char *node, bool exclusive);
 	u32 obtainNodeListener(const char *name, const char *node);
+	u32 readListener(const char *name, const char *node, u32 listener, char *buffer, u32 n);
 }
 
 #endif
