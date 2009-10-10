@@ -58,6 +58,7 @@ class Tasks : public Subsystem {
 						u32 registerWriter(bool exclusive);
 						u32 registerListener();
 						Listener &getListener(u32 id);
+						void writeAllListeners(const char *buffer, u32 n);
 
 						bool hasWriter(u32 id) const;
 						bool hasListener(u32 id) const;
@@ -67,7 +68,7 @@ class Tasks : public Subsystem {
 							public:
 								Listener(u32 id);
 
-								void append(const char *data);
+								void append(const char *data, u32 n);
 								void reset();
 								void cut(u32 n);
 

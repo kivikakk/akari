@@ -231,6 +231,12 @@ Tasks::Task::Node::Listener &Tasks::Task::Node::getListener(u32 id) {
 	AkariPanic("No matching listener - TODO: something more useful.");
 }
 
+void Tasks::Task::Node::writeAllListeners(const char *buffer, u32 n) {
+	for (LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
+		it->append(buffer, n);
+	}
+}
+
 bool Tasks::Task::Node::hasWriter(u32 id) const {
 	for (const LinkedList<u32>::iterator it = _writers.begin(); it != _writers.end(); ++it) {
 		if (*it == id)
@@ -250,21 +256,20 @@ bool Tasks::Task::Node::hasListener(u32 id) const {
 Tasks::Task::Node::Listener::Listener(u32 id): _id(id), _buffer(0), _buflen(0)
 { }
 
-void Tasks::Task::Node::Listener::append(const char *data) {
+void Tasks::Task::Node::Listener::append(const char *data, u32 n) {
 	// HACK: hacky little appending string reallocing stupid buffer.
 	// Write a proper appending buffer (with smarts) and refactor it later.
 	if (!_buffer) {
-		_buflen = POSIX::strlen(data);
-		_buffer = new char[_buflen + 1];
-		POSIX::strcpy(_buffer, data);
+		_buflen = n;
+		_buffer = new char[n];
+		POSIX::memcpy(_buffer, data, n);
 	} else {
-		u32 datalen = POSIX::strlen(data);
-		char *newbuf = new char[_buflen + datalen + 1];
-		POSIX::strcpy(newbuf, _buffer);
-		POSIX::strcpy(newbuf + _buflen, data);
+		char *newbuf = new char[_buflen + n];
+		POSIX::memcpy(newbuf, _buffer, _buflen);
+		POSIX::memcpy(newbuf + _buflen, data, n);
 		delete [] _buffer;
 		_buffer = newbuf;
-		_buflen += datalen;
+		_buflen += n;
 	}
 }
 
@@ -283,13 +288,13 @@ void Tasks::Task::Node::Listener::cut(u32 n) {
 		_buffer = 0;
 		_buflen = 0;
 	} else {
-		// Not using strcpy since in the future we probably
+		// Not using memcpy since in the future we probably
 		// will have no guarantee that it won't collapse if
 		// using overlapping regions!
 		char *rp = _buffer + n, *wp = _buffer;
-		while (*rp)
+		u32 rm = _buflen - n;
+		while (rm-- > 0)
 			*wp++ = *rp++;
-		*wp = 0;
 		_buflen -= n;
 	}
 }

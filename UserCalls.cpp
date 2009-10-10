@@ -120,11 +120,14 @@ namespace User {
 		return target->registerListener();
 	}
 
-	u32 readListener(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
-		if (n == 0) return 0;
-		
+	// Keeping in mind that `buffer''s data probably isn't asciz.
+	u32 readNode(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
 		Tasks::Task::Node *target = getNode(name, node);
+		if (!target || !target->hasListener(listener)) return -1;
+
 		Tasks::Task::Node::Listener &l = target->getListener(listener);
+
+		if (n == 0) return 0;
 
 		u32 len = l.length();
 		if (len == 0) return 0;
@@ -134,6 +137,15 @@ namespace User {
 		l.cut(len);
 
 		return len;
+	}
+
+	u32 writeNode(const char *name, const char *node, u32 writer, const char *buffer, u32 n) {
+		Tasks::Task::Node *target = getNode(name, node);
+		if (!target || !target->hasWriter(writer)) return -1;
+
+		// We do have a writer, so we can go ahead and write to all listeners.
+		target->writeAllListeners(buffer, n);
+		return n;		// what else?!
 	}
 }
 
