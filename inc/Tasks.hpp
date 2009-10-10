@@ -53,10 +53,19 @@ class Tasks : public Subsystem {
 					public:
 						Node();
 
-						void registerListener();
+						u32 registerWriter(bool exclusive);
+						u32 registerListener();
+
+						bool hasWriter(u32 id) const;
+						bool hasListener(u32 id) const;
 
 					protected:
+						bool _exclusive;
+						LinkedList<u32> _writers;
 						LinkedList<u32> _listeners;
+
+						u32 _wl_id;
+						u32 _nextId();
 				};
 
 				HashTable<ASCIIString, Node *> *nodesByName;

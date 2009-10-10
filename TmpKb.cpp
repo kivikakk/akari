@@ -79,14 +79,11 @@ static s8 capslockInvert(s8 c) {
 
 
 void KeyboardProcess() {
-	if (!(syscall_registerName("system.io.keyboard") & 0xFF)) {
+	if (!SYSCALL_BOOL(syscall_registerName("system.io.keyboard")))
 		syscall_panic("could not register system.io.keyboard");
-	}
 
-	bool success = SYSCALL_BOOL(syscall_registerNode("input"));
-	if (!success) {
+	if (!SYSCALL_BOOL(syscall_registerNode("input")))
 		syscall_panic("could not register system.io.keyboard:input");
-	}
 
 	syscall_irqListen(1);
 

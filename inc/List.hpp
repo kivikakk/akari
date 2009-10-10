@@ -10,17 +10,30 @@ class LinkedList {
 		};
 
 		class iterator {
+			friend class LinkedList;
 			public:
 				bool operator ==(const iterator &r) const {
 					return _data == r._data;
+				}
+
+				bool operator !=(const iterator &r) const {
+					return _data != r._data;
 				}
 
 				T &operator *() {
 					 return *_data->item;
 				}
 
+				const T &operator *() const {
+					 return *_data->item;
+				}
+
 				iterator next() const {
 					return iterator(_data->next);
+				}
+
+				iterator operator ++() const {
+					return next();
 				}
 
 			protected:
@@ -31,19 +44,27 @@ class LinkedList {
 				listNode *_data;
 		};
 
-		LinkedList(): _start(0) {
+		LinkedList(): _begin(0) {
 		}
 
-		iterator start() {
-			return iterator(_start);
+		iterator begin() {
+			return iterator(_begin);
+		}
+
+		const iterator begin() const {
+			return iterator(_begin);
 		}
 
 		iterator end() {
 			return iterator(0);
 		}
 
+		const iterator end() const {
+			return iterator(0);
+		}
+
 		void push_back(const T &data) {
-			listNode **writeHead = &_start;
+			listNode **writeHead = &_begin;
 			while (*writeHead) {
 				writeHead = &(*writeHead)->next;
 			}
@@ -56,7 +77,7 @@ class LinkedList {
 		}
 
 	protected:
-		listNode *_start;
+		listNode *_begin;
 };
 
 #endif

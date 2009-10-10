@@ -197,7 +197,51 @@ void Tasks::Task::setIOMap(u8 port, bool enabled) {
 		iomap[port / 8] |= (1 << (port % 8));
 }
 
-Tasks::Task::Node::Node() { }
+Tasks::Task::Node::Node(): _wl_id(0) {
+}
+
+u32 Tasks::Task::Node::registerWriter(bool exclusive) {
+	if (_exclusive) return -1;
+
+	if (exclusive) {
+		if ((_writers.begin() != _writers.end())) {
+			// Whoops; there are already writers! Can't set it exclusive now.
+			return -1;
+		}
+		_exclusive = true;
+	}
+
+	u32 id = _nextId();
+	_writers.push_back(id);
+	return id;
+}
+
+
+u32 Tasks::Task::Node::registerListener() {
+	u32 id = _nextId();
+	_writers.push_back(id);
+	return id;
+}
+
+bool Tasks::Task::Node::hasWriter(u32 id) const {
+	for (const LinkedList<u32>::iterator it = _writers.begin(); it != _writers.end(); ++it) {
+		if (*it == id)
+			return true;
+	}
+	return false;
+}
+
+bool Tasks::Task::Node::hasListener(u32 id) const {
+	for (const LinkedList<u32>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
+		if (*it == id)
+			return true;
+	}
+	return false;
+}
+
+u32 Tasks::Task::Node::_nextId() {
+	return ++_wl_id;
+}
 
 Tasks::Task::Task(u8 cpl):
 		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
