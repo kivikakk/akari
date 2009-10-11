@@ -60,4 +60,6 @@ DEFN_SYSCALL5(readNode, 12, const char *, const char *, u32, char *, u32);
 DEFN_SYSCALL5(readNodeUnblock, 13, const char *, const char *, u32, char *, u32);
 DEFN_SYSCALL5(writeNode, 14, const char *, const char *, u32, const char *, u32);
 DEFN_SYSCALL0(defer, 15);
-
+DEFN_SYSCALL1(malloc, 16, u32);
+DEFN_SYSCALL1(free, 17, void *);
+DEFN_SYSCALL3(memcpy, 18, void *, const void *, u32);

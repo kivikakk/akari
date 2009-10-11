@@ -22,6 +22,9 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(13, (void *)&User::readNodeUnblock);
 	addSyscall(14, (void *)&User::writeNode);
 	addSyscall(15, (void *)&User::defer);
+	addSyscall(16, (void *)&User::malloc);
+	addSyscall(17, (void *)&User::free);
+	addSyscall(18, (void *)&User::memcpy);
 }
 
 u8 Syscall::versionMajor() const { return 0; }

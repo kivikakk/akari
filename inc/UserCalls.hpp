@@ -23,6 +23,9 @@ namespace User {
 	u32 readNodeUnblock(const char *name, const char *node, u32 listener, char *buffer, u32 n);
 	u32 writeNode(const char *name, const char *node, u32 writer, const char *buffer, u32 n);
 	void defer();
+	void *malloc(u32 n);
+	void free(void *p);
+	void *memcpy(void *dest, const void *src, u32 n);
 
 	class ReadCall : public BlockingCall {
 	public:

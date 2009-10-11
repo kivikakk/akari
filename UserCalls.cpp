@@ -158,6 +158,14 @@ namespace User {
 		Akari->syscall->returnToNextTask();
 	}
 
+	void *malloc(u32 n) {
+
+	}
+
+	void free(void *p) {
+		
+	}
+
 	ReadCall::ReadCall(const char *name, const char *node, u32 listener, char *buffer, u32 n):
 		_listener(&getNode(name, node)->getListener(listener)), _buffer(buffer), _n(n)
 	{ }
