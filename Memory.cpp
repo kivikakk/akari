@@ -204,7 +204,7 @@ u32 Memory::freeFrame() const {
 			for (u32 j = 0; j < 32; ++j)
 				if (!(_frames[i] & (1 << j)))
 					return (i * 32 + j) * 0x1000;
-			AkariPanic("FreeFrame thought it found a free frame, but didn't find one?");
+			AkariPanic("freeFrame thought it found a free frame, but didn't find one?");
 		}
 	
 	AkariPanic("no frames free! Time to panic. :)");
