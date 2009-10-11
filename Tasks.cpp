@@ -135,8 +135,13 @@ void *Tasks::assignInternalTask(Task *task) {
 	if (task->userWaiting) {
 		AkariPanic("task->userWaiting");			// We shouldn't be switching to a task that's waiting. Block fail?
 	} else if (task->userCall) {
+		// We want to change the value in the stack which actually becomes the return value of the syscall.
+		// If they're a kernel proc (cpl==0), then that's just the EAX on the ks. If they're cpl>0, then
+		// we want to change utks' EAX, not ks' one, since ks is just the kernel stack for jumping back to
+		// their cpl.
 		struct modeswitch_registers *regs = (struct modeswitch_registers *)((task->cpl > 0) ? task->utks : task->ks);
 		regs->callback.eax = (*task->userCall)();
+		ASSERT(!task->userCall->shallBlock());
 
 		delete task->userCall;
 		task->userCall = 0;
