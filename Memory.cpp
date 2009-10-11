@@ -127,11 +127,11 @@ void *Memory::allocAligned(u32 n, u32 *phys) {
 void Memory::free(void *p) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
-		// TODO: AkariPanic("implement Free() for heaps");
+		// TODO: AkariPanic("implement free() for heaps");
 		return;
 	}
 	
-	AkariPanic("Memory: tried to Free() in placement mode");
+	AkariPanic("Memory: tried to free() in placement mode");
 }
 
 void *Memory::PageFault(struct modeswitch_registers *r) {
