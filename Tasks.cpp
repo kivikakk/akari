@@ -122,6 +122,11 @@ void *Tasks::assignInternalTask(Task *task) {
 	
 	ASSERT(task);
 	Akari->memory->switchPageDirectory(task->pageDir);
+
+	if (!task->heap && task->heapStart != task->heapMax) {
+		task->heap = new Memory::Heap(task->heapStart, task->heapEnd, task->heapMax, false, false);	// false false? XXX Always?
+	}
+
 	if (task->cpl > 0) {
 		Akari->descriptor->gdt->setTSSStack(task->utks + sizeof(struct modeswitch_registers));
 		Akari->descriptor->gdt->setTSSIOMap(task->iomap);
@@ -199,7 +204,15 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 	regs->callback.eflags = (interruptFlag ? 0x200 : 0x0) | (iopl << 12);
 
 	nt->pageDir = pageDirBase->clone();
+	
+#define _PROCESS_HEAP_START	0x0500000
+#define _PROCESS_HEAP_SIZE	0x500000		// 5MiB
+	for (u32 i = _PROCESS_HEAP_START; i < (_PROCESS_HEAP_START + _PROCESS_HEAP_SIZE); i += 0x1000)
+		nt->pageDir->getPage(i, true)->allocAnyFrame(false, true);
 
+	nt->heapStart = _PROCESS_HEAP_START;
+	nt->heapEnd = nt->heapMax = _PROCESS_HEAP_START + _PROCESS_HEAP_SIZE;
+	// Heap will be initialised first time we switch to the process.
 
 	return nt;
 }
@@ -345,7 +358,10 @@ u32 Tasks::Task::Node::_nextId() {
 Tasks::Task::Task(u8 cpl):
 		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
 		userWaiting(false), userCall(0),
-		id(0), registeredName(), cpl(cpl), pageDir(0), heap(0), ks(0), utks(0) {
+		id(0), registeredName(),
+		cpl(cpl), pageDir(0),
+		heap(0), heapStart(0), heapEnd(0), heapMax(0),
+		ks(0), utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	id = ++lastAssignedId;
 

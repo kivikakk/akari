@@ -96,6 +96,7 @@ public:
 		u8 cpl;
 		Memory::PageDirectory *pageDir;
 		Memory::Heap *heap;
+		u32 heapStart, heapEnd, heapMax;
 		u32 ks; u32 utks;
 		u8 iomap[32];
 
