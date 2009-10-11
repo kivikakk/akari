@@ -122,7 +122,7 @@ namespace User {
 
 	// Keeping in mind that `buffer''s data probably isn't asciz.
 	u32 readNode_impl(const char *name, const char *node, u32 listener, char *buffer, u32 n, bool block) {
-		ReadBlockingCall c(name, node, listener, buffer, n);
+		ReadCall c(name, node, listener, buffer, n);
 		u32 r = c();
 		if (!block || !c.shallBlock())
 			return r;
@@ -131,11 +131,11 @@ namespace User {
 		// Block until such time as some data is available.
 		Tasks::Task::Node::Listener *l = c.getListener();
 
-		Akari->tasks->current->nodeWaiting = true;
-		Akari->tasks->current->nodeListen = l;
+		Akari->tasks->current->userWaiting = true;
+		Akari->tasks->current->userCall = new ReadCall(c);
 		l->hook(Akari->tasks->current);
 		Akari->syscall->returnToNextTask();
-		return 424242;
+		return 0;
 	}
 
 	u32 readNode(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
@@ -158,30 +158,15 @@ namespace User {
 		Akari->syscall->returnToNextTask();
 	}
 
-	BlockingCall::BlockingCall(): _shallBlock(false) { }
-	BlockingCall::~BlockingCall() { }
-
-	bool BlockingCall::shallBlock() const {
-		return _shallBlock;
-	}
-
-	void BlockingCall::_wontBlock() {
-		_shallBlock = false;
-	}
-
-	void BlockingCall::_willBlock() {
-		_shallBlock = true;
-	}
-
-	ReadBlockingCall::ReadBlockingCall(const char *name, const char *node, u32 listener, char *buffer, u32 n):
+	ReadCall::ReadCall(const char *name, const char *node, u32 listener, char *buffer, u32 n):
 		_listener(&getNode(name, node)->getListener(listener)), _buffer(buffer), _n(n)
 	{ }
 
-	Tasks::Task::Node::Listener *ReadBlockingCall::getListener() const {
+	Tasks::Task::Node::Listener *ReadCall::getListener() const {
 		return _listener;
 	}
 
-	u32 ReadBlockingCall::operator ()() {
+	u32 ReadCall::operator ()() {
 		if (_n == 0) {
 			_wontBlock();
 			return 0;

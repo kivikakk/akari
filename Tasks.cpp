@@ -83,9 +83,9 @@ Tasks::Task *Tasks::getNextTask() {
 		// it intentionally will be able to loop back to the task we switched from. (though
 		// of course, it won't if it's irqWait ...)
 
-		if ((t->irqWaiting && !t->irqListenHits) || t->nodeWaiting) {
+		if ((t->irqWaiting && !t->irqListenHits) || t->userWaiting) {
 			Task *newCurrent = t;
-			while ((newCurrent->irqWaiting && !newCurrent->irqListenHits) || newCurrent->nodeWaiting) {
+			while ((newCurrent->irqWaiting && !newCurrent->irqListenHits) || newCurrent->userWaiting) {
 				Task *next = _NextTask(newCurrent);
 				ASSERT(next != t);
 				newCurrent = next;
@@ -132,12 +132,14 @@ void *Tasks::assignInternalTask(Task *task) {
 		task->irqListenHits--;
 	}
 
-	if (task->nodeWaiting) {
-		AkariPanic("task->nodeWaiting");			// We shouldn't be switching to a task that's waiting. Block fail?
-	} else if (task->nodeListen) {
-		task->nodeListen = 0;
+	if (task->userWaiting) {
+		AkariPanic("task->userWaiting");			// We shouldn't be switching to a task that's waiting. Block fail?
+	} else if (task->userCall) {
 		struct modeswitch_registers *regs = (struct modeswitch_registers *)((task->cpl > 0) ? task->utks : task->ks);
-		regs->callback.eax = 979797;
+		regs->callback.eax = (*task->userCall)();
+
+		delete task->userCall;
+		task->userCall = 0;
 	}
 
 	return (void *)((!task->cpl > 0) ? task->ks : task->utks);
@@ -283,7 +285,7 @@ void Tasks::Task::Node::Listener::append(const char *data, u32 n) {
 	}
 
 	if (_hooked) {
-		_hooked->nodeWaiting = false;
+		_hooked->userWaiting = false;
 	}
 }
 
@@ -335,7 +337,7 @@ u32 Tasks::Task::Node::_nextId() {
 
 Tasks::Task::Task(u8 cpl):
 		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
-		nodeWaiting(false),
+		userWaiting(false), userCall(0),
 		id(0), registeredName(), cpl(cpl), pageDir(0), ks(0), utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	id = ++lastAssignedId;

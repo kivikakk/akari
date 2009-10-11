@@ -8,6 +8,7 @@
 #include <Strings.hpp>
 #include <List.hpp>
 #include <Symbol.hpp>
+#include <BlockingCall.hpp>
 
 // user task kernel stack is used for state when it's
 // pre-empted, and for system calls, etc.
@@ -83,9 +84,9 @@ class Tasks : public Subsystem {
 				bool irqWaiting;
 				u32 irqListen, irqListenHits;
 
-				// Node listen blocking. (HACKy?)
-				bool nodeWaiting;
-				Node::Listener *nodeListen;
+				// User call blocking. (HACKy?)
+				bool userWaiting;
+				BlockingCall *userCall;
 
 				// GUID and other identifying information.
 				u32 id;
