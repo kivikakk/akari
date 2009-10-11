@@ -159,11 +159,13 @@ namespace User {
 	}
 
 	void *malloc(u32 n) {
-		
+		ASSERT(Akari->tasks->current->heap);
+		return Akari->tasks->current->heap->alloc(n);
 	}
 
 	void free(void *p) {
-		
+		ASSERT(Akari->tasks->current->heap);
+		// TODO! :-)
 	}
 
 	void *memcpy(void *dest, const void *src, u32 n) {

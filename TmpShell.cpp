@@ -30,29 +30,20 @@ void ShellProcess() {
 	stdin = (u32)-1;
 	while (stdin == (u32)-1) {
 		stdin = syscall_obtainNodeListener("system.io.keyboard", "input");
-		syscall_putc('.');
 	}
 
 	syscall_puts("\nstdin is 0x");
 	syscall_putl(stdin, 16);
 	syscall_puts(".\n");
 
-	char kbbuf[1024];
-
 	while (true) {
-		u32 incoming = syscall_readNode("system.io.keyboard", "input", stdin, kbbuf, 1024);	// Will block.
-		// syscall_puts("Returned: value is ");
-		// syscall_putl(incoming, 10);
-		// syscall_puts("\n");
-
-		if (!incoming) {
-			//syscall_defer();
-		} else {
-			syscall_puts("Heard from kb: ");
-			kbbuf[incoming] = 0;
-			syscall_puts(kbbuf);
-			syscall_putc('\n');
-		}
+		char *l = getline();
+		syscall_puts("got line (0x");
+		syscall_putl((u32)l, 16);
+		syscall_puts("): ");
+		syscall_puts(l);
+		syscall_putc('\n');
+		syscall_free(l);
 	}
 
 	syscall_exit();

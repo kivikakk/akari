@@ -127,7 +127,7 @@ void *Memory::allocAligned(u32 n, u32 *phys) {
 void Memory::free(void *p) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
-		// AkariPanic("implement Free() for heaps");
+		// TODO: AkariPanic("implement Free() for heaps");
 		return;
 	}
 	
