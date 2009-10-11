@@ -108,23 +108,15 @@ void Tasks::saveRegisterToTask(Task *dest, void *regs) {
 	// internal consistency.
 	ASSERT(((((struct modeswitch_registers *)regs)->callback.cs - 0x08) / 0x11) == dest->cpl);
 
-	if (dest->cpl == 0) {
-		// update the tip of stack pointer so we can restore later
-		// Akari->console->putString("ks saved as 0x");
-		// Akari->console->putInt((u32)regs, 16);
-		// Akari->console->putString("\n");
-		dest->ks = (u32)regs;
-	} else {
-		// update utks pointer
-		dest->utks = (u32)regs;
-		// Akari->console->putString("utks saved as 0x");
-		// Akari->console->putInt((u32)regs, 16);
-		// Akari->console->putString("\n");
-	}
+	// update the tip of stack pointer so we can restore later
+	// Akari->console->putString("ks saved as 0x");
+	// Akari->console->putInt((u32)regs, 16);
+	// Akari->console->putString("\n");
+	dest->ks = (u32)regs;
 }
 
 void *Tasks::assignInternalTask(Task *task) {
-	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
+	// now set the page directory, ks for TSS (if applicable) and stack to switch to as appropriate
 	
 	ASSERT(task);
 	Akari->memory->switchPageDirectory(task->pageDir);
@@ -134,7 +126,7 @@ void *Tasks::assignInternalTask(Task *task) {
 	}
 
 	if (task->cpl > 0) {
-		Akari->descriptor->gdt->setTSSStack(task->utks + sizeof(struct modeswitch_registers));
+		Akari->descriptor->gdt->setTSSStack(task->ks + sizeof(struct modeswitch_registers));
 		Akari->descriptor->gdt->setTSSIOMap(task->iomap);
 	}
 
@@ -147,10 +139,8 @@ void *Tasks::assignInternalTask(Task *task) {
 		AkariPanic("task->userWaiting");			// We shouldn't be switching to a task that's waiting. Block fail?
 	} else if (task->userCall) {
 		// We want to change the value in the stack which actually becomes the return value of the syscall.
-		// If they're a kernel proc (cpl==0), then that's just the EAX on the ks. If they're cpl>0, then
-		// we want to change utks' EAX, not ks' one, since ks is just the kernel stack for jumping back to
-		// their cpl.
-		struct modeswitch_registers *regs = (struct modeswitch_registers *)((task->cpl > 0) ? task->utks : task->ks);
+		// If they're a kernel proc (cpl==0), then that's just the EAX on the ks.
+		struct modeswitch_registers *regs = (struct modeswitch_registers *)task->ks;
 		regs->callback.eax = (*task->userCall)();
 		ASSERT(!task->userCall->shallBlock());
 
@@ -158,13 +148,13 @@ void *Tasks::assignInternalTask(Task *task) {
 		task->userCall = 0;
 	}
 
-	return (void *)((task->cpl == 0) ? task->ks : task->utks);
+	return (void *)task->ks;
 }
 
 Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase) {
 	Task *nt = new Task(cpl);
 	if (cpl > 0)
-		nt->utks = (u32)Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		nt->ks = (u32)Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 	else {
 		// nt->ks = (u32)Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 		AkariPanic("I haven't tested a non-user initial task. Uncomment this panic at your own peril.");
@@ -191,24 +181,16 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 	if (cpl > 0) {
 		// Allocate the user's stack to top out at USER_TASK_BASE (i.e. it goes below that).
 		// We need to do the frame allocs ourselves so they're visible and writable by the user.
-		// We also save nt->ks as the top of the first frame (physically).
 		for (u32 i = 0, page = USER_TASK_BASE - 0x1000; i < USER_TASK_STACK_SIZE; i += 0x1000, page -= 0x1000) {
-			Memory::Page *ksp = nt->pageDir->getPage(page, true);
-			ksp->allocAnyFrame(false, true);
-			/**
-			 * This appears to be completely unneeded.
-			if (i == 0) {
-				nt->ks = ksp->pageAddress * 0x1000 + 0x1000;
-			}
-			*/
+			nt->pageDir->getPage(page, true)->allocAnyFrame(false, true);
 		}
+
+		nt->ks = (u32)Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		regs = (struct modeswitch_registers *)(nt->ks);
 
 		Akari->console->putString("alloced nt->ks at 0x");
 		Akari->console->putInt(nt->ks, 16);
 		Akari->console->putString("\n");
-
-		nt->utks = (u32)Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
-		regs = (struct modeswitch_registers *)(nt->utks);
 
 		regs->useresp = USER_TASK_BASE;
 		regs->ss = 0x10 + (cpl * 0x11);		// same as ds: ss is set by TSS, ds is manually set by irq_timer_multitask after
@@ -385,7 +367,7 @@ Tasks::Task::Task(u8 cpl):
 		id(0), registeredName(),
 		cpl(cpl), pageDir(0),
 		heap(0), heapStart(0), heapEnd(0), heapMax(0),
-		ks(0), utks(0) {
+		ks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	id = ++lastAssignedId;
 

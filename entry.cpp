@@ -64,7 +64,7 @@ static void AkariEntryCont() {
 	Tasks::Task *base = Tasks::Task::BootstrapInitialTask(3, Akari->memory->_kernelDirectory);
 	Akari->tasks->start = Akari->tasks->current = base;
 
-	Akari->descriptor->gdt->setTSSStack(base->utks + sizeof(struct modeswitch_registers));
+	Akari->descriptor->gdt->setTSSStack(base->ks + sizeof(struct modeswitch_registers));
 	Akari->descriptor->gdt->setTSSIOMap(base->iomap);
 
 	// Idle task

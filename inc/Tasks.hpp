@@ -99,7 +99,7 @@ public:
 		Memory::PageDirectory *pageDir;
 		Memory::Heap *heap;
 		u32 heapStart, heapEnd, heapMax;
-		u32 ks; u32 utks;
+		u32 ks;
 		u8 iomap[32];
 
 		HashTable<Symbol, Node *> *nodesByName;
