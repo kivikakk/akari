@@ -33,25 +33,10 @@ static s8 keyboard_us_shift_table[] = {
 	0
 };
 
-static bool echo_mode = true;
-static bool capslock_down = false, numlock_down = false, scrolllock_down = false;
-static bool pressed_ctrl = false, pressed_alt = false, pressed_shift = false;
-static u8 held_scancodes[16];     // held_scancodes is a 128-bit=16 bytes bitfield static
-
 static void waitForKb() {
     while (1)
         if ((AkariInB(0x64) & 2) == 0)
             break;
-}
-
-static void updateLEDs() {
-    u8 valuebyte =
-        (scrolllock_down ? 1 : 0) |
-        (numlock_down ? 2 : 0) |
-        (capslock_down ? 4 : 0);
-
-    waitForKb(); AkariOutB(0x60, 0xed);
-    waitForKb(); AkariOutB(0x60, valuebyte);
 }
 
 static s8 shiftCharacter(s8 c) {
@@ -76,8 +61,14 @@ static s8 capslockInvert(s8 c) {
 
 
 void KeyboardProcess() {
+	// 128-bit=16 bytes bitfield
+	u8 held_scancodes[16];     
+
+	bool echo_mode = true;
+	bool capslock_down = false, numlock_down = false, scrolllock_down = false;
+	bool pressed_ctrl = false, pressed_alt = false, pressed_shift = false;
+
 	for (int i = 0; i < 1000000; ++i);
-	while(1);
 
 	if (!SYSCALL_BOOL(syscall_registerName("system.io.keyboard")))
 		syscall_panic("could not register system.io.keyboard");
@@ -96,6 +87,8 @@ void KeyboardProcess() {
 	syscall_irqListen(1);
 
 	u8 scancode = AkariInB(0x60);
+	bool mustUpdateLEDs = false;
+
 	while (1) {
 		if (scancode & 0x80) {
 			// release
@@ -117,13 +110,13 @@ void KeyboardProcess() {
 				pressed_alt = true;
 			else if (scancode == 58) {
 				capslock_down = !capslock_down;
-				updateLEDs();
+				mustUpdateLEDs = true;
 			} else if (scancode == 69) {
 				numlock_down = !numlock_down;
-				updateLEDs();
+				mustUpdateLEDs = true;
 			} else if (scancode == 70) {
 				scrolllock_down = !scrolllock_down;
-				updateLEDs();
+				mustUpdateLEDs = true;
 			} else {
 				scancode = keyboard_us[scancode];
 				if (pressed_shift)
@@ -135,6 +128,16 @@ void KeyboardProcess() {
 
 				// Now actually dispatch this.
 				syscall_writeNode("system.io.keyboard", "input", writer, (const char *)&scancode, 1);
+			}
+
+			if (mustUpdateLEDs) {
+				u8 valuebyte =
+					(scrolllock_down ? 1 : 0) |
+					(numlock_down ? 2 : 0) |
+					(capslock_down ? 4 : 0);
+
+				waitForKb(); AkariOutB(0x60, 0xed);
+				waitForKb(); AkariOutB(0x60, valuebyte);
 			}
 		}
 
