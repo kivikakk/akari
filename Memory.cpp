@@ -155,9 +155,7 @@ void *Memory::PageFault(struct modeswitch_registers *r) {
 	Akari->console->putInt(faultingAddress, 16);
 	Akari->console->putChar('\n');
 
-	while (1)
-		__asm__ __volatile__("hlt");
-
+	// Return 0, which tells the interrupt handler to kill this process.
 	return 0;
 }
 

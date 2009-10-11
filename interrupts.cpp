@@ -3,6 +3,7 @@
 #include <Console.hpp>
 #include <Descriptor.hpp>
 #include <debug.hpp>
+#include <Tasks.hpp>
 
 static const char *isr_messages[] = {
     "Division by zero",
@@ -51,10 +52,26 @@ void *isr_handler(struct modeswitch_registers *r) {
 		Akari->console->putInt(r->callback.eflags, 16);
 		Akari->console->putString(", user ESP (may be garbage): ");
 		Akari->console->putInt(r->useresp, 16);
-		Akari->console->putString("\n");
+		Akari->console->putString("\nProcess killed.\n");
 
-		while (1)
-			__asm__ __volatile__("hlt");
+		// TODO OMG: refactor this code! It's terrible! Half-copied from
+		// UserCalls.cpp and the surrounding architecture to skip a killed
+		// task in Syscalls. These can be unified, now.
+
+		Tasks::Task *nextTask = Akari->tasks->getNextTask();
+
+		Tasks::Task **scanner = &Akari->tasks->start;
+		while (*scanner != Akari->tasks->current) {
+			scanner = &(*scanner)->next;
+		}
+		*scanner = (*scanner)->next;
+
+		Akari->tasks->current = nextTask;
+		return Akari->tasks->assignInternalTask(Akari->tasks->current);
+
+
+		// while (1)
+			// __asm__ __volatile__("hlt");
 	}
 
 	return resume;
