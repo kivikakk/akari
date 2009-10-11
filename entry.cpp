@@ -12,7 +12,7 @@
 #define UKERNEL_STACK_POS	0xE0000000
 #define UKERNEL_STACK_SIZE	0x2000
 
-#define IDLE_STACK_SIZE		0x2000
+#define INIT_STACK_SIZE		0x2000
 
 static void AkariEntryCont();
 void SubProcess();
@@ -43,14 +43,14 @@ void AkariEntry() {
 	Akari->memory->setPaging(true);
 	
 	// Give ourselves a normal stack. (n.b. this is from kernel heap!)
-	void *IdleTaskStack = Akari->memory->allocAligned(IDLE_STACK_SIZE);
+	void *initTaskStack = Akari->memory->allocAligned(INIT_STACK_SIZE);
 	// do we still need to flush the TLB?
 	__asm__ __volatile__("\
 		mov %%cr3, %%eax; \
 		mov %%eax, %%cr3" : : : "%eax");
 	__asm__ __volatile__("\
 		mov %%eax, %%esp; \
-		mov %%eax, %%ebp" : : "a" ((u32)IdleTaskStack));
+		mov %%eax, %%ebp" : : "a" ((u32)initTaskStack));
 	
 	AkariEntryCont();
 }
@@ -72,22 +72,25 @@ static void AkariEntryCont() {
 	Akari->tasks->current->next = idle;
 
 	// Keyboard driver task
-	Tasks::Task *kbdriver = Tasks::Task::CreateTask((u32)&KeyboardProcess, 1, true, 0, Akari->memory->_kernelDirectory);
+	Tasks::Task *kbdriver = Tasks::Task::CreateTask((u32)&KeyboardProcess, 3, true, 0, Akari->memory->_kernelDirectory);
 	kbdriver->setIOMap(0x60, true);
 	kbdriver->setIOMap(0x64, true);
 	idle->next = kbdriver;
 
 	// Shell
 	Tasks::Task *shell = Tasks::Task::CreateTask((u32)&ShellProcess, 3, true, 0, Akari->memory->_kernelDirectory);
-	kbdriver->next = shell;
+	// kbdriver->next = shell;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);
 
 	Tasks::SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 
-	// We have a proper (kernel-mode) idle task we spawn above that hlts.
-	syscall_exit();
+	// We have a proper (kernel-mode) idle task we spawn above that hlts, so we
+	// can exit, with an exit syscall. We can't actually call syscall_exit(), since
+	// the function call would try to push to our stack, and we can't do that now
+	// since we're in ring 3 and we have no write access!
+	asm volatile("int $0x80" : : "a" (9));
 }
 
 void IdleProcess() {

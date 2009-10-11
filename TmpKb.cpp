@@ -33,7 +33,7 @@ static s8 keyboard_us_shift_table[] = {
 	0
 };
 
-static bool echo_mode = false;
+static bool echo_mode = true;
 static bool capslock_down = false, numlock_down = false, scrolllock_down = false;
 static bool pressed_ctrl = false, pressed_alt = false, pressed_shift = false;
 static u8 held_scancodes[16];     // held_scancodes is a 128-bit=16 bytes bitfield static
@@ -77,6 +77,7 @@ static s8 capslockInvert(s8 c) {
 
 void KeyboardProcess() {
 	for (int i = 0; i < 1000000; ++i);
+	while(1);
 
 	if (!SYSCALL_BOOL(syscall_registerName("system.io.keyboard")))
 		syscall_panic("could not register system.io.keyboard");
