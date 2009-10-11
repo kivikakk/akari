@@ -95,6 +95,7 @@ class Tasks : public Subsystem {
 				// Real task process data.
 				u8 cpl;
 				Memory::PageDirectory *pageDir;
+				Memory::Heap *heap;
 				u32 ks; u32 utks;
 				u8 iomap[32];
 

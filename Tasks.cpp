@@ -165,6 +165,7 @@ Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pa
 	}
 
 	nt->pageDir = pageDirBase->clone();
+	// We don't give it a heap, it won't need one ...
 
 	return nt;
 }
@@ -180,7 +181,7 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 		regs = (struct modeswitch_registers *)(nt->utks);
 
 		regs->useresp = nt->ks;
-		regs->ss = 0x10 + (cpl * 0x11);		// dsと同じ.. ssがTSSにセットされ、dsは（後で）irq_timer_multitaskに手動によるセットされる
+		regs->ss = 0x10 + (cpl * 0x11);		// same as ds: ss is set by TSS, ds is manually set by irq_timer_multitask after
 	} else {
 		nt->ks -= sizeof(struct callback_registers);
 		regs = (struct modeswitch_registers *)(nt->ks);
@@ -343,7 +344,7 @@ u32 Tasks::Task::Node::_nextId() {
 Tasks::Task::Task(u8 cpl):
 		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
 		userWaiting(false), userCall(0),
-		id(0), registeredName(), cpl(cpl), pageDir(0), ks(0), utks(0) {
+		id(0), registeredName(), cpl(cpl), pageDir(0), heap(0), ks(0), utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	id = ++lastAssignedId;
 
