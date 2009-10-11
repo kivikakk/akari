@@ -161,7 +161,7 @@ Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pa
 		// be careful about where you placed the stack.. probably not, but just check it all matches up?
 		// ALSO NOTE WELL: SwitchRing does a range of important things like enabling interrupts,
 		// which is good for, you know, multitasking. So if you're going to do this, be careful ...
-		// ALSO NEXT: It doesn't really matter sinec we're killing the init task pretty quickly anyway..
+		// ALSO NEXT: It doesn't really matter since we're killing the init task pretty quickly anyway..
 	}
 
 	nt->pageDir = pageDirBase->clone();
