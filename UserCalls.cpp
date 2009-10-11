@@ -159,11 +159,20 @@ namespace User {
 	}
 
 	void *malloc(u32 n) {
-
+		
 	}
 
 	void free(void *p) {
 		
+	}
+
+	void *memcpy(void *dest, const void *src, u32 n) {
+		char *w = (char *)dest;
+		const char *r = (const char *)src;
+
+		while (n--)
+			*w++ = *r++;
+		return dest;
 	}
 
 	ReadCall::ReadCall(const char *name, const char *node, u32 listener, char *buffer, u32 n):

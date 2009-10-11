@@ -200,6 +200,7 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 
 	nt->pageDir = pageDirBase->clone();
 
+
 	return nt;
 }
 
