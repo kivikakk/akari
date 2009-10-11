@@ -122,29 +122,20 @@ namespace User {
 
 	// Keeping in mind that `buffer''s data probably isn't asciz.
 	u32 readNode_impl(const char *name, const char *node, u32 listener, char *buffer, u32 n, bool block) {
-		Tasks::Task::Node *target = getNode(name, node);
-		if (!target || !target->hasListener(listener)) return -1;
+		ReadBlockingCall c(name, node, listener, buffer, n);
+		u32 r = c();
+		if (!block || !c.shallBlock())
+			return r;
+	
+		// block && r.shallBlock()
+		// Block until such time as some data is available.
+		Tasks::Task::Node::Listener *l = c.getListener();
 
-		Tasks::Task::Node::Listener &l = target->getListener(listener);
-		if (n == 0) return 0;
-
-		u32 len = l.length();
-		if (len == 0) {
-			if (!block) return 0;
-
-			// Block until such time as some data is available.
-			Akari->tasks->current->nodeWaiting = true;
-			Akari->tasks->current->nodeListen = &l;
-			l.hook(Akari->tasks->current);
-			Akari->syscall->returnToNextTask();
-			return 424242;		// Will this return value be used? Where??? XXX
-		}
-		
-		if (len > n) len = n;
-		POSIX::memcpy(buffer, l.view(), len);
-		l.cut(len);
-
-		return len;
+		Akari->tasks->current->nodeWaiting = true;
+		Akari->tasks->current->nodeListen = l;
+		l->hook(Akari->tasks->current);
+		Akari->syscall->returnToNextTask();
+		return 424242;
 	}
 
 	u32 readNode(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
@@ -165,6 +156,49 @@ namespace User {
 
 	void defer() {
 		Akari->syscall->returnToNextTask();
+	}
+
+	BlockingCall::BlockingCall(): _shallBlock(false) { }
+	BlockingCall::~BlockingCall() { }
+
+	bool BlockingCall::shallBlock() const {
+		return _shallBlock;
+	}
+
+	void BlockingCall::_wontBlock() {
+		_shallBlock = false;
+	}
+
+	void BlockingCall::_willBlock() {
+		_shallBlock = true;
+	}
+
+	ReadBlockingCall::ReadBlockingCall(const char *name, const char *node, u32 listener, char *buffer, u32 n):
+		_listener(&getNode(name, node)->getListener(listener)), _buffer(buffer), _n(n)
+	{ }
+
+	Tasks::Task::Node::Listener *ReadBlockingCall::getListener() const {
+		return _listener;
+	}
+
+	u32 ReadBlockingCall::operator ()() {
+		if (_n == 0) {
+			_wontBlock();
+			return 0;
+		}
+
+		u32 len = _listener->length();
+		if (len == 0) {
+			_willBlock();
+			return 0;
+		}
+		
+		if (len > _n) len = _n;
+		POSIX::memcpy(_buffer, _listener->view(), len);
+		_listener->cut(len);
+
+		_wontBlock();
+		return len;
 	}
 }
 
