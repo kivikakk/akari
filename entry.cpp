@@ -81,7 +81,7 @@ static void AkariEntryCont() {
 
 	// Hello shell!
 	Tasks::Task *shell = Tasks::Task::CreateTask(
-		(u32)&ShellProcess, 0, true, 0, Akari->memory->_kernelDirectory);
+		(u32)&ShellProcess, 3, true, 0, Akari->memory->_kernelDirectory);
 	kbdriver->next = shell;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.

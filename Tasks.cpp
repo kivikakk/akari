@@ -133,8 +133,11 @@ void *Tasks::assignInternalTask(Task *task) {
 	}
 
 	if (task->nodeWaiting) {
-		AkariPanic("task->nodeWaiting");
-		task->nodeWaiting = false;
+		AkariPanic("task->nodeWaiting");			// We shouldn't be switching to a task that's waiting. Block fail?
+	} else if (task->nodeListen) {
+		task->nodeListen = 0;
+		struct modeswitch_registers *regs = (struct modeswitch_registers *)((task->cpl > 0) ? task->utks : task->ks);
+		regs->callback.eax = 979797;
 	}
 
 	return (void *)((!task->cpl > 0) ? task->ks : task->utks);
@@ -151,6 +154,7 @@ Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pa
 		// be careful about where you placed the stack.. probably not, but just check it all matches up?
 		// ALSO NOTE WELL: SwitchRing does a range of important things like enabling interrupts,
 		// which is good for, you know, multitasking. So if you're going to do this, be careful ...
+		// ALSO NEXT: It doesn't really matter sinec we're killing the init task pretty quickly anyway..
 	}
 
 	nt->pageDir = pageDirBase->clone();
@@ -263,6 +267,8 @@ Tasks::Task::Node::Listener::Listener(u32 id): _id(id), _buffer(0), _buflen(0), 
 void Tasks::Task::Node::Listener::append(const char *data, u32 n) {
 	// HACK: hacky little appending string reallocing stupid buffer.
 	// Write a proper appending buffer (with smarts) and refactor it later.
+	if (n == 0) return;
+
 	if (!_buffer) {
 		_buflen = n;
 		_buffer = new char[n];
@@ -274,6 +280,10 @@ void Tasks::Task::Node::Listener::append(const char *data, u32 n) {
 		delete [] _buffer;
 		_buffer = newbuf;
 		_buflen += n;
+	}
+
+	if (_hooked) {
+		_hooked->nodeWaiting = false;
 	}
 }
 
