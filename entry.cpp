@@ -60,28 +60,25 @@ static void AkariEntryCont() {
 	for (u32 i = UKERNEL_STACK_POS; i >= UKERNEL_STACK_POS - UKERNEL_STACK_SIZE; i -= 0x1000)
 		Akari->memory->_activeDirectory->getPage(i, true)->allocAnyFrame(false, true);
 
-	Tasks::Task *base = Tasks::Task::BootstrapInitialTask(
-		3, Akari->memory->_kernelDirectory);
+	// Initial task
+	Tasks::Task *base = Tasks::Task::BootstrapInitialTask(3, Akari->memory->_kernelDirectory);
 	Akari->tasks->start = Akari->tasks->current = base;
 
 	Akari->descriptor->gdt->setTSSStack(base->utks + sizeof(struct modeswitch_registers));
 	Akari->descriptor->gdt->setTSSIOMap(base->iomap);
 
 	// Idle task
-	Tasks::Task *idle = Tasks::Task::CreateTask(
-		(u32)&IdleProcess, 0, true, 0, Akari->memory->_kernelDirectory);
+	Tasks::Task *idle = Tasks::Task::CreateTask((u32)&IdleProcess, 0, true, 0, Akari->memory->_kernelDirectory);
 	Akari->tasks->current->next = idle;
 
 	// Keyboard driver task
-	Tasks::Task *kbdriver = Tasks::Task::CreateTask(
-		(u32)&KeyboardProcess, 1, true, 0, Akari->memory->_kernelDirectory);
+	Tasks::Task *kbdriver = Tasks::Task::CreateTask((u32)&KeyboardProcess, 1, true, 0, Akari->memory->_kernelDirectory);
 	kbdriver->setIOMap(0x60, true);
 	kbdriver->setIOMap(0x64, true);
 	idle->next = kbdriver;
 
-	// Hello shell!
-	Tasks::Task *shell = Tasks::Task::CreateTask(
-		(u32)&ShellProcess, 3, true, 0, Akari->memory->_kernelDirectory);
+	// Shell
+	Tasks::Task *shell = Tasks::Task::CreateTask((u32)&ShellProcess, 3, true, 0, Akari->memory->_kernelDirectory);
 	kbdriver->next = shell;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.

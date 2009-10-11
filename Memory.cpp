@@ -44,7 +44,7 @@ void Memory::setPlacementMode(u32 addr) {
  */
 
 // temp debug flag only, set to true if you want the kheap to be writeable from usermode!
-#define KERNEL_HEAP_PROMISC true
+#define KERNEL_HEAP_PROMISC false
 
 void Memory::setPaging(bool mode) {
 	ASSERT(mode);		// TODO support turning paging off [if ever required?! who knows! :)]
