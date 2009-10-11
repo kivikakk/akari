@@ -13,7 +13,9 @@
 // user task kernel stack is used for state when it's
 // pre-empted, and for system calls, etc.
 #define USER_TASK_KERNEL_STACK_SIZE	0x2000
-#define USER_TASK_STACK_SIZE	0x4000
+#define USER_TASK_STACK_SIZE		0x4000
+
+#define USER_TASK_BASE				0x50000000
 
 class Tasks : public Subsystem {
 public:

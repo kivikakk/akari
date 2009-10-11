@@ -108,12 +108,18 @@ void Tasks::saveRegisterToTask(Task *dest, void *regs) {
 	// internal consistency.
 	ASSERT(((((struct modeswitch_registers *)regs)->callback.cs - 0x08) / 0x11) == dest->cpl);
 
-	if (!dest->cpl > 0) {
+	if (dest->cpl == 0) {
 		// update the tip of stack pointer so we can restore later
+		// Akari->console->putString("ks saved as 0x");
+		// Akari->console->putInt((u32)regs, 16);
+		// Akari->console->putString("\n");
 		dest->ks = (u32)regs;
 	} else {
 		// update utks pointer
 		dest->utks = (u32)regs;
+		// Akari->console->putString("utks saved as 0x");
+		// Akari->console->putInt((u32)regs, 16);
+		// Akari->console->putString("\n");
 	}
 }
 
@@ -152,7 +158,7 @@ void *Tasks::assignInternalTask(Task *task) {
 		task->userCall = 0;
 	}
 
-	return (void *)((!task->cpl > 0) ? task->ks : task->utks);
+	return (void *)((task->cpl == 0) ? task->ks : task->utks);
 }
 
 Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase) {
@@ -177,17 +183,37 @@ Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pa
 
 Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase) {
 	Task *nt = new Task(cpl);
-	nt->ks = (u32)Akari->memory->allocAligned(USER_TASK_STACK_SIZE) + USER_TASK_STACK_SIZE;
+
+	nt->pageDir = pageDirBase->clone();
 
 	struct modeswitch_registers *regs = 0;
 
 	if (cpl > 0) {
+		// Allocate the user's stack to top out at USER_TASK_BASE (i.e. it goes below that).
+		// We need to do the frame allocs ourselves so they're visible and writable by the user.
+		// We also save nt->ks as the top of the first frame (physically).
+		for (u32 i = 0, page = USER_TASK_BASE - 0x1000; i < USER_TASK_STACK_SIZE; i += 0x1000, page -= 0x1000) {
+			Memory::Page *ksp = nt->pageDir->getPage(page, true);
+			ksp->allocAnyFrame(false, true);
+			/**
+			 * This appears to be completely unneeded.
+			if (i == 0) {
+				nt->ks = ksp->pageAddress * 0x1000 + 0x1000;
+			}
+			*/
+		}
+
+		Akari->console->putString("alloced nt->ks at 0x");
+		Akari->console->putInt(nt->ks, 16);
+		Akari->console->putString("\n");
+
 		nt->utks = (u32)Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 		regs = (struct modeswitch_registers *)(nt->utks);
 
-		regs->useresp = nt->ks;
+		regs->useresp = USER_TASK_BASE;
 		regs->ss = 0x10 + (cpl * 0x11);		// same as ds: ss is set by TSS, ds is manually set by irq_timer_multitask after
 	} else {
+		nt->ks = (u32)Akari->memory->allocAligned(USER_TASK_STACK_SIZE) + USER_TASK_STACK_SIZE;
 		nt->ks -= sizeof(struct callback_registers);
 		regs = (struct modeswitch_registers *)(nt->ks);
 	}
@@ -202,8 +228,6 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 	regs->callback.eip = entry;
 	regs->callback.cs = 0x08 + (cpl * 0x11);			// note the low 2 bits are the CPL
 	regs->callback.eflags = (interruptFlag ? 0x200 : 0x0) | (iopl << 12);
-
-	nt->pageDir = pageDirBase->clone();
 	
 #define _PROCESS_HEAP_START	0x0500000
 #define _PROCESS_HEAP_SIZE	0x500000		// 5MiB

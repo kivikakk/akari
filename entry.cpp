@@ -79,7 +79,7 @@ static void AkariEntryCont() {
 
 	// Shell
 	Tasks::Task *shell = Tasks::Task::CreateTask((u32)&ShellProcess, 3, true, 0, Akari->memory->_kernelDirectory);
-	// kbdriver->next = shell;
+	kbdriver->next = shell;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);

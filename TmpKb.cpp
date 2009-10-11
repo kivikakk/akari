@@ -64,7 +64,7 @@ void KeyboardProcess() {
 	// 128-bit=16 bytes bitfield
 	u8 held_scancodes[16];     
 
-	bool echo_mode = true;
+	bool echo_mode = false;
 	bool capslock_down = false, numlock_down = false, scrolllock_down = false;
 	bool pressed_ctrl = false, pressed_alt = false, pressed_shift = false;
 

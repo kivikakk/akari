@@ -1,12 +1,11 @@
 #include <UserGates.hpp>
 
-static u32 stdin;
-static char *getline() {
+static char *getline(u32 in) {
 	u32 cs = 8, n = 0;
 	char *kbbuf = (char *)syscall_malloc(cs);
 
 	while (true) {
-		u32 incoming = syscall_readNode("system.io.keyboard", "input", stdin, kbbuf + n, 1);
+		u32 incoming = syscall_readNode("system.io.keyboard", "input", in, kbbuf + n, 1);
 		syscall_putc(kbbuf[n]);
 		if (kbbuf[n] == '\n') break;
 
@@ -27,7 +26,7 @@ static char *getline() {
 
 
 void ShellProcess() {
-	stdin = (u32)-1;
+	u32 stdin = (u32)-1;
 	while (stdin == (u32)-1) {
 		stdin = syscall_obtainNodeListener("system.io.keyboard", "input");
 	}
@@ -37,7 +36,7 @@ void ShellProcess() {
 	syscall_puts(".\n");
 
 	while (true) {
-		char *l = getline();
+		char *l = getline(stdin);
 		syscall_puts("got line (0x");
 		syscall_putl((u32)l, 16);
 		syscall_puts("): ");
