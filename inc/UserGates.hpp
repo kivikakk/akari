@@ -9,6 +9,7 @@
 #define DECL_SYSCALL3(fn,p1,p2,p3) u32 syscall_##fn(p1,p2,p3)
 #define DECL_SYSCALL4(fn,p1,p2,p3,p4) u32 syscall_##fn(p1,p2,p3,p4)
 #define DECL_SYSCALL5(fn,p1,p2,p3,p4,p5) u32 syscall_##fn(p1,p2,p3,p4,p5)
+#define DECL_SYSCALL6(fn,p1,p2,p3,p4,p5,p6) u32 syscall_##fn(p1,p2,p3,p4,p5,p6)
 
 // Here we declare the user-mode names.
 
@@ -25,6 +26,7 @@ DECL_SYSCALL0(exit);
 DECL_SYSCALL3(obtainNodeWriter, const char *, const char *, bool);
 DECL_SYSCALL2(obtainNodeListener, const char *, const char *);
 DECL_SYSCALL5(readNode, const char *, const char *, u32, char *, u32);
+DECL_SYSCALL5(readNodeUnblock, const char *, const char *, u32, char *, u32);
 DECL_SYSCALL5(writeNode, const char *, const char *, u32, const char *, u32);
 DECL_SYSCALL0(defer);
 

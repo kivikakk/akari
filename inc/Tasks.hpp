@@ -27,29 +27,6 @@ class Tasks : public Subsystem {
 
 		class Task {
 			public:
-				static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);
-				static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase);
-
-				bool getIOMap(u8 port) const;
-				void setIOMap(u8 port, bool enabled);
-
-				// Task linked list.
-				Task *next, *priorityNext;
-
-				// IRQ listening controls.
-				bool irqWaiting;
-				u32 irqListen, irqListenHits;
-
-				// GUID and other identifying information.
-				u32 id;
-				Symbol registeredName;
-				
-				// Real task process data.
-				u8 cpl;
-				Memory::PageDirectory *pageDir;
-				u32 ks; u32 utks;
-				u8 iomap[32];
-
 				class Node {
 					public:
 						Node();
@@ -71,6 +48,8 @@ class Tasks : public Subsystem {
 								void append(const char *data, u32 n);
 								void reset();
 								void cut(u32 n);
+								void hook(Task *task);
+								void unhook();
 
 								const char *view() const;
 								u32 length() const;
@@ -79,6 +58,7 @@ class Tasks : public Subsystem {
 								u32 _id;
 								char *_buffer;
 								u32 _buflen;
+								Task *_hooked;
 						};
 
 					protected:
@@ -89,6 +69,33 @@ class Tasks : public Subsystem {
 						u32 _wl_id;
 						u32 _nextId();
 				};
+
+				static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);
+				static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase);
+
+				bool getIOMap(u8 port) const;
+				void setIOMap(u8 port, bool enabled);
+
+				// Task linked list.
+				Task *next, *priorityNext;
+
+				// IRQ listening controls.
+				bool irqWaiting;
+				u32 irqListen, irqListenHits;
+
+				// Node listen blocking. (HACKy?)
+				bool nodeWaiting;
+				Node::Listener *nodeListen;
+
+				// GUID and other identifying information.
+				u32 id;
+				Symbol registeredName;
+				
+				// Real task process data.
+				u8 cpl;
+				Memory::PageDirectory *pageDir;
+				u32 ks; u32 utks;
+				u8 iomap[32];
 
 				HashTable<Symbol, Node *> *nodesByName;
 

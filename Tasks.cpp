@@ -83,9 +83,9 @@ Tasks::Task *Tasks::getNextTask() {
 		// it intentionally will be able to loop back to the task we switched from. (though
 		// of course, it won't if it's irqWait ...)
 
-		if (t->irqWaiting && !t->irqListenHits) {
+		if ((t->irqWaiting && !t->irqListenHits) || t->nodeWaiting) {
 			Task *newCurrent = t;
-			while (newCurrent->irqWaiting && !t->irqListenHits) {
+			while ((newCurrent->irqWaiting && !newCurrent->irqListenHits) || newCurrent->nodeWaiting) {
 				Task *next = _NextTask(newCurrent);
 				ASSERT(next != t);
 				newCurrent = next;
@@ -120,7 +120,6 @@ void Tasks::saveRegisterToTask(Task *dest, void *regs) {
 void *Tasks::assignInternalTask(Task *task) {
 	// now set the page directory, utks for TSS (if applicable) and stack to switch to as appropriate
 	
-	// TODO: let task be NUL and just HLT until an interrupt/timer/...?
 	ASSERT(task);
 	Akari->memory->switchPageDirectory(task->pageDir);
 	if (task->cpl > 0) {
@@ -131,6 +130,11 @@ void *Tasks::assignInternalTask(Task *task) {
 	if (task->irqWaiting) {
 		task->irqWaiting = false;
 		task->irqListenHits--;
+	}
+
+	if (task->nodeWaiting) {
+		AkariPanic("task->nodeWaiting");
+		task->nodeWaiting = false;
 	}
 
 	return (void *)((!task->cpl > 0) ? task->ks : task->utks);
@@ -253,7 +257,7 @@ bool Tasks::Task::Node::hasListener(u32 id) const {
 	return false;
 }
 
-Tasks::Task::Node::Listener::Listener(u32 id): _id(id), _buffer(0), _buflen(0)
+Tasks::Task::Node::Listener::Listener(u32 id): _id(id), _buffer(0), _buflen(0), _hooked(0)
 { }
 
 void Tasks::Task::Node::Listener::append(const char *data, u32 n) {
@@ -299,6 +303,14 @@ void Tasks::Task::Node::Listener::cut(u32 n) {
 	}
 }
 
+void Tasks::Task::Node::Listener::hook(Task *task) {
+	_hooked = task;
+}
+
+void Tasks::Task::Node::Listener::unhook() {
+	_hooked = 0;
+}
+
 const char *Tasks::Task::Node::Listener::view() const {
 	return _buffer;
 }
@@ -313,6 +325,7 @@ u32 Tasks::Task::Node::_nextId() {
 
 Tasks::Task::Task(u8 cpl):
 		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
+		nodeWaiting(false),
 		id(0), registeredName(), cpl(cpl), pageDir(0), ks(0), utks(0) {
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	id = ++lastAssignedId;

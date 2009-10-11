@@ -14,7 +14,11 @@ void ShellProcess() {
 	char kbbuf[1024];
 
 	while (true) {
-		u32 incoming = syscall_readNode("system.io.keyboard", "input", listener, kbbuf, 1024);
+		u32 incoming = syscall_readNode("system.io.keyboard", "input", listener, kbbuf, 1024);	// Will block.
+		syscall_puts("Returned: value is ");
+		syscall_putl(incoming, 10);
+		syscall_puts("...?");
+
 		if (!incoming) {
 			//syscall_defer();
 		} else {

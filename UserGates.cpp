@@ -57,6 +57,7 @@ DEFN_SYSCALL0(exit, 9);
 DEFN_SYSCALL3(obtainNodeWriter, 10, const char *, const char *, bool);
 DEFN_SYSCALL2(obtainNodeListener, 11, const char *, const char *);
 DEFN_SYSCALL5(readNode, 12, const char *, const char *, u32, char *, u32);
-DEFN_SYSCALL5(writeNode, 13, const char *, const char *, u32, const char *, u32);
-DEFN_SYSCALL0(defer, 14);
+DEFN_SYSCALL5(readNodeUnblock, 13, const char *, const char *, u32, char *, u32);
+DEFN_SYSCALL5(writeNode, 14, const char *, const char *, u32, const char *, u32);
+DEFN_SYSCALL0(defer, 15);
 

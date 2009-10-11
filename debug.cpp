@@ -2,12 +2,12 @@
 #include <arch.hpp>
 
 #define SCREEN_VMEM		0xb8000
-#define SCREEN_DEATH	0x4f20
+#define SCREEN_DEATH	0x4f
 
 void AkariPanic(const char *message) {
 	u16 *i = (u16 *)SCREEN_VMEM;
 	for (u16 j = 0; j < 80 * 25; ++j, ++i)
-		*i = SCREEN_DEATH;
+		*((u8 *)i + 1) = SCREEN_DEATH;
 	
 	// "Clever."
 	i = (u16 *)SCREEN_VMEM;
@@ -18,6 +18,7 @@ void AkariPanic(const char *message) {
 }
 
 void AkariHalt() {
+	asm volatile("cli");
 	while (true)
 		asm volatile("hlt");
 }

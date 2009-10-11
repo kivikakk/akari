@@ -121,16 +121,24 @@ namespace User {
 	}
 
 	// Keeping in mind that `buffer''s data probably isn't asciz.
-	u32 readNode(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
+	u32 readNode_impl(const char *name, const char *node, u32 listener, char *buffer, u32 n, bool block) {
 		Tasks::Task::Node *target = getNode(name, node);
 		if (!target || !target->hasListener(listener)) return -1;
 
 		Tasks::Task::Node::Listener &l = target->getListener(listener);
-
 		if (n == 0) return 0;
 
 		u32 len = l.length();
-		if (len == 0) return 0;
+		if (len == 0) {
+			if (!block) return 0;
+
+			// Block until such time as some data is available.
+			Akari->tasks->current->nodeWaiting = true;
+			Akari->tasks->current->nodeListen = &l;
+			l.hook(Akari->tasks->current);
+			Akari->syscall->returnToNextTask();
+			return 424242;		// Will this return value be used? Where??? XXX
+		}
 		
 		if (len > n) len = n;
 		POSIX::memcpy(buffer, l.view(), len);
@@ -139,6 +147,13 @@ namespace User {
 		return len;
 	}
 
+	u32 readNode(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
+		return readNode_impl(name, node, listener, buffer, n, true);
+	}
+
+	u32 readNodeUnblock(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
+		return readNode_impl(name, node, listener, buffer, n, false);
+	}
 	u32 writeNode(const char *name, const char *node, u32 writer, const char *buffer, u32 n) {
 		Tasks::Task::Node *target = getNode(name, node);
 		if (!target || !target->hasWriter(writer)) return -1;
