@@ -80,14 +80,11 @@ static void AkariEntryCont() {
 	// Shell
 	Tasks::Task *shell = Tasks::Task::CreateTask((u32)&ShellProcess, 3, true, 0, Akari->memory->_kernelDirectory);
 	kbdriver->next = shell;
-	Tasks::Task *anoshell = Tasks::Task::CreateTask((u32)&ShellProcess, 3, true, 0, Akari->memory->_kernelDirectory);
-	shell->next = anoshell;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);
 
 	Tasks::SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
-	syscall_exit();
 
 	// We have a proper (kernel-mode) idle task we spawn above that hlts, so we
 	// can exit, with an exit syscall. We can't actually call syscall_exit(), since

@@ -24,6 +24,38 @@ static char *getline(u32 in) {
 	return kbbuf;
 }
 
+int strlen(const char *s) {
+	int i = 0;
+	while (*s)
+		++i, ++s;
+	return i;
+}
+
+int strcmpn(const char *s1, const char *s2, int n) {
+	while (*s1 && *s2 && n > 0) {
+		if (*s1 < *s2) return -1;
+		if (*s1 > *s2) return 1;
+		++s1, ++s2;
+		--n;
+	}
+	if (n == 0) return 0;
+	if (*s1 < *s2) return -1;
+	if (*s1 > *s2) return 1;
+	return 0;
+}
+
+int strpos(const char *haystack, const char *needle) {
+	int i = 0;
+	int hl = strlen(haystack), nl = strlen(needle);
+	int d = hl - nl;
+	while (i <= d) {
+		if (strcmpn(haystack, needle, nl) == 0)
+			return i;
+		++i, ++haystack;
+	}
+	return -1;
+}
+
 
 void ShellProcess() {
 	u32 stdin = (u32)-1;
@@ -37,11 +69,10 @@ void ShellProcess() {
 
 	while (true) {
 		char *l = getline(stdin);
-		syscall_puts("got line (0x");
-		syscall_putl((u32)l, 16);
-		syscall_puts("): ");
-		syscall_puts(l);
-		syscall_putc('\n');
+		int s = strpos(l, " ");
+		syscall_puts("space at ");
+		syscall_putl(s, 10);
+		syscall_puts("\n");
 		syscall_free(l);
 	}
 
