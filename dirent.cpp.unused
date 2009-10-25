@@ -1,0 +1,33 @@
+#include <dirent.hpp>
+#include <memory.hpp>
+#include <string.hpp>
+
+DIR *opendir(const char *name) {
+	fs_node_t *base = fs_root;
+
+	DIR *new_dir = (DIR *)kmalloc(sizeof(DIR));
+	new_dir->base = base;
+	new_dir->next_index = 0;
+	
+	return new_dir;
+}
+
+struct dirent *readdir(DIR *dir) {
+	static struct dirent dirent;
+
+	dirent_t *node = readdir_fs(dir->base, dir->next_index);
+	if (node == 0)
+		return 0;
+	dir->next_index++;
+
+	strcpy(dirent.name, node->name);
+	dirent.ino = node->ino;
+
+	return &dirent;
+}
+
+int closedir(DIR *dir) {
+	kfree(dir);
+	return 0;
+}
+
