@@ -19,6 +19,7 @@ void SubProcess();
 
 void KeyboardProcess();	// TmpKb
 void ShellProcess();	// TmpShell
+void ATAProcess();		// TmpATA
 void IdleProcess();
 
 multiboot_info_t *AkariMultiboot;

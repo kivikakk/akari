@@ -13,12 +13,25 @@ typedef signed long s32;
 typedef signed short s16;
 typedef signed char s8;
 
-// Minor IO functions. May need to be moved elsewhere later? (arch-dep)
+inline void AkariOutB(u16 port, u8 data) {
+	asm volatile("outb %1, %0" : : "dN" (port), "a" (data));
+}
 
-extern "C" void AkariOutB(u16, u8);
-extern "C" void AkariOutW(u16, u16);
-extern "C" u8 AkariInB(u16);
-extern "C" u16 AkariInW(u16);
+inline void AkariOutW(u16 port, u16 data) {
+	asm volatile("outw %1, %0" : : "dN" (port), "a" (data));
+}
+
+inline u8 AkariInB(u16 port) {
+	u8 r;
+	asm volatile("inb %1, %0" : "=a" (r) : "dN" (port));
+	return r;
+}
+
+inline u16 AkariInW(u16 port) {
+	u16 r;
+	asm volatile("inw %1, %0" : "=a" (r) : "dN" (port));
+	return r;
+}
 
 // Compiler-specific things.
 extern "C" void __cxa_pure_virtual();
