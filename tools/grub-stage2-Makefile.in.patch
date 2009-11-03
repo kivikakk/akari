@@ -1,0 +1,11 @@
+--- stage2/Makefile.in	2009-11-03 21:23:45.000000000 +1100
++++ stage2/Makefile.in	2009-11-03 21:24:16.547004596 +1100
+@@ -3244,7 +3244,7 @@
+ 	-rm -f $@
+ 	cat $^ > $@
+ .exec:
+-	$(OBJCOPY) -O binary $< $@
++	$(OBJCOPY) -R .note.gnu.build-id -O binary $< $@
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:

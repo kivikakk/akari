@@ -22,11 +22,23 @@ cd grub-0.97
 if [ ! -f configure-unpatched ]; then
     echo "Patching GRUB configure"
     cp configure configure-unpatched
-    patch --verbose -u -l < ../../grub-configure.patch
+    patch --verbose -p0 -u -l < ../../grub-configure.patch
+fi
+
+if [ ! -f stage1/Makefile.in-unpatched ]; then
+    echo "Patching stage1/Makefile.in"
+    cp stage1/Makefile.in stage1/Makefile.in-unpatched
+    patch --verbose -p0 -u -l < ../../grub-stage1-Makefile.in.patch
+fi
+
+if [ ! -f stage2/Makefile.in-unpatched ]; then
+    echo "Patching stage2/Makefile.in"
+    cp stage2/Makefile.in stage2/Makefile.in-unpatched
+    patch --verbose -p0 -u -l < ../../grub-stage2-Makefile.in.patch
 fi
 
 if [ ! -f Makefile ]; then
-    CFLAGS=-m32\ -fno-stack-protector LDFLAGS=-m32 ./configure --host=i686-pc-linux-gnu --disable-ext2fs --disable-ffs --disable-iso9660 --disable-jfs --disable-minix --disable-reiserfs --disable-ufs2 --disable-vstafs --disable-xfs
+    CFLAGS=-m32\ -fno-stack-protector\ -Wl,--build-id=none LDFLAGS=-m32 ./configure --host=i686-pc-linux-gnu --disable-ext2fs --disable-ffs --disable-iso9660 --disable-jfs --disable-minix --disable-reiserfs --disable-ufs2 --disable-vstafs --disable-xfs
 else
     echo "Not running ./configure, Makefile exists already"
 fi

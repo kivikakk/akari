@@ -1,0 +1,11 @@
+--- stage1/Makefile.in	2009-11-03 21:23:40.000000000 +1100
++++ stage1/Makefile.in	2009-11-03 21:24:12.535390774 +1100
+@@ -427,7 +427,7 @@
+ 	uninstall-nodist_pkglibDATA
+ 
+ .exec:
+-	$(OBJCOPY) -O binary $< $@
++	$(OBJCOPY) -R .note.gnu.build-id -O binary $< $@
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:
