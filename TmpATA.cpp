@@ -112,6 +112,13 @@ void ATAProcess() {
 	puthexlong(li); syscall_puts(" ("); putdec(li * 512 / 1024); syscall_puts(" KiB)");
 	 */
 
+	// Now we need to wait and listen for commands!
+	// I think we need a message passing method for this, not just our current reader/writer.
+	if (!SYSCALL_BOOL(syscall_registerName("system.io.ata")))
+		syscall_panic("could not register system.io.ata");
+
+	if (!SYSCALL_BOOL(syscall_registerNode("command")))
+		syscall_panic("could not register system.io.ata:command");
 }
 
 void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
