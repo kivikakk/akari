@@ -1,2 +1,2 @@
-drive c: file="/home/celtic/Code/akari/32disk.img" partition=0
+drive c: file="/home/celtic/Code/akari/tools/32disk.img" partition=1 mtools_skip_check=1
 #drive d: file="/home/celtic/Code/akari/16disk.img" partition=1
