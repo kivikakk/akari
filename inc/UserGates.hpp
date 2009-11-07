@@ -19,18 +19,21 @@ DECL_SYSCALL0(getProcessId);
 DECL_SYSCALL0(irqWait);
 DECL_SYSCALL1(irqListen, u32);
 DECL_SYSCALL1(panic, const char *);
-DECL_SYSCALL1(registerName, const char *);
-DECL_SYSCALL1(registerNode, const char *);
 DECL_SYSCALL0(exit);
-DECL_SYSCALL3(obtainNodeWriter, const char *, const char *, bool);
-DECL_SYSCALL2(obtainNodeListener, const char *, const char *);
-DECL_SYSCALL5(readNode, const char *, const char *, u32, char *, u32);
-DECL_SYSCALL5(readNodeUnblock, const char *, const char *, u32, char *, u32);
-DECL_SYSCALL5(writeNode, const char *, const char *, u32, const char *, u32);
 DECL_SYSCALL0(defer);
 DECL_SYSCALL1(malloc, u32);
 DECL_SYSCALL1(free, void *);
 DECL_SYSCALL3(memcpy, void *, const void *, u32);
+
+DECL_SYSCALL1(registerName, const char *);
+
+DECL_SYSCALL1(registerStream, const char *);
+DECL_SYSCALL3(obtainStreamWriter, const char *, const char *, bool);
+DECL_SYSCALL2(obtainStreamListener, const char *, const char *);
+DECL_SYSCALL5(readStream, const char *, const char *, u32, char *, u32);
+DECL_SYSCALL5(readStreamUnblock, const char *, const char *, u32, char *, u32);
+DECL_SYSCALL5(writeStream, const char *, const char *, u32, const char *, u32);
+
 DECL_SYSCALL1(registerQueue, const char *);
 
 #define SYSCALL_BOOL(x) ((bool)((x) & 0xFF))

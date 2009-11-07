@@ -118,6 +118,11 @@ void ATAProcess() {
 
 	if (!SYSCALL_BOOL(syscall_registerQueue("command")))
 		syscall_panic("could not register system.io.ata:command");
+
+	syscall_puts("ATA driver entering loop\n");
+	while (true) {
+
+	}
 }
 
 void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)

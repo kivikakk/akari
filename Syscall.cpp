@@ -1,6 +1,7 @@
 #include <Syscall.hpp>
 #include <Akari.hpp>
 #include <UserCalls.hpp>
+#include <UserIPC.hpp>
 #include <Descriptor.hpp>
 
 Syscall::Syscall(): _syscalls_assigned(0) {
@@ -13,19 +14,22 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(4, (void *)&User::irqWait);
 	addSyscall(5, (void *)&User::irqListen);
 	addSyscall(6, (void *)&User::panic);
-	addSyscall(7, (void *)&User::registerName);
-	addSyscall(8, (void *)&User::registerStream);
-	addSyscall(9, (void *)&User::exit);
-	addSyscall(10, (void *)&User::obtainStreamWriter);
-	addSyscall(11, (void *)&User::obtainStreamListener);
-	addSyscall(12, (void *)&User::readStream);
-	addSyscall(13, (void *)&User::readStreamUnblock);
-	addSyscall(14, (void *)&User::writeStream);
-	addSyscall(15, (void *)&User::defer);
-	addSyscall(16, (void *)&User::malloc);
-	addSyscall(17, (void *)&User::free);
-	addSyscall(18, (void *)&User::memcpy);
-	addSyscall(19, (void *)&User::registerQueue);
+	addSyscall(7, (void *)&User::exit);
+	addSyscall(8, (void *)&User::defer);
+	addSyscall(9, (void *)&User::malloc);
+	addSyscall(10, (void *)&User::free);
+	addSyscall(11, (void *)&User::memcpy);
+
+	addSyscall(12, (void *)&User::IPC::registerName);
+
+	addSyscall(13, (void *)&User::IPC::registerStream);
+	addSyscall(14, (void *)&User::IPC::obtainStreamWriter);
+	addSyscall(15, (void *)&User::IPC::obtainStreamListener);
+	addSyscall(16, (void *)&User::IPC::readStream);
+	addSyscall(17, (void *)&User::IPC::readStreamUnblock);
+	addSyscall(18, (void *)&User::IPC::writeStream);
+
+	addSyscall(19, (void *)&User::IPC::registerQueue);
 }
 
 u8 Syscall::versionMajor() const { return 0; }

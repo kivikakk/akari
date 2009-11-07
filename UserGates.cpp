@@ -51,16 +51,19 @@ DEFN_SYSCALL0(getProcessId, 3);
 DEFN_SYSCALL0(irqWait, 4);
 DEFN_SYSCALL1(irqListen, 5, u32);
 DEFN_SYSCALL1(panic, 6, const char *);
-DEFN_SYSCALL1(registerName, 7, const char *);
-DEFN_SYSCALL1(registerNode, 8, const char *);
-DEFN_SYSCALL0(exit, 9);
-DEFN_SYSCALL3(obtainNodeWriter, 10, const char *, const char *, bool);
-DEFN_SYSCALL2(obtainNodeListener, 11, const char *, const char *);
-DEFN_SYSCALL5(readNode, 12, const char *, const char *, u32, char *, u32);
-DEFN_SYSCALL5(readNodeUnblock, 13, const char *, const char *, u32, char *, u32);
-DEFN_SYSCALL5(writeNode, 14, const char *, const char *, u32, const char *, u32);
-DEFN_SYSCALL0(defer, 15);
-DEFN_SYSCALL1(malloc, 16, u32);
-DEFN_SYSCALL1(free, 17, void *);
-DEFN_SYSCALL3(memcpy, 18, void *, const void *, u32);
+DEFN_SYSCALL0(exit, 7);
+DEFN_SYSCALL0(defer, 8);
+DEFN_SYSCALL1(malloc, 9, u32);
+DEFN_SYSCALL1(free, 10, void *);
+DEFN_SYSCALL3(memcpy, 11, void *, const void *, u32);
+
+DEFN_SYSCALL1(registerName, 12, const char *);
+
+DEFN_SYSCALL1(registerStream, 13, const char *);
+DEFN_SYSCALL3(obtainStreamWriter, 14, const char *, const char *, bool);
+DEFN_SYSCALL2(obtainStreamListener, 15, const char *, const char *);
+DEFN_SYSCALL5(readStream, 16, const char *, const char *, u32, char *, u32);
+DEFN_SYSCALL5(readStreamUnblock, 17, const char *, const char *, u32, char *, u32);
+DEFN_SYSCALL5(writeStream, 18, const char *, const char *, u32, const char *, u32);
+
 DEFN_SYSCALL1(registerQueue, 19, const char *);

@@ -73,10 +73,10 @@ void KeyboardProcess() {
 	if (!SYSCALL_BOOL(syscall_registerName("system.io.keyboard")))
 		syscall_panic("could not register system.io.keyboard");
 
-	if (!SYSCALL_BOOL(syscall_registerNode("input")))
+	if (!SYSCALL_BOOL(syscall_registerStream("input")))
 		syscall_panic("could not register system.io.keyboard:input");
 
-	u32 writer = syscall_obtainNodeWriter("system.io.keyboard", "input", true);
+	u32 writer = syscall_obtainStreamWriter("system.io.keyboard", "input", true);
 	if (writer == (u32)-1) {
 		// This shouldn't be possible if we just initialised the damn thing.
 		syscall_panic("could not obtain writer on system.io.keyboard:input");
@@ -127,7 +127,7 @@ void KeyboardProcess() {
 					syscall_putc(scancode);
 
 				// Now actually dispatch this.
-				syscall_writeNode("system.io.keyboard", "input", writer, (const char *)&scancode, 1);
+				syscall_writeStream("system.io.keyboard", "input", writer, (const char *)&scancode, 1);
 			}
 
 			if (mustUpdateLEDs) {
