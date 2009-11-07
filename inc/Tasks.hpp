@@ -77,7 +77,10 @@ public:
 		class Queue {
 		public:
 			Queue();
+			
+			u32 length() const;
 
+		protected:
 		};
 
 		static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);
@@ -110,11 +113,11 @@ public:
 		u8 iomap[32];
 
 		HashTable<Symbol, Stream *> *streamsByName;
-		HashTable<Symbol, Queue *> *queuesByName;
+		Queue *replyQueue;
 
 	protected:
 		Task(u8 cpl);
-
+		~Task();
 	};
 
 	Task *getNextTask();

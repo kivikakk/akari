@@ -35,6 +35,8 @@ DECL_SYSCALL5(readStreamUnblock, const char *, const char *, u32, char *, u32);
 DECL_SYSCALL5(writeStream, const char *, const char *, u32, const char *, u32);
 
 DECL_SYSCALL1(registerQueue, const char *);
+DECL_SYSCALL1(readQueue, const char *);
+DECL_SYSCALL4(sendQueue, const char *, const char *, u32, u32);
 
 #define SYSCALL_BOOL(x) ((bool)((x) & 0xFF))
 

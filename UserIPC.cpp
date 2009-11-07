@@ -136,14 +136,14 @@ namespace IPC {
 		return n;		// what else?!
 	}
 
-	bool registerQueue(const char *name) {
-		Symbol sNode(name);
+	bool registerQueue(const char *node) {
+		Symbol sNode(node);
 		if (!Akari->tasks->current->registeredName) {
 			// TODO
 			AkariPanic("name not registered - cannot register node");
 		}
 
-		if (Akari->tasks->current->streamsByName->hasKey(name)) {
+		if (Akari->tasks->current->streamsByName->hasKey(node)) {
 			AkariPanic("node already registered - cannot register atop it");
 		}
 
@@ -153,10 +153,19 @@ namespace IPC {
 		return true;
 	}
 
+	static inline Tasks::Task::Queue *getQueue(Tasks::Task *task, const char *node) {
+		Symbol sNode(node);
+
+		if (!task || !task->queuesByName->hasKey(sNode))
+			return 0;
+
+		return (*task->queuesByName)[sNode];
+	}
+
 	class ReadQueueCall : public BlockingCall {
 	public:
 		// TODO: need to know the current task!
-		ReadQueueCall(const char *node) { }
+		ReadQueueCall(Tasks::Task *task, const char *node) { }
 	};
 
 	u32 readQueue(const char *node) {

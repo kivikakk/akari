@@ -377,5 +377,14 @@ Tasks::Task::Task(u8 cpl):
 		iomap[i] = 0xFF;
 
 	streamsByName = new HashTable<Symbol, Stream *>();
-	queuesByName = new HashTable<Symbol, Queue *>();
+	replyQueue = new Queue();
+}
+
+Tasks::Task::~Task() {
+	if (userCall) delete userCall;
+	// TODO: destroy pageDir? the actual space allocated within the heap?
+	// TODO: do we need to deallocate the Stream*s within streamsByName?
+	// TODO: what about payloads in replyQueue?
+	delete streamsByName;
+	delete replyQueue;
 }

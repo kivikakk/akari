@@ -67,3 +67,5 @@ DEFN_SYSCALL5(readStreamUnblock, 17, const char *, const char *, u32, char *, u3
 DEFN_SYSCALL5(writeStream, 18, const char *, const char *, u32, const char *, u32);
 
 DEFN_SYSCALL1(registerQueue, 19, const char *);
+DEFN_SYSCALL1(readQueue, 20, const char *);
+DEFN_SYSCALL4(sendQueue, 21, const char *, const char *, u32, u32);
