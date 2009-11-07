@@ -69,15 +69,14 @@ sudo cp -r "$GRUBINST"/grub-0.97/stage1/stage1 "$GRUBINST"/grub-0.97/stage2/stag
 sudo cp grub-menu.lst "$mntpoint"/boot/grub/menu.lst
 sudo sync
 
+sudo umount "$partloop"
+sudo rmdir "$mntpoint"
+sudo losetup -d "$partloop"
+sudo losetup -d "$loopback"
+
 echo "Running GRUB shell to install ..."
 sudo "$GRUBINST"/grub-0.97/grub/grub --device-map=/dev/null <<EOF
 device (hd0) $IMAGE
 root (hd0,0)
 setup (hd0)
 EOF
-
-sudo sync
-sudo umount "$partloop"
-sudo rmdir "$mntpoint"
-sudo losetup -d "$partloop"
-sudo losetup -d "$loopback"
