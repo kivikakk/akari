@@ -14,17 +14,18 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(5, (void *)&User::irqListen);
 	addSyscall(6, (void *)&User::panic);
 	addSyscall(7, (void *)&User::registerName);
-	addSyscall(8, (void *)&User::registerNode);
+	addSyscall(8, (void *)&User::registerStream);
 	addSyscall(9, (void *)&User::exit);
-	addSyscall(10, (void *)&User::obtainNodeWriter);
-	addSyscall(11, (void *)&User::obtainNodeListener);
-	addSyscall(12, (void *)&User::readNode);
-	addSyscall(13, (void *)&User::readNodeUnblock);
-	addSyscall(14, (void *)&User::writeNode);
+	addSyscall(10, (void *)&User::obtainStreamWriter);
+	addSyscall(11, (void *)&User::obtainStreamListener);
+	addSyscall(12, (void *)&User::readStream);
+	addSyscall(13, (void *)&User::readStreamUnblock);
+	addSyscall(14, (void *)&User::writeStream);
 	addSyscall(15, (void *)&User::defer);
 	addSyscall(16, (void *)&User::malloc);
 	addSyscall(17, (void *)&User::free);
 	addSyscall(18, (void *)&User::memcpy);
+	addSyscall(19, (void *)&User::registerQueue);
 }
 
 u8 Syscall::versionMajor() const { return 0; }

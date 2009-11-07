@@ -113,11 +113,10 @@ void ATAProcess() {
 	 */
 
 	// Now we need to wait and listen for commands!
-	// I think we need a message passing method for this, not just our current reader/writer.
 	if (!SYSCALL_BOOL(syscall_registerName("system.io.ata")))
 		syscall_panic("could not register system.io.ata");
 
-	if (!SYSCALL_BOOL(syscall_registerNode("command")))
+	if (!SYSCALL_BOOL(syscall_registerQueue("command")))
 		syscall_panic("could not register system.io.ata:command");
 }
 

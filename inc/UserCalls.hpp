@@ -15,13 +15,14 @@ namespace User {
 	void irqListen(u32 irq);
 	void panic(const char *s);
 	bool registerName(const char *name);
-	bool registerNode(const char *name);
+	bool registerStream(const char *name);
+	bool registerQueue(const char *name);
 	void exit();
-	u32 obtainNodeWriter(const char *name, const char *node, bool exclusive);
-	u32 obtainNodeListener(const char *name, const char *node);
-	u32 readNode(const char *name, const char *node, u32 listener, char *buffer, u32 n);
-	u32 readNodeUnblock(const char *name, const char *node, u32 listener, char *buffer, u32 n);
-	u32 writeNode(const char *name, const char *node, u32 writer, const char *buffer, u32 n);
+	u32 obtainStreamWriter(const char *name, const char *node, bool exclusive);
+	u32 obtainStreamListener(const char *name, const char *node);
+	u32 readStream(const char *name, const char *node, u32 listener, char *buffer, u32 n);
+	u32 readStreamUnblock(const char *name, const char *node, u32 listener, char *buffer, u32 n);
+	u32 writeStream(const char *name, const char *node, u32 writer, const char *buffer, u32 n);
 	void defer();
 	void *malloc(u32 n);
 	void free(void *p);
@@ -31,12 +32,12 @@ namespace User {
 	public:
 		ReadCall(const char *name, const char *node, u32 listener, char *buffer, u32 n);
 
-		Tasks::Task::Node::Listener *getListener() const;
+		Tasks::Task::Stream::Listener *getListener() const;
 
 		u32 operator ()();
 
 	protected:
-		Tasks::Task::Node::Listener *_listener;
+		Tasks::Task::Stream::Listener *_listener;
 		char *_buffer;
 		u32 _n;
 	};

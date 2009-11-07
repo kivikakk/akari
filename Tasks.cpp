@@ -234,10 +234,10 @@ void Tasks::Task::setIOMap(u8 port, bool enabled) {
 		iomap[port / 8] |= (1 << (port % 8));
 }
 
-Tasks::Task::Node::Node(): _wl_id(0) {
+Tasks::Task::Stream::Stream(): _wl_id(0) {
 }
 
-u32 Tasks::Task::Node::registerWriter(bool exclusive) {
+u32 Tasks::Task::Stream::registerWriter(bool exclusive) {
 	if (_exclusive) return -1;
 
 	if (exclusive) {
@@ -253,13 +253,13 @@ u32 Tasks::Task::Node::registerWriter(bool exclusive) {
 	return id;
 }
 
-u32 Tasks::Task::Node::registerListener() {
+u32 Tasks::Task::Stream::registerListener() {
 	u32 id = _nextId();
 	_listeners.push_back(Listener(id));
 	return id;
 }
 
-Tasks::Task::Node::Listener &Tasks::Task::Node::getListener(u32 id) {
+Tasks::Task::Stream::Listener &Tasks::Task::Stream::getListener(u32 id) {
 	for (LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
 		if (it->_id == id)
 			return *it;
@@ -267,13 +267,13 @@ Tasks::Task::Node::Listener &Tasks::Task::Node::getListener(u32 id) {
 	AkariPanic("No matching listener - TODO: something more useful.");
 }
 
-void Tasks::Task::Node::writeAllListeners(const char *buffer, u32 n) {
+void Tasks::Task::Stream::writeAllListeners(const char *buffer, u32 n) {
 	for (LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
 		it->append(buffer, n);
 	}
 }
 
-bool Tasks::Task::Node::hasWriter(u32 id) const {
+bool Tasks::Task::Stream::hasWriter(u32 id) const {
 	for (LinkedList<u32>::iterator it = _writers.begin(); it != _writers.end(); ++it) {
 		if (*it == id)
 			return true;
@@ -281,7 +281,7 @@ bool Tasks::Task::Node::hasWriter(u32 id) const {
 	return false;
 }
 
-bool Tasks::Task::Node::hasListener(u32 id) const {
+bool Tasks::Task::Stream::hasListener(u32 id) const {
 	for (LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
 		if (it->_id == id)
 			return true;
@@ -289,10 +289,10 @@ bool Tasks::Task::Node::hasListener(u32 id) const {
 	return false;
 }
 
-Tasks::Task::Node::Listener::Listener(u32 id): _id(id), _buffer(0), _buflen(0), _hooked(0)
+Tasks::Task::Stream::Listener::Listener(u32 id): _id(id), _buffer(0), _buflen(0), _hooked(0)
 { }
 
-void Tasks::Task::Node::Listener::append(const char *data, u32 n) {
+void Tasks::Task::Stream::Listener::append(const char *data, u32 n) {
 	// HACK: hacky little appending string reallocing stupid buffer.
 	// Write a proper appending buffer (with smarts) and refactor it later.
 	if (n == 0) return;
@@ -315,7 +315,7 @@ void Tasks::Task::Node::Listener::append(const char *data, u32 n) {
 	}
 }
 
-void Tasks::Task::Node::Listener::reset() {
+void Tasks::Task::Stream::Listener::reset() {
 	if (_buffer) {
 		delete [] _buffer;
 		_buffer = 0;
@@ -323,7 +323,7 @@ void Tasks::Task::Node::Listener::reset() {
 	}
 }
 
-void Tasks::Task::Node::Listener::cut(u32 n) {
+void Tasks::Task::Stream::Listener::cut(u32 n) {
 	if (!_buffer) return;
 	if (_buflen <= n) {
 		delete [] _buffer;
@@ -341,25 +341,27 @@ void Tasks::Task::Node::Listener::cut(u32 n) {
 	}
 }
 
-void Tasks::Task::Node::Listener::hook(Task *task) {
+void Tasks::Task::Stream::Listener::hook(Task *task) {
 	_hooked = task;
 }
 
-void Tasks::Task::Node::Listener::unhook() {
+void Tasks::Task::Stream::Listener::unhook() {
 	_hooked = 0;
 }
 
-const char *Tasks::Task::Node::Listener::view() const {
+const char *Tasks::Task::Stream::Listener::view() const {
 	return _buffer;
 }
 
-u32 Tasks::Task::Node::Listener::length() const {
+u32 Tasks::Task::Stream::Listener::length() const {
 	return _buflen;
 }
 
-u32 Tasks::Task::Node::_nextId() {
+u32 Tasks::Task::Stream::_nextId() {
 	return ++_wl_id;
 }
+
+Tasks::Task::Queue::Queue() { }
 
 Tasks::Task::Task(u8 cpl):
 		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
@@ -374,5 +376,6 @@ Tasks::Task::Task(u8 cpl):
 	for (u8 i = 0; i < 32; ++i)
 		iomap[i] = 0xFF;
 
-	nodesByName = new HashTable<Symbol, Node *>();
+	streamsByName = new HashTable<Symbol, Stream *>();
+	queuesByName = new HashTable<Symbol, Queue *>();
 }

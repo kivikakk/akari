@@ -30,9 +30,10 @@ public:
 
 	class Task {
 	public:
-		class Node {
+
+		class Stream {
 		public:
-			Node();
+			Stream();
 			class Listener;
 
 			u32 registerWriter(bool exclusive);
@@ -44,7 +45,7 @@ public:
 			bool hasListener(u32 id) const;
 
 			class Listener {
-			friend class Node;
+			friend class Stream;
 			public:
 				Listener(u32 id);
 
@@ -71,6 +72,12 @@ public:
 
 			u32 _wl_id;
 			u32 _nextId();
+		};
+
+		class Queue {
+		public:
+			Queue();
+
 		};
 
 		static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);
@@ -102,7 +109,8 @@ public:
 		u32 ks;
 		u8 iomap[32];
 
-		HashTable<Symbol, Node *> *nodesByName;
+		HashTable<Symbol, Stream *> *streamsByName;
+		HashTable<Symbol, Queue *> *queuesByName;
 
 	protected:
 		Task(u8 cpl);

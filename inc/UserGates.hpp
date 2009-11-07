@@ -31,6 +31,7 @@ DECL_SYSCALL0(defer);
 DECL_SYSCALL1(malloc, u32);
 DECL_SYSCALL1(free, void *);
 DECL_SYSCALL3(memcpy, void *, const void *, u32);
+DECL_SYSCALL1(registerQueue, const char *);
 
 #define SYSCALL_BOOL(x) ((bool)((x) & 0xFF))
 

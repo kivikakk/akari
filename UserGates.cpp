@@ -63,3 +63,4 @@ DEFN_SYSCALL0(defer, 15);
 DEFN_SYSCALL1(malloc, 16, u32);
 DEFN_SYSCALL1(free, 17, void *);
 DEFN_SYSCALL3(memcpy, 18, void *, const void *, u32);
+DEFN_SYSCALL1(registerQueue, 19, const char *);
