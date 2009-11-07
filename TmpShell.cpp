@@ -74,6 +74,8 @@ void ShellProcess() {
 		syscall_putl(s, 10);
 		syscall_puts("\n");
 		syscall_free(l);
+
+		syscall_sendQueue("system.io.ata", "command", 0, 0x0); 
 	}
 
 	syscall_exit();

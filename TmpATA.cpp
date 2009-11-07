@@ -121,7 +121,10 @@ void ATAProcess() {
 
 	syscall_puts("ATA driver entering loop\n");
 	while (true) {
-
+		u32 msgId = syscall_readQueue("command");
+		syscall_puts("ATA got msg: ");
+		syscall_putl(msgId, 16);
+		syscall_putc('\n');
 	}
 }
 

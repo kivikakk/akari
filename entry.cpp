@@ -91,7 +91,7 @@ static void AkariEntryCont() {
 	// can exit, with an exit syscall. We can't actually call syscall_exit(), since
 	// the function call would try to push to our stack, and we can't do that now
 	// since we're in ring 3 and we have no write access!
-	asm volatile("int $0x80" : : "a" (9));
+	asm volatile("int $0x80" : : "a" (7));
 }
 
 void IdleProcess() {

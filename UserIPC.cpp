@@ -64,9 +64,9 @@ namespace IPC {
 		return target->registerListener();
 	}
 
-	class ReadCall : public BlockingCall {
+	class ReadStreamCall : public BlockingCall {
 	public:
-		ReadCall(const char *name, const char *node, u32 listener, char *buffer, u32 n):
+		ReadStreamCall(const char *name, const char *node, u32 listener, char *buffer, u32 n):
 			_listener(&getStream(name, node)->getListener(listener)), _buffer(buffer), _n(n)
 		{ }
 
@@ -104,7 +104,7 @@ namespace IPC {
 
 	// Keeping in mind that `buffer''s data probably isn't asciz.
 	u32 readStream_impl(const char *name, const char *node, u32 listener, char *buffer, u32 n, bool block) {
-		ReadCall c(name, node, listener, buffer, n);
+		ReadStreamCall c(name, node, listener, buffer, n);
 		u32 r = c();
 		if (!block || !c.shallBlock())
 			return r;
@@ -114,7 +114,7 @@ namespace IPC {
 		Tasks::Task::Stream::Listener *l = c.getListener();
 
 		Akari->tasks->current->userWaiting = true;
-		Akari->tasks->current->userCall = new ReadCall(c);
+		Akari->tasks->current->userCall = new ReadStreamCall(c);
 		l->hook(Akari->tasks->current);
 		Akari->syscall->returnToNextTask();
 		return 0;
@@ -151,6 +151,28 @@ namespace IPC {
 
 		(*Akari->tasks->current->queuesByName)[sNode] = target;
 		return true;
+	}
+
+	class ReadQueueCall : public BlockingCall {
+	public:
+		// TODO: need to know the current task!
+		ReadQueueCall(const char *node) { }
+	};
+
+	u32 readQueue(const char *node) {
+		ReadQueueCall c(node);
+		u32 r = c();
+		if (!block || !c.shallBlock())
+			return r;
+
+		Akari->tasks->current->userWaiting = true;
+		Akari->tasks->current->userCall = new ReadQueueCall(c);
+		Akari->syscall->returnToNextTask();
+		return 0;
+	}
+
+	void sendQueue(const char *name, const char *node, u32 reply_to, u32 value) {
+		// TODO: a u32 value is pretty limited. We'll need to specify a buffer and a length soon.
 	}
 }
 }
