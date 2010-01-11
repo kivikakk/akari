@@ -103,7 +103,7 @@ namespace IPC {
 	// Stream reading calls (can block).
 
 	// Keeping in mind that `buffer''s data probably isn't asciz.
-	u32 readStream_impl(const char *name, const char *node, u32 listener, char *buffer, u32 n, bool block) {
+	static u32 readStream_impl(const char *name, const char *node, u32 listener, char *buffer, u32 n, bool block) {
 		ReadStreamCall c(name, node, listener, buffer, n);
 		u32 r = c();
 		if (!block || !c.shallBlock())
@@ -127,6 +127,7 @@ namespace IPC {
 	u32 readStreamUnblock(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
 		return readStream_impl(name, node, listener, buffer, n, false);
 	}
+
 	u32 writeStream(const char *name, const char *node, u32 writer, const char *buffer, u32 n) {
 		Tasks::Task::Stream *target = getStream(name, node);
 		if (!target || !target->hasWriter(writer)) return -1;
@@ -136,52 +137,37 @@ namespace IPC {
 		return n;		// what else?!
 	}
 
-	bool registerQueue(const char *node) {
-		Symbol sNode(node);
-		if (!Akari->tasks->current->registeredName) {
-			// TODO
-			AkariPanic("name not registered - cannot register node");
-		}
-
-		if (Akari->tasks->current->streamsByName->hasKey(node)) {
-			AkariPanic("node already registered - cannot register atop it");
-		}
-
-		Tasks::Task::Queue *target = new Tasks::Task::Queue();
-
-		(*Akari->tasks->current->queuesByName)[sNode] = target;
-		return true;
-	}
-
-	static inline Tasks::Task::Queue *getQueue(Tasks::Task *task, const char *node) {
-		Symbol sNode(node);
-
-		if (!task || !task->queuesByName->hasKey(sNode))
-			return 0;
-
-		return (*task->queuesByName)[sNode];
-	}
-
-	class ReadQueueCall : public BlockingCall {
+	class ProbeQueueCall : public BlockingCall {
 	public:
-		// TODO: need to know the current task!
-		ReadQueueCall(Tasks::Task *task, const char *node) { }
+		ProbeQueueCall(Tasks::Task *task) { }
+
+		u32 operator()() {
+			// _wontBlock(), _willBlock() need to be called.
+			return -1;
+		}
 	};
 
-	u32 readQueue(const char *node) {
-		ReadQueueCall c(node);
+	static u32 probeQueue_impl(bool block) {
+		ProbeQueueCall c(Akari->tasks->current);
 		u32 r = c();
 		if (!block || !c.shallBlock())
 			return r;
 
 		Akari->tasks->current->userWaiting = true;
-		Akari->tasks->current->userCall = new ReadQueueCall(c);
+		Akari->tasks->current->userCall = new ProbeQueueCall(c);
 		Akari->syscall->returnToNextTask();
 		return 0;
 	}
 
-	void sendQueue(const char *name, const char *node, u32 reply_to, u32 value) {
-		// TODO: a u32 value is pretty limited. We'll need to specify a buffer and a length soon.
+	u32 probeQueue() {
+		return probeQueue_impl(true);
+	}
+
+	u32 probeQueueUnblock() {
+		return readQueue_impl(false);
+	}
+
+	void sendQueue(const char *name, const char *node, u32 reply_to, const char *buffer, u32 len) {
 	}
 }
 }

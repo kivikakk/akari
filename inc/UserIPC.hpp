@@ -15,9 +15,11 @@ namespace IPC {
 	u32 readStreamUnblock(const char *name, const char *node, u32 listener, char *buffer, u32 n);
 	u32 writeStream(const char *name, const char *node, u32 writer, const char *buffer, u32 n);
 
-	bool registerQueue(const char *node);
-	u32 readQueue(const char *node);
-	void sendQueue(const char *name, const char *node, u32 reply_to, u32 value);
+	u32 probeQueue();
+	u32 probeQueueUnblock();
+	u32 readQueue();
+	void shiftQueue();
+	void sendQueue(const char *name, u32 reply_to, const char *buffer, u32 len);
 }
 }
 
