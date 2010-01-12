@@ -1,3 +1,4 @@
+#include <UserCalls.hpp>
 #include <Akari.hpp>
 #include <arch.hpp>
 #include <UserIPC.hpp>

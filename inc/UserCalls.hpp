@@ -2,7 +2,9 @@
 #define __USER_CALLS_HPP__
 
 #include <arch.hpp>
-#include <Tasks.hpp>
+#include <UserGates.hpp>
+
+#ifdef __AKARI_KERNEL__
 
 namespace User {
 	void putc(char c);
@@ -18,6 +20,23 @@ namespace User {
 	void free(void *p);
 	void *memcpy(void *dest, const void *src, u32 n);
 }
+
+#else
+
+DECL_SYSCALL1(putc, char);
+DECL_SYSCALL1(puts, const char *);
+DECL_SYSCALL2(putl, u32, u8);
+DECL_SYSCALL0(getProcessId);
+DECL_SYSCALL0(irqWait);
+DECL_SYSCALL1(irqListen, u32);
+DECL_SYSCALL1(panic, const char *);
+DECL_SYSCALL0(exit);
+DECL_SYSCALL0(defer);
+DECL_SYSCALL1(malloc, u32);
+DECL_SYSCALL1(free, void *);
+DECL_SYSCALL3(memcpy, void *, const void *, u32);
+
+#endif
 
 #endif
 

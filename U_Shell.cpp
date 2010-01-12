@@ -1,3 +1,4 @@
+#include <UserCalls.hpp>
 #include <UserIPC.hpp>
 
 static char *getline(u32 in) {
