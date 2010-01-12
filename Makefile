@@ -27,7 +27,7 @@ obj/%.s.o: %.s obj
 obj/%.c.o: %.c obj
 	$(CC) $(KERNEL_DEFINE) $(COPTS) -c -o $@ $<
 obj/%.cpp.o: %.cpp obj
-	$(CXX) $(KERNEL_DEFINE) $(CXXOPTS) --D__CPLUSPLUS c -o $@ $<
+	$(CXX) $(KERNEL_DEFINE) $(CXXOPTS) -D__CPLUSPLUS -c -o $@ $<
 
 obj:
 	if [ ! -e obj ]; then mkdir obj; fi
