@@ -52,7 +52,7 @@ void Syscall::returnToTask(Tasks::Task *task) {
 void Syscall::returnToNextTask() {
 	Tasks::Task *nextTask = Akari->tasks->getNextTask();
 	if (nextTask == Akari->tasks->current) {
-		AkariPanic("TODO: let no 'active' processes being running. i.e. have the ukernel HLT or similar.");
+		AkariPanic("TODO: let no 'active' processes being running. i.e. have the ukernel HLT or similar. -- bigger question; why isn't idle task running!? or why is it trying to 'returnToNextTask' from a syscall?");
 	}
 		
 	returnToTask(nextTask);
