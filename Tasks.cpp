@@ -140,6 +140,7 @@ void *Tasks::assignInternalTask(Task *task) {
 	} else if (task->userCall) {
 		// We want to change the value in the stack which actually becomes the return value of the syscall.
 		// If they're a kernel proc (cpl==0), then that's just the EAX on the ks.
+		// // XXX if they aren't??
 		struct modeswitch_registers *regs = (struct modeswitch_registers *)task->ks;
 		regs->callback.eax = (*task->userCall)();
 		ASSERT(!task->userCall->shallBlock());
@@ -361,7 +362,35 @@ u32 Tasks::Task::Stream::_nextId() {
 	return ++_wl_id;
 }
 
+Tasks::Task::Queue::Item::Item(u32 _id, u32 _timestamp, u32 _reply_to, const void *_data, u32 _data_len):
+	id(_id), timestamp(_timestamp), reply_to(_reply_to), data(0), data_len(_data_len)
+{
+	data = new char[data_len];
+	POSIX::memcpy(data, _data, data_len);
+}
+
+Tasks::Task::Queue::Item::~Item() {
+	if (data)
+		delete [] data;
+}
+
 Tasks::Task::Queue::Queue() { }
+
+u32 Tasks::Task::Queue::add(u32 reply_to, const void *data, u32 data_len) {
+	// This should become some random-ish guid in the future.
+	// I don't like these being guessable.
+	static u32 last_msg_id = 0;		
+
+	Item *item = new Item(++last_msg_id, -1, reply_to, data, data_len);
+	list.push_back(item);
+	return last_msg_id;
+}
+
+Tasks::Task::Queue::Item *Tasks::Task::Queue::first() {
+	if (list.begin() == list.end())
+		return 0;
+	return *list.begin();
+}
 
 Tasks::Task::Task(u8 cpl):
 		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),

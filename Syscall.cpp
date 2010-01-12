@@ -29,7 +29,11 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(17, (void *)&User::IPC::readStreamUnblock);
 	addSyscall(18, (void *)&User::IPC::writeStream);
 
-	addSyscall(19, (void *)&User::IPC::registerQueue);
+	addSyscall(19, (void *)&User::IPC::probeQueue);
+	addSyscall(20, (void *)&User::IPC::probeQueueUnblock);
+	addSyscall(21, (void *)&User::IPC::readQueue);
+	addSyscall(22, (void *)&User::IPC::shiftQueue);
+	addSyscall(23, (void *)&User::IPC::sendQueue);
 }
 
 u8 Syscall::versionMajor() const { return 0; }

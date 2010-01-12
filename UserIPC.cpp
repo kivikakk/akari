@@ -139,12 +139,22 @@ namespace IPC {
 
 	class ProbeQueueCall : public BlockingCall {
 	public:
-		ProbeQueueCall(Tasks::Task *task) { }
+		ProbeQueueCall(Tasks::Task *_task): task(_task)
+		{ }
 
 		u32 operator()() {
-			// _wontBlock(), _willBlock() need to be called.
-			return -1;
+			Tasks::Task::Queue::Item *item = task->replyQueue->first();
+			if (!item) {
+				_willBlock();
+				return 0;
+			}
+
+			_wontBlock();
+			return item->data_len;
 		}
+	
+	protected:
+		Tasks::Task *task;
 	};
 
 	static u32 probeQueue_impl(bool block) {
@@ -164,10 +174,38 @@ namespace IPC {
 	}
 
 	u32 probeQueueUnblock() {
-		return readQueue_impl(false);
+		return probeQueue_impl(false);
 	}
 
-	void sendQueue(const char *name, const char *node, u32 reply_to, const char *buffer, u32 len) {
+	u32 readQueue(char *dest, u32 offset, u32 len) { 
+		Tasks::Task::Queue::Item *item = Akari->tasks->current->replyQueue->first();
+		if (!item) return 0;		// XXX error out!
+
+		// If offset is out of bounds, just return.
+		if (offset >= item->data_len) return item->id;
+
+		// If the calculated end bound falls outside of the data,
+		// just adjust the length to make it go to the end.
+		if (offset + len > item->data_len) len = item->data_len - offset;
+
+		// Sane offset and length. Off we go.
+		POSIX::memcpy(dest, item->data + offset, len);
+
+		return item->id;
+	}
+
+	void shiftQueue() {
+		// ...
+	}
+
+	u32 sendQueue(const char *name, u32 reply_to, const char *buffer, u32 len) {
+		Symbol sName(name);
+		if (!Akari->tasks->registeredTasks->hasKey(sName))
+			AkariPanic("cannot find task in sendQueue?");
+
+		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
+
+		return task->replyQueue->add(reply_to, buffer, len);
 	}
 }
 }

@@ -76,11 +76,22 @@ public:
 
 		class Queue {
 		public:
+			class Item {
+			public:
+				Item(u32, u32, u32, const void *, u32);
+				~Item();
+
+				u32 id, timestamp, reply_to;
+				char *data; u32 data_len;
+			};
+
 			Queue();
-			
-			u32 length() const;
+
+			u32 add(u32 reply_to, const void *data, u32 data_len);
+			Item *first();
 
 		protected:
+			LinkedList<Item *> list;
 		};
 
 		static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);

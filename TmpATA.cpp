@@ -116,15 +116,15 @@ void ATAProcess() {
 	if (!SYSCALL_BOOL(syscall_registerName("system.io.ata")))
 		syscall_panic("could not register system.io.ata");
 
-	if (!SYSCALL_BOOL(syscall_registerQueue("command")))
-		syscall_panic("could not register system.io.ata:command");
+	//if (!SYSCALL_BOOL(syscall_registerQueue("command")))
+		//syscall_panic("could not register system.io.ata:command");
 
 	syscall_puts("ATA driver entering loop\n");
 	while (true) {
-		u32 msgId = syscall_readQueue("command");
-		syscall_puts("ATA got msg: ");
-		syscall_putl(msgId, 16);
-		syscall_putc('\n');
+		//u32 msgId = syscall_readQueue("command");
+		//syscall_puts("ATA got msg: ");
+		//syscall_putl(msgId, 16);
+		//syscall_putc('\n');
 	}
 }
 
