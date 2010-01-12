@@ -2,7 +2,9 @@
 #define __USER_IPC_HPP__
 
 #include <arch.hpp>
-#include <Tasks.hpp>
+#include <UserGates.hpp>
+
+#ifdef __AKARI_KERNEL__
 
 namespace User {
 namespace IPC {
@@ -22,6 +24,25 @@ namespace IPC {
 	void sendQueue(const char *name, u32 reply_to, const char *buffer, u32 len);
 }
 }
+
+#else
+
+DECL_SYSCALL1(registerName, const char *);
+
+DECL_SYSCALL1(registerStream, const char *);
+DECL_SYSCALL3(obtainStreamWriter, const char *, const char *, bool);
+DECL_SYSCALL2(obtainStreamListener, const char *, const char *);
+DECL_SYSCALL5(readStream, const char *, const char *, u32, char *, u32);
+DECL_SYSCALL5(readStreamUnblock, const char *, const char *, u32, char *, u32);
+DECL_SYSCALL5(writeStream, const char *, const char *, u32, const char *, u32);
+
+DECL_SYSCALL0(probeQueue);
+DECL_SYSCALL0(probeQueueUnblock);
+DECL_SYSCALL3(readQueue, char *, u32, u32);
+DECL_SYSCALL0(shiftQueue);
+DECL_SYSCALL4(sendQueue, const char *, u32, const char *, u32);
+
+#endif
 
 #endif
 

@@ -209,3 +209,18 @@ namespace IPC {
 	}
 }
 }
+
+DEFN_SYSCALL1(registerName, 12, const char *);
+
+DEFN_SYSCALL1(registerStream, 13, const char *);
+DEFN_SYSCALL3(obtainStreamWriter, 14, const char *, const char *, bool);
+DEFN_SYSCALL2(obtainStreamListener, 15, const char *, const char *);
+DEFN_SYSCALL5(readStream, 16, const char *, const char *, u32, char *, u32);
+DEFN_SYSCALL5(readStreamUnblock, 17, const char *, const char *, u32, char *, u32);
+DEFN_SYSCALL5(writeStream, 18, const char *, const char *, u32, const char *, u32);
+
+DEFN_SYSCALL0(probeQueue, 19);
+DEFN_SYSCALL0(probeQueueUnblock, 20);
+DEFN_SYSCALL3(readQueue, 21, char *, u32, u32);
+DEFN_SYSCALL0(shiftQueue, 22);
+DEFN_SYSCALL4(sendQueue, 23, const char *, u32, const char *, u32);

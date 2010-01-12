@@ -10,6 +10,49 @@
 #define DECL_SYSCALL4(fn,p1,p2,p3,p4) u32 syscall_##fn(p1,p2,p3,p4)
 #define DECL_SYSCALL5(fn,p1,p2,p3,p4,p5) u32 syscall_##fn(p1,p2,p3,p4,p5)
 
+#define DEFN_SYSCALL0(fn, num) \
+    u32 syscall_##fn() { \
+        u32 a; \
+        asm volatile("int $0x80" : "=a" (a) : "0" (num)); \
+        return a; \
+    }
+
+#define DEFN_SYSCALL1(fn, num, P1) \
+    u32 syscall_##fn(P1 p1) { \
+        u32 a; \
+        asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((int)p1)); \
+        return a; \
+    }
+
+#define DEFN_SYSCALL2(fn, num, P1, P2) \
+    u32 syscall_##fn(P1 p1, P2 p2) { \
+        u32 a; \
+        asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((int)p1), "c" ((int)p2)); \
+        return a; \
+    }
+
+#define DEFN_SYSCALL3(fn, num, P1, P2, P3) \
+    u32 syscall_##fn(P1 p1, P2 p2, P3 p3) { \
+        u32 a; \
+        asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((int)p1), "c" ((int)p2), "d" ((int)p3)); \
+        return a; \
+    }
+
+#define DEFN_SYSCALL4(fn, num, P1, P2, P3, P4) \
+    u32 syscall_##fn(P1 p1, P2 p2, P3 p3, P4 p4) { \
+        u32 a; \
+        asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((int)p1), "c" ((int)p2), "d" ((int)p3), "S" ((int)p4)); \
+        return a; \
+    }
+
+#define DEFN_SYSCALL5(fn, num, P1, P2, P3, P4, P5) \
+    u32 syscall_##fn(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) { \
+        u32 a; \
+        asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((int)p1), "c" ((int)p2), "d" ((int)p3), "S" ((int)p4), "D" ((int)p5)); \
+        return a; \
+    }
+
+
 // Here we declare the user-mode names.
 
 DECL_SYSCALL1(putc, char);
@@ -24,21 +67,6 @@ DECL_SYSCALL0(defer);
 DECL_SYSCALL1(malloc, u32);
 DECL_SYSCALL1(free, void *);
 DECL_SYSCALL3(memcpy, void *, const void *, u32);
-
-DECL_SYSCALL1(registerName, const char *);
-
-DECL_SYSCALL1(registerStream, const char *);
-DECL_SYSCALL3(obtainStreamWriter, const char *, const char *, bool);
-DECL_SYSCALL2(obtainStreamListener, const char *, const char *);
-DECL_SYSCALL5(readStream, const char *, const char *, u32, char *, u32);
-DECL_SYSCALL5(readStreamUnblock, const char *, const char *, u32, char *, u32);
-DECL_SYSCALL5(writeStream, const char *, const char *, u32, const char *, u32);
-
-DECL_SYSCALL0(probeQueue);
-DECL_SYSCALL0(probeQueueUnblock);
-DECL_SYSCALL3(readQueue, char *, u32, u32);
-DECL_SYSCALL0(shiftQueue);
-DECL_SYSCALL4(sendQueue, const char *, u32, const char *, u32);
 
 #define SYSCALL_BOOL(x) ((bool)((x) & 0xFF))
 

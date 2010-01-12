@@ -14,6 +14,8 @@ OBJS := $(patsubst %.s,obj/%.s.o,$(ASMSRCS)) $(patsubst %.c,obj/%.c.o,$(CSRCS)) 
 
 all: clean $(TARGET)-copy
 
+KERNEL_DEFINE = `if [ \`echo $< | grep ^U_ | wc -l\` = 0 ]; then echo "-D__AKARI_KERNEL__"; fi` 
+
 $(TARGET)-copy: $(TARGET)
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
 
@@ -23,9 +25,9 @@ $(TARGET): $(OBJS) $(LDFILE) obj
 obj/%.s.o: %.s obj
 	$(AS) $(ASOPTS) -o $@ $<
 obj/%.c.o: %.c obj
-	$(CC) $(COPTS) -c -o $@ $<
+	$(CC) $(KERNEL_DEFINE) $(COPTS) -c -o $@ $<
 obj/%.cpp.o: %.cpp obj
-	$(CXX) -D__CPLUSPLUS $(CXXOPTS) -c -o $@ $<
+	$(CXX) $(KERNEL_DEFINE) -D__CPLUSPLUS $(CXXOPTS) -c -o $@ $<
 
 obj:
 	if [ ! -e obj ]; then mkdir obj; fi
