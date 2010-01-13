@@ -25,6 +25,7 @@
 #include <List.hpp>
 #include <Symbol.hpp>
 #include <BlockingCall.hpp>
+#include <UserIPC.hpp>
 
 // user task kernel stack is used for state when it's
 // pre-empted, and for system calls, etc.
@@ -97,8 +98,8 @@ public:
 				Item(u32, u32, u32, const void *, u32);
 				~Item();
 
-				u32 id, timestamp, reply_to;
-				char *data; u32 data_len;
+				struct queue_item_info info;
+				char *data;
 			};
 
 			Queue();

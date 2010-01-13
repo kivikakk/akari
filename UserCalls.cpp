@@ -81,6 +81,7 @@ namespace User {
 
 		*scanner = (*scanner)->next;
 		// Gone! XXX what happens when the last task exists!? Everything probably goes to hell ...
+		// This should never happen because of the idle task; right?
 	}
 
 	void defer() {

@@ -379,10 +379,15 @@ u32 Tasks::Task::Stream::_nextId() {
 }
 
 Tasks::Task::Queue::Item::Item(u32 _id, u32 _timestamp, u32 _reply_to, const void *_data, u32 _data_len):
-	id(_id), timestamp(_timestamp), reply_to(_reply_to), data(0), data_len(_data_len)
+	data(0)
 {
-	data = new char[data_len];
-	POSIX::memcpy(data, _data, data_len);
+	info.id = _id;
+	info.timestamp = _timestamp;
+	info.reply_to = _reply_to;
+	info.data_len = _data_len;
+
+	data = new char[_data_len];
+	POSIX::memcpy(data, _data, _data_len);
 }
 
 Tasks::Task::Queue::Item::~Item() {

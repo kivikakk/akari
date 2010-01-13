@@ -20,6 +20,11 @@
 #include <arch.hpp>
 #include <UserGates.hpp>
 
+struct queue_item_info {
+	u32 id, timestamp, reply_to;
+	u32 data_len;
+};
+
 #ifdef __AKARI_KERNEL__
 
 namespace User {

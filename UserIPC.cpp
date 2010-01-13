@@ -166,7 +166,7 @@ namespace IPC {
 			}
 
 			_wontBlock();
-			return item->data_len;
+			return item->info.data_len;
 		}
 	
 	protected:
@@ -198,16 +198,16 @@ namespace IPC {
 		if (!item) return 0;		// XXX error out!
 
 		// If offset is out of bounds, just return.
-		if (offset >= item->data_len) return item->id;
+		if (offset >= item->info.data_len) return item->info.id;
 
 		// If the calculated end bound falls outside of the data,
 		// just adjust the length to make it go to the end.
-		if (offset + len > item->data_len) len = item->data_len - offset;
+		if (offset + len > item->info.data_len) len = item->info.data_len - offset;
 
 		// Sane offset and length. Off we go.
 		POSIX::memcpy(dest, item->data + offset, len);
 
-		return item->id;
+		return item->info.id;
 	}
 
 	void shiftQueue() {
