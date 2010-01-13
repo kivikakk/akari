@@ -67,7 +67,7 @@ void AkariEntry() {
 		mov %%eax, %%cr3" : : : "%eax");
 	__asm__ __volatile__("\
 		mov %%eax, %%esp; \
-		mov %%eax, %%ebp" : : "a" ((u32)initTaskStack));
+		mov %%eax, %%ebp" : : "a" (reinterpret_cast<u32>(initTaskStack)));
 	
 	AkariEntryCont();
 }

@@ -35,7 +35,7 @@ const char *Console::versionManufacturer() const { return "Akari"; }
 const char *Console::versionProduct() const { return "Akari Console"; }
 
 void Console::clear() {
-	u16 *i = (u16 *)SCREEN_VMEM;
+	u16 *i = reinterpret_cast<u16 *>(SCREEN_VMEM);
 
 	for (u16 j = 0; j < 80 * 25; ++j, ++i)
 		*i = SCREEN_BLANK;
@@ -49,7 +49,7 @@ void Console::putChar(s8 c) {
 		case '\n':	_shiftCursorNewline(); break;
 		case '\t':	_shiftCursorTab(); break;
 		default:
-			*((s8 *)(SCREEN_VMEM + (_cursorY * 80 + _cursorX) * 2)) = c;
+			*reinterpret_cast<s8 *>(SCREEN_VMEM + (_cursorY * 80 + _cursorX) * 2) = c;
 			_shiftCursor();
 	}
 }
@@ -73,7 +73,7 @@ void Console::putInt(u32 n, u8 base) {
 
 	do {
 		u8 c = (n / index);
-		n -= (u32)c * index;
+		n -= static_cast<u32>(c) * index;
 
 		putChar( (c >= 0 && c <= 9) ? (c + '0') : (c - 10 + 'a') );
 		index /= base;
@@ -87,9 +87,9 @@ void Console::_scroll() {
 	u16 i;
 	while (_cursorY > 24) {
 		for (i = 0; i < 24 * 80; ++i)
-			((u16 *)SCREEN_VMEM)[i] = ((u16 *)SCREEN_VMEM)[i + 80];
+			reinterpret_cast<u16 *>(SCREEN_VMEM)[i] = reinterpret_cast<u16 *>(SCREEN_VMEM)[i + 80];
 		for (i = 0; i < 80; ++i)
-			((u16 *)(SCREEN_VMEM + 24 * 80 * 2))[i] = SCREEN_BLANK;
+			reinterpret_cast<u16 *>(SCREEN_VMEM + 24 * 80 * 2)[i] = SCREEN_BLANK;
 		--_cursorY;
 	}
 }

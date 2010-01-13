@@ -66,7 +66,7 @@ void Memory::setPaging(bool mode) {
 	ASSERT(mode);		// TODO support turning paging off [if ever required?! who knows! :)]
 
 	_frameCount = (0x100000 + _upperMemory * 1024) / 0x1000;
-	_frames = (u32 *)alloc(INDEX_BIT(_frameCount) + 1);
+	_frames = static_cast<u32 *>(alloc(INDEX_BIT(_frameCount) + 1));
 	POSIX::memset(_frames, 0, INDEX_BIT(_frameCount) + 1);
 
 	_kernelDirectory = PageDirectory::Allocate();
@@ -98,9 +98,9 @@ void *Memory::alloc(u32 n, u32 *phys) {
 		ASSERT(_heap);
 		void *addr = _heap->alloc(n);
 		if (phys) {
-			Page *page = _kernelDirectory->getPage((u32)addr, false);
+			Page *page = _kernelDirectory->getPage(reinterpret_cast<u32>(addr), false);
 			ASSERT(page);
-			*phys = page->pageAddress * 0x1000 + ((u32)addr & 0xFFF);
+			*phys = page->pageAddress * 0x1000 + (reinterpret_cast<u32>(addr) & 0xFFF);
 		}
 		return addr;
 	}
@@ -112,7 +112,7 @@ void *Memory::alloc(u32 n, u32 *phys) {
 
 	u32 addr = _placementAddress;
 	_placementAddress += n;
-	return (void *)addr;
+	return reinterpret_cast<void *>(addr);
 }
 
 void *Memory::allocAligned(u32 n, u32 *phys) {
@@ -120,9 +120,9 @@ void *Memory::allocAligned(u32 n, u32 *phys) {
 		ASSERT(_heap);
 		void *addr = _heap->allocAligned(n);
 		if (phys) {
-			Page *page = _kernelDirectory->getPage((u32)addr, false);
+			Page *page = _kernelDirectory->getPage(reinterpret_cast<u32>(addr), false);
 			ASSERT(page);
-			*phys = page->pageAddress * 0x1000 + ((u32)addr & 0xFFF);
+			*phys = page->pageAddress * 0x1000 + (reinterpret_cast<u32>(addr) & 0xFFF);
 		}
 		return addr;
 	}
@@ -137,7 +137,7 @@ void *Memory::allocAligned(u32 n, u32 *phys) {
 
 	u32 addr = _placementAddress;
 	_placementAddress += n;
-	return (void *)addr;
+	return reinterpret_cast<void *>(addr);
 }
 
 void Memory::free(void *p) {
@@ -227,7 +227,7 @@ u32 Memory::freeFrame() const {
 // Heap
 
 Memory::Heap::Heap(u32 start, u32 end, u32 max, bool supervisor, bool readonly):
-_index((Entry *)start, HEAP_INDEX_SIZE, IndexSort),
+_index(reinterpret_cast<Entry *>(start), HEAP_INDEX_SIZE, IndexSort),
 _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly)
 {
 	ASSERT(start % 0x1000 == 0);
@@ -266,7 +266,7 @@ void *Memory::Heap::alloc(u32 n) {
 
 	Entry data(dataStart, n, false);
 	_index.insert(data);
-	return (void *)dataStart;
+	return reinterpret_cast<void *>(dataStart);
 }
 
 void *Memory::Heap::allocAligned(u32 n) {
@@ -304,7 +304,7 @@ void *Memory::Heap::allocAligned(u32 n) {
 
 	Entry data(dataStart, n, false);
 	_index.insert(data);
-	return (void *)dataStart;
+	return reinterpret_cast<void *>(dataStart);
 }
 
 Memory::Heap::Entry::Entry(u32 start, u32 size, bool isHole):
@@ -348,7 +348,7 @@ s32 Memory::Heap::smallestAlignedHole(u32 n) const {
 
 		// if the size of this hole is large enough for our needs, considering we have
 		// `off' bytes of waste, then it's good
-		if (((s32)entry.size - off) >= (s32)n)
+		if ((static_cast<s32>(entry.size) - off) >= static_cast<s32>(n))
 			return it;
 
 		++it;
@@ -383,7 +383,7 @@ void Memory::Page::allocFrame(u32 addr, bool kernel, bool writeable) {
 // PageTable
 
 Memory::PageTable *Memory::PageTable::Allocate(u32 *phys) {
-	PageTable *table = (PageTable *)Akari->memory->allocAligned(sizeof(PageTable), phys);
+	PageTable *table = static_cast<PageTable *>(Akari->memory->allocAligned(sizeof(PageTable), phys));
 	POSIX::memset(table, 0, sizeof(PageTable));
 	return table;
 }
@@ -416,9 +416,9 @@ Memory::PageTable *Memory::PageTable::clone(u32 *phys) const {
 Memory::PageDirectory *Memory::PageDirectory::Allocate() {
 	u32 phys;
 
-	PageDirectory *dir = (PageDirectory *)Akari->memory->allocAligned(sizeof(PageDirectory), &phys);
+	PageDirectory *dir = static_cast<PageDirectory *>(Akari->memory->allocAligned(sizeof(PageDirectory), &phys));
 	POSIX::memset(dir, 0, sizeof(PageDirectory));
-	u32 off = (u32)dir->tablePhysicals - (u32)dir;
+	u32 off = reinterpret_cast<u32>(dir->tablePhysicals) - reinterpret_cast<u32>(dir);
 	dir->physicalAddr = phys + off;						// check above
 
 	return dir;

@@ -74,9 +74,9 @@ namespace User {
 		}
 
 		Akari->console->putString("exit(): 0x");
-		Akari->console->putInt((u32)*scanner, 16);
+		Akari->console->putInt(reinterpret_cast<u32>(*scanner), 16);
 		Akari->console->putString(" -> 0x");
-		Akari->console->putInt((u32)(*scanner)->next, 16);
+		Akari->console->putInt(reinterpret_cast<u32>((*scanner)->next), 16);
 		Akari->console->putString("\n");
 
 		*scanner = (*scanner)->next;
@@ -99,8 +99,8 @@ namespace User {
 	}
 
 	void *memcpy(void *dest, const void *src, u32 n) {
-		char *w = (char *)dest;
-		const char *r = (const char *)src;
+		char *w = static_cast<char *>(dest);
+		const char *r = static_cast<const char *>(src);
 
 		while (n--)
 			*w++ = *r++;

@@ -135,6 +135,6 @@ const char *ASCIIString::getCString() const {
 		POSIX::memcpy(buffer, _data, _dataLength + 1);
 	}
 
-	return (const char *)buffer;
+	return static_cast<const char *>(buffer);
 }
 

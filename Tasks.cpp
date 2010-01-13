@@ -122,13 +122,10 @@ void Tasks::saveRegisterToTask(Task *dest, void *regs) {
 	// This could happen if, say, it's in kernel mode, then interrupts or something.
 	// HACK: need to handle this situation properly, but for now, ensure
 	// internal consistency.
-	ASSERT(((((struct modeswitch_registers *)regs)->callback.cs - 0x08) / 0x11) == dest->cpl);
+	ASSERT(((static_cast<struct modeswitch_registers *>(regs)->callback.cs - 0x08) / 0x11) == dest->cpl);
 
 	// update the tip of stack pointer so we can restore later
-	// Akari->console->putString("ks saved as 0x");
-	// Akari->console->putInt((u32)regs, 16);
-	// Akari->console->putString("\n");
-	dest->ks = (u32)regs;
+	dest->ks = reinterpret_cast<u32>(regs);
 }
 
 void *Tasks::assignInternalTask(Task *task) {
@@ -157,7 +154,7 @@ void *Tasks::assignInternalTask(Task *task) {
 		// We want to change the value in the stack which actually becomes the return value of the syscall.
 		// If they're a kernel proc (cpl==0), then that's just the EAX on the ks.
 		// // XXX if they aren't??
-		struct modeswitch_registers *regs = (struct modeswitch_registers *)task->ks;
+		struct modeswitch_registers *regs = reinterpret_cast<struct modeswitch_registers *>(task->ks);
 		regs->callback.eax = (*task->userCall)();
 		ASSERT(!task->userCall->shallBlock());
 
@@ -165,15 +162,15 @@ void *Tasks::assignInternalTask(Task *task) {
 		task->userCall = 0;
 	}
 
-	return (void *)task->ks;
+	return reinterpret_cast<void *>(task->ks);
 }
 
 Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase) {
 	Task *nt = new Task(cpl);
 	if (cpl > 0)
-		nt->ks = (u32)Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE)) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 	else {
-		// nt->ks = (u32)Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		// nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE)) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 		AkariPanic("I haven't tested a non-user initial task. Uncomment this panic at your own peril.");
 		// i.e. you may need to add some code as deemed appropriate here. Current thoughts are that you may need to
 		// be careful about where you placed the stack.. probably not, but just check it all matches up?
@@ -202,8 +199,8 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 			nt->pageDir->getPage(page, true)->allocAnyFrame(false, true);
 		}
 
-		nt->ks = (u32)Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
-		regs = (struct modeswitch_registers *)(nt->ks);
+		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE)) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		regs = reinterpret_cast<struct modeswitch_registers *>(nt->ks);
 
 		Akari->console->putString("alloced nt->ks at 0x");
 		Akari->console->putInt(nt->ks, 16);
@@ -212,9 +209,9 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 		regs->useresp = USER_TASK_BASE;
 		regs->ss = 0x10 + (cpl * 0x11);		// same as ds: ss is set by TSS, ds is manually set by irq_timer_multitask after
 	} else {
-		nt->ks = (u32)Akari->memory->allocAligned(USER_TASK_STACK_SIZE) + USER_TASK_STACK_SIZE;
+		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_STACK_SIZE)) + USER_TASK_STACK_SIZE;
 		nt->ks -= sizeof(struct callback_registers);
-		regs = (struct modeswitch_registers *)(nt->ks);
+		regs = reinterpret_cast<struct modeswitch_registers *>(nt->ks);
 	}
 
 	// only set ->callback.* here, as it may not be a proper modeswitch_registers if cpl==0

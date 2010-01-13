@@ -161,11 +161,11 @@ void *Descriptor::IDT::callHandler(u8 isr, struct modeswitch_registers *regs) {
 }
 
 void Descriptor::IDT::setGate(u8 idt, void (*callback)(), u16 isrSegment, u8 flags) {
-	_entries[idt].offset_low = (u32)callback & 0xFFFF;
+	_entries[idt].offset_low = reinterpret_cast<u32>(callback) & 0xFFFF;
 	_entries[idt].selector = isrSegment;
 	_entries[idt]._always_0 = 0;
 	_entries[idt].flags = flags | 0x60;
-	_entries[idt].offset_high = ((u32)callback >> 16) & 0xFFFF;
+	_entries[idt].offset_high = (reinterpret_cast<u32>(callback) >> 16) & 0xFFFF;
 }
 
 Descriptor::IRQT::IRQT(IDT *idt): _idt(idt) {

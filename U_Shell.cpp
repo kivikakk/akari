@@ -19,7 +19,7 @@
 
 static char *getline(u32 in) {
 	u32 cs = 8, n = 0;
-	char *kbbuf = (char *)syscall_malloc(cs);
+	char *kbbuf = static_cast<char *>(syscall_malloc(cs));
 
 	while (true) {
 		u32 incoming = syscall_readStream("system.io.keyboard", "input", in, kbbuf + n, 1);
@@ -29,7 +29,7 @@ static char *getline(u32 in) {
 		n += incoming;	// 1
 
 		if (n == cs) {
-			char *nkb = (char *)syscall_malloc(cs * 2);
+			char *nkb = static_cast<char *>(syscall_malloc(cs * 2));
 			syscall_memcpy(nkb, kbbuf, n);
 			syscall_free(kbbuf);
 			kbbuf = nkb;

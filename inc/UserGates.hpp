@@ -26,6 +26,10 @@
 #define DECL_SYSCALL4(fn,r,p1,p2,p3,p4) r syscall_##fn(p1,p2,p3,p4)
 #define DECL_SYSCALL5(fn,r,p1,p2,p3,p4,p5) r syscall_##fn(p1,p2,p3,p4,p5)
 
+// In the interest of protecting the sanity of all, reinterpret_ or static_ style casts
+// have not been used here, as they cause mayhem depending on what types are passed.
+// (reinterpret_cast<void>(...) does not work, for instance. (void)x does.)
+
 #define DEFN_SYSCALL0(fn, num, r) \
     r syscall_##fn() { \
         u32 a = 0; \
@@ -67,8 +71,6 @@
         asm volatile("int $0x80" : "=a" (a) : "0" (num), "b" ((int)p1), "c" ((int)p2), "d" ((int)p3), "S" ((int)p4), "D" ((int)p5)); \
         return (r)a; \
     }
-
-//#define SYSCALL_BOOL(x) ((bool)((x) & 0xFF))
 
 #endif
 
