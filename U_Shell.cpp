@@ -95,8 +95,8 @@ void ShellProcess() {
 
 		// Okay, let's grab the first 512 bytes.
 		l = static_cast<char *>(syscall_malloc(512));
-		char req[] = { 0 /*read*/, 0, 0, 0, 0 /*sec 0*/, 0, 0 /*offset 0*/, 0, 0, 2, 0 /*len 512*/ };
-		u32 id = syscall_sendQueue(syscall_processIdByName("system.io.ata"), 0, req, 11);
+		char req[] = { 0 /*read*/, 0 /*part 0*/, 0, 0, 0, 0 /*sec 0*/, 0, 0 /*offset 0*/, 0, 0, 2, 0 /*len 512*/ };
+		u32 id = syscall_sendQueue(syscall_processIdByName("system.io.mbr"), 0, req, 11);
 		syscall_puts("sent request #"); syscall_putl(id, 16); syscall_putc('\n');
 
 		struct queue_item_info *info = syscall_probeQueue();

@@ -33,9 +33,10 @@
 static void AkariEntryCont();
 void SubProcess();
 
-void KeyboardProcess();	// TmpKb
-void ShellProcess();	// TmpShell
-void ATAProcess();		// TmpATA
+void KeyboardProcess();
+void ShellProcess();
+void ATAProcess();
+void MBRProcess();
 void IdleProcess();
 
 multiboot_info_t *AkariMultiboot;
@@ -108,6 +109,10 @@ static void AkariEntryCont() {
 	ata->setIOMap(0x3F6, true);
 	ata->setIOMap(0x376, true);
 	shell->next = ata;
+	
+	// MBR driver
+	Tasks::Task *mbr = Tasks::Task::CreateTask(reinterpret_cast<u32>(&MBRProcess), 3, true, 0, Akari->memory->_kernelDirectory);
+	ata->next = mbr;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);

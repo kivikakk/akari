@@ -95,9 +95,9 @@ void ATAProcess() {
 		rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 	
 	if (rs & ATA_ERR)
-		AkariPanic("ATA error on IDENTIFY.\n");
+		syscall_panic("ATA error on IDENTIFY.\n");
 	else if (!(rs & ATA_DRQ))
-		AkariPanic("No error on ATA IDENTIFY, but no DRQ?\n");
+		syscall_panic("No error on ATA IDENTIFY, but no DRQ?\n");
 
 	for (u32 i = 0; i < 256; ++i)
 		returndata[i] = AkariInW(ATA_PRIMARY + ATA_DATA);
@@ -121,7 +121,7 @@ void ATAProcess() {
 	hdd_model_number[40] = 0;
 
 	if (!(returndata[60] || returndata[61]))
-		AkariPanic("Hard drive does not support LBA28?");
+		syscall_panic("Hard drive does not support LBA28?");
 
 	hdd_lba28_addr = returndata[60] | (returndata[61] << 16);
 
@@ -229,7 +229,7 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer)
 	}
 	
 	if (number == 0)
-		AkariPanic("Reading 0 sectors?\n");
+		syscall_panic("Reading 0 sectors?\n");
 
 	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER_OP | ((start >> 24) & 0x0F));
 	AkariInB(ATA_PRIMARY_DCR);
@@ -248,8 +248,8 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer)
 		while (!(!(rs & ATA_BSY) && (rs & ATA_DRQ)) && !(rs & ATA_ERR) && !(rs & ATA_DF))
 			rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 		
-		if (rs & ATA_ERR) 	AkariPanic("ATA_ERR in ata_read_sectors\n");
-		else if (rs & ATA_DF) 	AkariPanic("ATA_DF in ata_read_sectors\n");
+		if (rs & ATA_ERR) 	syscall_panic("ATA_ERR in ata_read_sectors\n");
+		else if (rs & ATA_DF) 	syscall_panic("ATA_DF in ata_read_sectors\n");
 
 		for (i = 0; i < 256; ++i) {
 			returndata = AkariInW(ATA_PRIMARY + ATA_DATA);
@@ -302,9 +302,9 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer)
 	u32 i, sectors_written = 0;
 
 	if (number > 256)
-		AkariPanic("We haven't implemented writing more than 256 sectors at once yet (> 128KiB)\n");
+		syscall_panic("We haven't implemented writing more than 256 sectors at once yet (> 128KiB)\n");
 	else if (number == 0)
-		AkariPanic("Writing 0 sectors?\n");
+		syscall_panic("Writing 0 sectors?\n");
 
 	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER_OP | ((start >> 24) & 0x0F));
 	AkariInB(ATA_PRIMARY_DCR);
@@ -323,8 +323,8 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer)
 		while (!(!(rs & ATA_BSY) && (rs & ATA_DRQ)) && !(rs & ATA_ERR) && !(rs & ATA_DF))
 			rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 		
-		if (rs & ATA_ERR) 	AkariPanic("ATA_ERR in ata_write_sectors\n");
-		else if (rs & ATA_DF) 	AkariPanic("ATA_DF in ata_write_sectors\n");
+		if (rs & ATA_ERR) 	syscall_panic("ATA_ERR in ata_write_sectors\n");
+		else if (rs & ATA_DF) 	syscall_panic("ATA_DF in ata_write_sectors\n");
 
 		for (i = 0; i < 256; ++i) {
 			AkariOutW(ATA_PRIMARY + ATA_DATA, buffer[0] | (buffer[1] << 8));
