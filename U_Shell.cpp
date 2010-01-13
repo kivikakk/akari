@@ -90,11 +90,28 @@ void ShellProcess() {
 		int s = strpos(l, " ");
 		syscall_puts("space at ");
 		syscall_putl(s, 10);
-		syscall_puts("\n");
+		syscall_puts("\n\n");
 		syscall_free(l);
 
-		u32 id = syscall_sendQueue(syscall_processIdByName("system.io.ata"), 0, "hello", 6);
+		// Okay, let's grab the first 512 bytes.
+		l = static_cast<char *>(syscall_malloc(512));
+		char req[] = { 0 /*read*/, 0, 0, 0, 0 /*sec 0*/, 0, 0 /*offset 0*/, 0, 0, 2, 0 /*len 512*/ };
+		u32 id = syscall_sendQueue(syscall_processIdByName("system.io.ata"), 0, req, 11);
 		syscall_puts("sent request #"); syscall_putl(id, 16); syscall_putc('\n');
+
+		struct queue_item_info *info = syscall_probeQueue();
+		syscall_puts("received reply #"); syscall_putl(info->id, 16);
+		syscall_puts(" to #"); syscall_putl(info->reply_to, 16);
+		syscall_puts(", length "); syscall_putl(info->data_len, 16); syscall_putc('\n');
+
+		if (info->data_len != 512) syscall_panic("not 512 bytes back?");
+		syscall_readQueue(l, 0, info->data_len);
+		syscall_shiftQueue();
+
+		syscall_puts("data follows:\n");
+		for (int i = 0; i < 512; ++i)
+			syscall_putc(l[i]);
+		syscall_putc('\n');
 	}
 
 	syscall_exit();
