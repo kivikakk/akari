@@ -419,12 +419,12 @@ u32 Tasks::Task::Queue::push_back(pid_t from, u32 reply_to, const void *data, u3
 
 	Item *item = new Item(++last_msg_id, AkariMicrokernelSwitches, from, reply_to, data, data_len);
 	list.push_back(item);
-	delete item;
 	return last_msg_id;
 }
 
 void Tasks::Task::Queue::shift() {
 	if (list.empty()) return;
+	delete *list.begin();
 	list.shift();
 }
 

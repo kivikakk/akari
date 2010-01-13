@@ -143,6 +143,9 @@ void *Memory::allocAligned(u32 n, u32 *phys) {
 void Memory::free(void *p) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
+
+		*static_cast<char *>(p) = 0x88;		// Just something of a marker in the meantime.
+
 		// TODO: AkariPanic("implement free() for heaps");
 		return;
 	}
