@@ -135,6 +135,7 @@ void ATAProcess() {
 		syscall_panic("could not register system.io.ata");
 
 	syscall_puts("ATA driver entering loop\n");
+	char buffer[42];
 	while (true) {
 		struct queue_item_info *info = syscall_probeQueue();
 		syscall_puts("ATA got msg id: ");
@@ -145,6 +146,13 @@ void ATAProcess() {
 		syscall_putl(info->reply_to, 16);
 		syscall_puts(", data_len: ");
 		syscall_putl(info->data_len, 16);
+		syscall_putc('\n');
+
+		syscall_puts("read result: ");
+		u32 r = syscall_readQueue(buffer, 0, info->data_len);
+		syscall_putl(r, 16);
+		syscall_puts(", data: ");
+		syscall_puts(buffer);
 		syscall_putc('\n');
 
 		syscall_shiftQueue();

@@ -85,8 +85,7 @@ namespace IPC {
 
 		// Sane offset and length. Off we go.
 		POSIX::memcpy(dest, item->data + offset, len);
-
-		return item->info.id;
+		return len;
 	}
 
 	void shiftQueue() {
