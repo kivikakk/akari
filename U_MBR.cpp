@@ -73,18 +73,6 @@ void MBRProcess() {
 			u16 offset = buffer[6] << 8 | buffer[7];
 			u32 length = buffer[8] << 24 | buffer[9] << 16 | buffer[10] << 8 | buffer[11];
 
-			syscall_puts("MBR for: partition ");
-			syscall_putl((u32)partition_id, 16);
-			syscall_puts(", sector ");
-			syscall_putl(sector, 16);
-			syscall_puts(", offset ");
-			syscall_putl((u32)offset, 16);
-			syscall_puts(", length ");
-			syscall_putl(length, 16);
-			syscall_puts(", for id ");
-			syscall_putl(info.id, 16);
-			syscall_puts("\n");
-
 			if (length > MBR_BUFFER) syscall_panic("Static buffer in MBR too small for req'd amount");
 
 			partition_read_data(partition_id, sector, offset, length, buffer);
@@ -124,6 +112,8 @@ void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer) {
 
 	// u32 id =
 	syscall_sendQueue(syscall_processIdByName("system.io.ata"), 0, req, 11);
+
+	// TODO XXX: need to listen for replies to a certain message, not just the next one.
 
 	struct queue_item_info *info = syscall_probeQueue();
 	if (info->data_len != length) syscall_panic("MBR's ATA read: not expected number of bytes back?");
