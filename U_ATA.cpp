@@ -137,9 +137,17 @@ void ATAProcess() {
 	syscall_puts("ATA driver entering loop\n");
 	while (true) {
 		struct queue_item_info *info = syscall_probeQueue();
-		syscall_puts("ATA got msg: ");
+		syscall_puts("ATA got msg id: ");
 		syscall_putl(info->id, 16);
+		syscall_puts(", timestamp: ");
+		syscall_putl(info->timestamp, 16);
+		syscall_puts(", reply_to: ");
+		syscall_putl(info->reply_to, 16);
+		syscall_puts(", data_len: ");
+		syscall_putl(info->data_len, 16);
 		syscall_putc('\n');
+
+		syscall_shiftQueue();
 	}
 }
 
