@@ -93,7 +93,8 @@ void ShellProcess() {
 		syscall_puts("\n");
 		syscall_free(l);
 
-		syscall_sendQueue("system.io.ata", 0, "hello", 6);
+		u32 id = syscall_sendQueue(syscall_processIdByName("system.io.ata"), 0, "hello", 6);
+		syscall_puts("sent request #"); syscall_putl(id, 16); syscall_putc('\n');
 	}
 
 	syscall_exit();

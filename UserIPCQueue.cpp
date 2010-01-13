@@ -92,16 +92,11 @@ namespace IPC {
 		Akari->tasks->current->replyQueue->shift();
 	}
 
-	u32 sendQueue(const char *name, u32 reply_to, const char *buffer, u32 len) {
-		Symbol sName(name);
-		if (!Akari->tasks->registeredTasks->hasKey(sName))
-			AkariPanic("cannot find task in sendQueue?");
-
-		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
-
-		u32 id = task->replyQueue->push_back(Akari->tasks->current->id, reply_to, buffer, len);
+	u32 sendQueue(pid_t id, u32 reply_to, const char *buffer, u32 len) {
+		Tasks::Task *task = Akari->tasks->getTaskById(id);
+		u32 msg_id = task->replyQueue->push_back(Akari->tasks->current->id, reply_to, buffer, len);
 		task->unblockType(ProbeQueueCall::type());
-		return id;
+		return msg_id;
 	}
 }
 }
@@ -110,5 +105,5 @@ DEFN_SYSCALL0(probeQueue, 19, struct queue_item_info *);
 DEFN_SYSCALL0(probeQueueUnblock, 20, struct queue_item_info *);
 DEFN_SYSCALL3(readQueue, 21, u32, char *, u32, u32);
 DEFN_SYSCALL0(shiftQueue, 22, void);
-DEFN_SYSCALL4(sendQueue, 23, u32, const char *, u32, const char *, u32);
+DEFN_SYSCALL4(sendQueue, 23, u32, pid_t, u32, const char *, u32);
 

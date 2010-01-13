@@ -36,7 +36,7 @@ namespace IPC {
 	struct queue_item_info *probeQueueUnblock();
 	u32 readQueue(char *dest, u32 offset, u32 len);
 	void shiftQueue();
-	u32 sendQueue(const char *name, u32 reply_to, const char *buffer, u32 len);
+	u32 sendQueue(pid_t id, u32 reply_to, const char *buffer, u32 len);
 }
 }
 
@@ -46,7 +46,7 @@ DECL_SYSCALL0(probeQueue, struct queue_item_info *);
 DECL_SYSCALL0(probeQueueUnblock, struct queue_item_info *);
 DECL_SYSCALL3(readQueue, u32, char *, u32, u32);
 DECL_SYSCALL0(shiftQueue, void);
-DECL_SYSCALL4(sendQueue, u32, const char *, u32, const char *, u32);
+DECL_SYSCALL4(sendQueue, u32, pid_t id, u32, const char *, u32);
 
 #endif
 

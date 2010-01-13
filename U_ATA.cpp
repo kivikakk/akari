@@ -60,6 +60,9 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer);
 #define ATA_CACHE_FLUSH		0xE7
 #define ATA_IDENTIFY		0xEC
 
+void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
+void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
+
 void ATAProcess() {
 	u32 hdd_lba28_addr;
 	char hdd_serial_number[21];
@@ -139,15 +142,39 @@ void ATAProcess() {
 	char buffer[ATA_BUFFER];
 	while (true) {
 		struct queue_item_info *info = syscall_probeQueue();
-		if (info->data_len > ATA_BUFFER) syscall_panic("ATA buffer overflow");
-		u32 r = syscall_readQueue(buffer, 0, info->data_len);
+		u32 len = info->data_len;
+		if (len > ATA_BUFFER) syscall_panic("ATA buffer overflow");
+		syscall_readQueue(buffer, 0, len);
 
-		
+		if (buffer[0] == 0) {
+			// Read
 
-		syscall_putl(r, 16);
-		syscall_puts(", data: ");
-		syscall_puts(buffer);
-		syscall_putc('\n');
+			u32 sector_offset = buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4];
+			u16 offset = buffer[5] << 8 | buffer[6];
+			u32 length = buffer[7] << 24 | buffer[8] << 16 | buffer[9] << 8 | buffer[10];
+
+			if (length > ATA_BUFFER) syscall_panic("Static buffer in ATA too small for requested amount");
+
+			ata_read_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer));
+
+			syscall_sendQueue(info->from, info->id, buffer, length);
+
+		} else if (buffer[0] == 1) {
+			// Write
+
+			u32 sector_offset = buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4];
+			u16 offset = buffer[5] << 8 | buffer[6];
+			u32 length = buffer[7] << 24 | buffer[8] << 16 | buffer[9] << 8 | buffer[10];
+
+			if (len - 11 > length) syscall_panic("ATA driver got more data in msg than msg asked to write");
+			if (len - 11 < length) syscall_panic("ATA driver got LESS data in msg than msg asked to write!");
+
+			ata_write_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer + 11));
+
+			syscall_sendQueue(info->from, info->id, "\1", 1);
+		} else {
+			syscall_panic("ATA driver confused");
+		}
 
 		syscall_shiftQueue();
 	}
