@@ -53,7 +53,7 @@ Descriptor::GDT::GDT(u32 n): _entryCount(n), _entries(0) {
 }
 
 void Descriptor::GDT::setGateFields(s32 num, u32 base, u32 limit, u8 access, u8 granularity) {
-	ASSERT(num >= 0 && num < (s32)_entryCount);
+	ASSERT(num >= 0 && num < static_cast<s32>(_entryCount));
 
 	_entries[num].base_low		= (base & 0xFFFF);
 	_entries[num].base_middle	= ((base >> 16) & 0xFF);
@@ -75,7 +75,7 @@ void Descriptor::GDT::clearGate(s32 num) {
 }
 
 void Descriptor::GDT::writeTSS(s32 num, u16 ss0, u32 esp0) {
-	u32 base = (u32)&_tssEntry;
+	u32 base = reinterpret_cast<u32>(&_tssEntry);
 	u32 limit = base + sizeof(TSSEntry);
 
 	POSIX::memset(&_tssEntry, 0, sizeof(TSSEntry));
@@ -86,7 +86,7 @@ void Descriptor::GDT::writeTSS(s32 num, u16 ss0, u32 esp0) {
 	_tssEntry.ss = 0x13; _tssEntry.ds = 0x13;
 	_tssEntry.es = 0x13; _tssEntry.fs = 0x13;
 	_tssEntry.gs = 0x13;
-	_tssEntry.iomap_base = (u32)&_tssEntry.iomap - (u32)&_tssEntry;
+	_tssEntry.iomap_base = reinterpret_cast<u32>(&_tssEntry.iomap) - reinterpret_cast<u32>(&_tssEntry);
 
 	for (u16 i = 0; i < sizeof(_tssEntry.iomap); ++i)
 		_tssEntry.iomap[i] = 0xFF;
@@ -105,7 +105,7 @@ void Descriptor::GDT::flush() {
 		movw %%ax, %%gs; \
 		movw %%ax, %%ss; \
 		ljmp $0x08, $.flush; \
-	.flush:" : : "r" ((u32)&_pointer) : "eax");
+	.flush:" : : "r" (reinterpret_cast<u32>(&_pointer)) : "eax");
 }
 
 void Descriptor::GDT::flushTSS(s32 num) {
@@ -140,7 +140,7 @@ Descriptor::IDT::IDT() {
 #undef SET_IDT_GATE
 
 	_pointer.limit = sizeof(_entries) - 1;
-	_pointer.ridt = (u32)_entries;
+	_pointer.ridt = reinterpret_cast<u32>(_entries);
 
 	__asm__ __volatile__("lidt %0" : : "m" (_pointer));
 }

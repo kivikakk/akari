@@ -180,7 +180,7 @@ namespace IPC {
 
 	static struct queue_item_info *probeQueue_impl(bool block) {
 		ProbeQueueCall c(Akari->tasks->current);
-		struct queue_item_info *r = (struct queue_item_info *)c();
+		struct queue_item_info *r = reinterpret_cast<struct queue_item_info *>(c());
 		if (!block || !c.shallBlock())
 			return r;
 

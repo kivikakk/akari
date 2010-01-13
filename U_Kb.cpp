@@ -94,7 +94,7 @@ void KeyboardProcess() {
 		syscall_panic("could not register system.io.keyboard:input");
 
 	u32 writer = syscall_obtainStreamWriter("system.io.keyboard", "input", true);
-	if (writer == (u32)-1) {
+	if (writer == static_cast<u32>(-1)) {
 		// This shouldn't be possible if we just initialised the damn thing.
 		syscall_panic("could not obtain writer on system.io.keyboard:input");
 	}
@@ -143,8 +143,8 @@ void KeyboardProcess() {
 				if (echo_mode)
 					syscall_putc(scancode);
 
-				// Now actually dispatch this.
-				syscall_writeStream("system.io.keyboard", "input", writer, (const char *)&scancode, 1);
+				// Now actually dispatch this.. reinterpret_cast for u8*<->char*. Unfortunate but true.
+				syscall_writeStream("system.io.keyboard", "input", writer, reinterpret_cast<const char *>(&scancode), 1);
 			}
 
 			if (mustUpdateLEDs) {

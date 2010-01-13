@@ -158,9 +158,9 @@ void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 	offset %= 512;
 	
 	if (offset > 0) {
-		ata_read_sectors(sector_open, 1, (u8 *)tempdata);
-		syscall_memcpy(buffer, tempdata + offset, min((u32)(512 - offset), length));	/* the +1 is important, but i don't understand why */
-		buffer += min((u32)(512 - offset), length);	/* yet no +1 here */
+		ata_read_sectors(sector_open, 1, static_cast<u8 *>(tempdata));
+		syscall_memcpy(buffer, tempdata + offset, min(static_cast<u32>(512 - offset), length));	// XXX: what was this comment about!?	/* the +1 is important, but i don't understand why */
+		buffer += min(static_cast<u32>(512 - offset), length);										// XXX: and this??/* yet no +1 here */
 		++sectors_read;
 		length -= min(512, offset + length) - offset;
 	}
@@ -174,7 +174,7 @@ void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 	length %= 512;
 
 	if (length > 0) {
-		ata_read_sectors(sector_open + sectors_read, 1, (u8 *)tempdata);
+		ata_read_sectors(sector_open + sectors_read, 1, static_cast<u8 *>(tempdata));
 		syscall_memcpy(buffer, tempdata, length);
 		/* buffer, sectors_read, length stale */
 	}
@@ -203,9 +203,9 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer)
 	AkariInB(ATA_PRIMARY_DCR);	/* replace with more intelligence later */
 	AkariOutB(ATA_PRIMARY + ATA_FEATURES, 0x00);
 	AkariOutB(ATA_PRIMARY + ATA_SECTOR, (number == 256) ? 0 : number);	/* sector count */
-	AkariOutB(ATA_PRIMARY + ATA_PDSA1, (u8)(start & 0xFF));	/* low 8 bits of LBA */
-	AkariOutB(ATA_PRIMARY + ATA_PDSA2, (u8)((start >> 8) & 0xFF));	/* next 8 */
-	AkariOutB(ATA_PRIMARY + ATA_PDSA3, (u8)((start >> 16) & 0xFF));	/* next 8 */
+	AkariOutB(ATA_PRIMARY + ATA_PDSA1, static_cast<u8>(start & 0xFF));	/* low 8 bits of LBA */
+	AkariOutB(ATA_PRIMARY + ATA_PDSA2, static_cast<u8>((start >> 8) & 0xFF));	/* next 8 */
+	AkariOutB(ATA_PRIMARY + ATA_PDSA3, static_cast<u8>((start >> 16) & 0xFF));	/* next 8 */
 	AkariOutB(ATA_PRIMARY + ATA_CMD, ATA_READ_SECTORS);
 
 	while (sectors_read < number) {
@@ -237,10 +237,10 @@ void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 	offset %= 512;
 
 	if (offset > 0) {
-		ata_read_sectors(sector_open, 1, (u8 *)tempdata);
-		syscall_memcpy(tempdata + offset, buffer, min((u32)(512 - offset), length));
-		ata_write_sectors(sector_open, 1, (u8 *)tempdata);
-		buffer += min((u32)(512 - offset), length);
+		ata_read_sectors(sector_open, 1, static_cast<u8 *>(tempdata));
+		syscall_memcpy(tempdata + offset, buffer, min(static_cast<u32>(512 - offset), length));
+		ata_write_sectors(sector_open, 1, static_cast<u8 *>(tempdata));
+		buffer += min(static_cast<u32>(512 - offset), length);
 		++sectors_written;
 		length -= min(512, offset + length) - offset;
 	}
@@ -254,9 +254,9 @@ void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 	length %= 512;
 
 	if (length > 0) {
-		ata_read_sectors(sector_open + sectors_written, 1, (u8 *)tempdata);
+		ata_read_sectors(sector_open + sectors_written, 1, static_cast<u8 *>(tempdata));
 		syscall_memcpy(tempdata, buffer, length);
-		ata_write_sectors(sector_open + sectors_written, 1, (u8 *)tempdata);
+		ata_write_sectors(sector_open + sectors_written, 1, static_cast<u8 *>(tempdata));
 		/* buffer, sectors_written, length stale */
 	}
 }
@@ -278,9 +278,9 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer)
 	AkariInB(ATA_PRIMARY_DCR);	/* see above */
 	AkariOutB(ATA_PRIMARY + ATA_FEATURES, 0x00);
 	AkariOutB(ATA_PRIMARY + ATA_SECTOR, (number == 256) ? 0 : number);
-	AkariOutB(ATA_PRIMARY + ATA_PDSA1, (u8)(start & 0xFF));
-	AkariOutB(ATA_PRIMARY + ATA_PDSA2, (u8)((start >> 8) & 0xFF));
-	AkariOutB(ATA_PRIMARY + ATA_PDSA3, (u8)((start >> 16) & 0xFF));
+	AkariOutB(ATA_PRIMARY + ATA_PDSA1, static_cast<u8>(start & 0xFF));
+	AkariOutB(ATA_PRIMARY + ATA_PDSA2, static_cast<u8>((start >> 8) & 0xFF));
+	AkariOutB(ATA_PRIMARY + ATA_PDSA3, static_cast<u8>((start >> 16) & 0xFF));
 	AkariOutB(ATA_PRIMARY + ATA_CMD, ATA_WRITE_SECTORS);
 
 	while (sectors_written < number) {

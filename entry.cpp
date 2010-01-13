@@ -44,7 +44,7 @@ void AkariEntry() {
 	if ((AkariMultiboot->flags & 0x41) != 0x41)
 		AkariPanic("Akari: MULTIBOOT hasn't given us enough information about memory.");
 
-	Akari = Kernel::Construct((u32)&__kend, AkariMultiboot->mem_upper);
+	Akari = Kernel::Construct(reinterpret_cast<u32>(&__kend), AkariMultiboot->mem_upper);
 
 	// these can only work if Akari = an AkariKernel, since `new' calls Akari->...
 	// how could we integrate these with construction in AkariKernel::Construct
@@ -85,17 +85,17 @@ static void AkariEntryCont() {
 	Akari->descriptor->gdt->setTSSIOMap(base->iomap);
 
 	// Idle task
-	Tasks::Task *idle = Tasks::Task::CreateTask((u32)&IdleProcess, 0, true, 0, Akari->memory->_kernelDirectory);
+	Tasks::Task *idle = Tasks::Task::CreateTask(reinterpret_cast<u32>(&IdleProcess), 0, true, 0, Akari->memory->_kernelDirectory);
 	Akari->tasks->current->next = idle;
 
 	// Keyboard driver task
-	Tasks::Task *kbdriver = Tasks::Task::CreateTask((u32)&KeyboardProcess, 3, true, 0, Akari->memory->_kernelDirectory);
+	Tasks::Task *kbdriver = Tasks::Task::CreateTask(reinterpret_cast<u32>(&KeyboardProcess), 3, true, 0, Akari->memory->_kernelDirectory);
 	kbdriver->setIOMap(0x60, true);
 	kbdriver->setIOMap(0x64, true);
 	idle->next = kbdriver;
 
 	// Shell
-	Tasks::Task *shell = Tasks::Task::CreateTask((u32)&ShellProcess, 3, true, 0, Akari->memory->_kernelDirectory);
+	Tasks::Task *shell = Tasks::Task::CreateTask(reinterpret_cast<u32>(&ShellProcess), 3, true, 0, Akari->memory->_kernelDirectory);
 	kbdriver->next = shell;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.

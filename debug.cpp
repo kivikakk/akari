@@ -23,18 +23,18 @@
 static const char *PANIC_MSG = "oh god how did this get here I am not good with kernel panic";
 
 void AkariPanic(const char *message) {
-	u16 *i = (u16 *)SCREEN_VMEM;
+	u16 *i = reinterpret_cast<u16 *>(SCREEN_VMEM);
 	for (u16 j = 0; j < 80 * 25; ++j, ++i)
-		*((u8 *)i + 1) = SCREEN_DEATH;
+		*(reinterpret_cast<u8 *>(i) + 1) = SCREEN_DEATH;
 	
 	// "Clever."
-	i = (u16 *)SCREEN_VMEM;
+	i = reinterpret_cast<u16 *>(SCREEN_VMEM);
 	while (*PANIC_MSG)
-		*((s8 *)i++) = *PANIC_MSG++;
+		*reinterpret_cast<s8 *>(i++) = *PANIC_MSG++;
 
-	i = (u16 *)SCREEN_VMEM + 80;
+	i = reinterpret_cast<u16 *>(SCREEN_VMEM) + 80;
 	while (*message)
-		*((s8 *)i++) = *message++;
+		*reinterpret_cast<s8 *>(i++) = *message++;
 	
 	AkariHalt();
 }

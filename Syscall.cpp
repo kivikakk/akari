@@ -23,33 +23,33 @@
 Syscall::Syscall(): _syscalls_assigned(0) {
 	Akari->descriptor->idt->installHandler(0x80, &Syscall::_handler);
 
-	addSyscall(0, (void *)&User::putc);
-	addSyscall(1, (void *)&User::puts);
-	addSyscall(2, (void *)&User::putl);
-	addSyscall(3, (void *)&User::getProcessId);
-	addSyscall(4, (void *)&User::irqWait);
-	addSyscall(5, (void *)&User::irqListen);
-	addSyscall(6, (void *)&User::panic);
-	addSyscall(7, (void *)&User::exit);
-	addSyscall(8, (void *)&User::defer);
-	addSyscall(9, (void *)&User::malloc);
-	addSyscall(10, (void *)&User::free);
-	addSyscall(11, (void *)&User::memcpy);
+	addSyscall(0, reinterpret_cast<void *>(&User::putc));
+	addSyscall(1, reinterpret_cast<void *>(&User::puts));
+	addSyscall(2, reinterpret_cast<void *>(&User::putl));
+	addSyscall(3, reinterpret_cast<void *>(&User::getProcessId));
+	addSyscall(4, reinterpret_cast<void *>(&User::irqWait));
+	addSyscall(5, reinterpret_cast<void *>(&User::irqListen));
+	addSyscall(6, reinterpret_cast<void *>(&User::panic));
+	addSyscall(7, reinterpret_cast<void *>(&User::exit));
+	addSyscall(8, reinterpret_cast<void *>(&User::defer));
+	addSyscall(9, reinterpret_cast<void *>(&User::malloc));
+	addSyscall(10, reinterpret_cast<void *>(&User::free));
+	addSyscall(11, reinterpret_cast<void *>(&User::memcpy));
 
-	addSyscall(12, (void *)&User::IPC::registerName);
+	addSyscall(12, reinterpret_cast<void *>(&User::IPC::registerName));
 
-	addSyscall(13, (void *)&User::IPC::registerStream);
-	addSyscall(14, (void *)&User::IPC::obtainStreamWriter);
-	addSyscall(15, (void *)&User::IPC::obtainStreamListener);
-	addSyscall(16, (void *)&User::IPC::readStream);
-	addSyscall(17, (void *)&User::IPC::readStreamUnblock);
-	addSyscall(18, (void *)&User::IPC::writeStream);
+	addSyscall(13, reinterpret_cast<void *>(&User::IPC::registerStream));
+	addSyscall(14, reinterpret_cast<void *>(&User::IPC::obtainStreamWriter));
+	addSyscall(15, reinterpret_cast<void *>(&User::IPC::obtainStreamListener));
+	addSyscall(16, reinterpret_cast<void *>(&User::IPC::readStream));
+	addSyscall(17, reinterpret_cast<void *>(&User::IPC::readStreamUnblock));
+	addSyscall(18, reinterpret_cast<void *>(&User::IPC::writeStream));
 
-	addSyscall(19, (void *)&User::IPC::probeQueue);
-	addSyscall(20, (void *)&User::IPC::probeQueueUnblock);
-	addSyscall(21, (void *)&User::IPC::readQueue);
-	addSyscall(22, (void *)&User::IPC::shiftQueue);
-	addSyscall(23, (void *)&User::IPC::sendQueue);
+	addSyscall(19, reinterpret_cast<void *>(&User::IPC::probeQueue));
+	addSyscall(20, reinterpret_cast<void *>(&User::IPC::probeQueueUnblock));
+	addSyscall(21, reinterpret_cast<void *>(&User::IPC::readQueue));
+	addSyscall(22, reinterpret_cast<void *>(&User::IPC::shiftQueue));
+	addSyscall(23, reinterpret_cast<void *>(&User::IPC::sendQueue));
 }
 
 u8 Syscall::versionMajor() const { return 0; }

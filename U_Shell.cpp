@@ -75,8 +75,8 @@ int strpos(const char *haystack, const char *needle) {
 
 
 void ShellProcess() {
-	u32 stdin = (u32)-1;
-	while (stdin == (u32)-1) {
+	u32 stdin = static_cast<u32>(-1);
+	while (stdin == static_cast<u32>(-1)) {
 		stdin = syscall_obtainStreamListener("system.io.keyboard", "input");
 	}
 
