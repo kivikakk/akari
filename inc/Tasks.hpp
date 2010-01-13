@@ -132,7 +132,7 @@ public:
 		BlockingCall *userCall;
 
 		// GUID and other identifying information.
-		u32 id;
+		pid_t id;
 		Symbol registeredName;
 		
 		// Real task process data.
@@ -151,7 +151,9 @@ public:
 		~Task();
 	};
 
-	Task *getNextTask();
+	Task *getTaskById(pid_t id) const;
+
+	Task *prepareFetchNextTask();
 	void cycleTask();
 	void saveRegisterToTask(Task *dest, void *regs);
 	void *assignInternalTask(Task *task);

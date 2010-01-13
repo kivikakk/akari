@@ -21,7 +21,7 @@
 // to a proper system later.
 
 typedef __SIZE_TYPE__ size_t;
-typedef unsigned long u32;
+typedef unsigned long u32, pid_t;
 typedef unsigned short u16;
 typedef unsigned char u8;
 

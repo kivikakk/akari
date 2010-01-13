@@ -74,7 +74,7 @@ void *isr_handler(struct modeswitch_registers *r) {
 		// UserCalls.cpp and the surrounding architecture to skip a killed
 		// task in Syscalls. These can be unified, now.
 
-		Tasks::Task *nextTask = Akari->tasks->getNextTask();
+		Tasks::Task *nextTask = Akari->tasks->prepareFetchNextTask();
 
 		Tasks::Task **scanner = &Akari->tasks->start;
 		while (*scanner != Akari->tasks->current) {

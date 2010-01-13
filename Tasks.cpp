@@ -79,11 +79,21 @@ void Tasks::SwitchRing(u8 cpl, u8 iopl) {
 	// note this works with our current stack... hm.
 }
 
+Tasks::Task *Tasks::getTaskById(pid_t id) const {
+	Task *const *read = &start;
+	while (*read) {
+		if ((*read)->id == id)
+			return *read;
+		read = &(*read)->next;
+	}
+	return 0;
+}
+
 static inline Tasks::Task *_NextTask(Tasks::Task *t) {
 	return t->next ? t->next : Akari->tasks->start;
 }
 
-Tasks::Task *Tasks::getNextTask() {
+Tasks::Task *Tasks::prepareFetchNextTask() {
 	if (priorityStart) {
 		// We have something priority. We put it in without regard for irqWait,
 		// since it's probably an IRQ being fired that put it there ...
@@ -116,7 +126,7 @@ Tasks::Task *Tasks::getNextTask() {
 }
 
 void Tasks::cycleTask() {
-	current = getNextTask();
+	current = prepareFetchNextTask();
 }
 
 void Tasks::saveRegisterToTask(Task *dest, void *regs) {
@@ -428,7 +438,7 @@ Tasks::Task::Task(u8 cpl):
 		cpl(cpl), pageDir(0),
 		heap(0), heapStart(0), heapEnd(0), heapMax(0),
 		ks(0) {
-	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
+	static pid_t lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	id = ++lastAssignedId;
 
 	for (u16 i = 0; i < 8192; ++i)

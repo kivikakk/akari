@@ -36,6 +36,8 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(10, reinterpret_cast<void *>(&User::free));
 	addSyscall(11, reinterpret_cast<void *>(&User::memcpy));
 
+	addSyscall(24, reinterpret_cast<void *>(&User::IPC::processId));
+	addSyscall(25, reinterpret_cast<void *>(&User::IPC::processIdByName));
 	addSyscall(12, reinterpret_cast<void *>(&User::IPC::registerName));
 
 	addSyscall(13, reinterpret_cast<void *>(&User::IPC::registerStream));
@@ -66,7 +68,7 @@ void Syscall::returnToTask(Tasks::Task *task) {
 }
 
 void Syscall::returnToNextTask() {
-	Tasks::Task *nextTask = Akari->tasks->getNextTask();
+	Tasks::Task *nextTask = Akari->tasks->prepareFetchNextTask();
 	if (nextTask == Akari->tasks->current) {
 		AkariPanic("TODO: let no 'active' processes being running. i.e. have the ukernel HLT or similar. -- bigger question; why isn't idle task running!? or why is it trying to 'returnToNextTask' from a syscall?");
 	}

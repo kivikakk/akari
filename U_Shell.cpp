@@ -23,7 +23,7 @@ static char *getline(u32 in) {
 	char *kbbuf = static_cast<char *>(syscall_malloc(cs));
 
 	while (true) {
-		u32 incoming = syscall_readStream("system.io.keyboard", "input", in, kbbuf + n, 1);
+		u32 incoming = syscall_readStream(syscall_processIdByName("system.io.keyboard"), "input", in, kbbuf + n, 1);
 		syscall_putc(kbbuf[n]);
 		if (kbbuf[n] == '\n') break;
 
@@ -78,7 +78,7 @@ int strpos(const char *haystack, const char *needle) {
 void ShellProcess() {
 	u32 stdin = static_cast<u32>(-1);
 	while (stdin == static_cast<u32>(-1)) {
-		stdin = syscall_obtainStreamListener("system.io.keyboard", "input");
+		stdin = syscall_obtainStreamListener(syscall_processIdByName("system.io.keyboard"), "input");
 	}
 
 	syscall_puts("\nstdin is 0x");

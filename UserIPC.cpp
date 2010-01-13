@@ -25,6 +25,19 @@
 
 namespace User {
 namespace IPC {
+	pid_t processId() {
+		return Akari->tasks->current->id;
+	}
+
+	pid_t processIdByName(const char *name) {
+		Symbol sName(name);
+		if (!Akari->tasks->registeredTasks->hasKey(sName))
+			return 0;
+
+		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
+		return task->id;
+	}
+
 	bool registerName(const char *name) {
 		Symbol sName(name);
 		if (Akari->tasks->registeredTasks->hasKey(sName))
@@ -37,13 +50,6 @@ namespace IPC {
 
 	bool registerStream(const char *node) {
 		Symbol sNode(node);
-		if (!Akari->tasks->current->registeredName) {
-			// TODO: just kill the process, don't kill the system.
-			// TODO: is this correct behaviour? Or could we have registered nodes
-			// on no particular name? Why not?.. think about it.
-			AkariPanic("name not registered - cannot register node");
-		}
-
 		if (Akari->tasks->current->streamsByName->hasKey(node)) {
 			AkariPanic("node already registered - cannot register atop it");
 		}
@@ -54,35 +60,31 @@ namespace IPC {
 		return true;
 	}
 
-	static inline Tasks::Task::Stream *getStream(const char *name, const char *node) {
-		Symbol sName(name), sNode(node);
-
-		if (!Akari->tasks->registeredTasks->hasKey(sName))
-			return 0;
-
-		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
-		if (!task->streamsByName->hasKey(sNode))
+	static inline Tasks::Task::Stream *getStream(pid_t id, const char *node) {
+		Symbol sNode(node);
+		Tasks::Task *task = Akari->tasks->getTaskById(id);
+		if (!task || !task->streamsByName->hasKey(sNode))
 			return 0;
 
 		return (*task->streamsByName)[sNode];
 	}
 
-	u32 obtainStreamWriter(const char *name, const char *node, bool exclusive) {
-		Tasks::Task::Stream *target = getStream(name, node);
+	u32 obtainStreamWriter(pid_t id, const char *node, bool exclusive) {
+		Tasks::Task::Stream *target = getStream(id, node);
 		if (!target) return -1;
 		return target->registerWriter(exclusive);
 	}
 
-	u32 obtainStreamListener(const char *name, const char *node) {
-		Tasks::Task::Stream *target = getStream(name, node);
+	u32 obtainStreamListener(pid_t id, const char *node) {
+		Tasks::Task::Stream *target = getStream(id, node);
 		if (!target) return -1;
 		return target->registerListener();
 	}
 
 	// ReadStreamCall's implementation
 
-	ReadStreamCall::ReadStreamCall(const char *name, const char *node, u32 listener, char *buffer, u32 n):
-		_listener(&getStream(name, node)->getListener(listener)), _buffer(buffer), _n(n)
+	ReadStreamCall::ReadStreamCall(pid_t id, const char *node, u32 listener, char *buffer, u32 n):
+		_listener(&getStream(id, node)->getListener(listener)), _buffer(buffer), _n(n)
 	{ }
 
 	Tasks::Task::Stream::Listener *ReadStreamCall::getListener() const {
@@ -115,8 +117,8 @@ namespace IPC {
 	// Stream reading calls (can block).
 
 	// Keeping in mind that `buffer''s data probably isn't asciz.
-	static u32 readStream_impl(const char *name, const char *node, u32 listener, char *buffer, u32 n, bool block) {
-		ReadStreamCall c(name, node, listener, buffer, n);
+	static u32 readStream_impl(pid_t id, const char *node, u32 listener, char *buffer, u32 n, bool block) {
+		ReadStreamCall c(id, node, listener, buffer, n);
 		u32 r = c();
 		if (!block || !c.shallBlock())
 			return r;
@@ -132,16 +134,16 @@ namespace IPC {
 		return 0;
 	}
 
-	u32 readStream(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
-		return readStream_impl(name, node, listener, buffer, n, true);
+	u32 readStream(pid_t id, const char *node, u32 listener, char *buffer, u32 n) {
+		return readStream_impl(id, node, listener, buffer, n, true);
 	}
 
-	u32 readStreamUnblock(const char *name, const char *node, u32 listener, char *buffer, u32 n) {
-		return readStream_impl(name, node, listener, buffer, n, false);
+	u32 readStreamUnblock(pid_t id, const char *node, u32 listener, char *buffer, u32 n) {
+		return readStream_impl(id, node, listener, buffer, n, false);
 	}
 
-	u32 writeStream(const char *name, const char *node, u32 writer, const char *buffer, u32 n) {
-		Tasks::Task::Stream *target = getStream(name, node);
+	u32 writeStream(pid_t id, const char *node, u32 writer, const char *buffer, u32 n) {
+		Tasks::Task::Stream *target = getStream(id, node);
 		if (!target || !target->hasWriter(writer)) return -1;
 
 		// We do have a writer, so we can go ahead and write to all listeners.
@@ -151,12 +153,14 @@ namespace IPC {
 }
 }
 
-DEFN_SYSCALL1(registerName, 12, u32, const char *);
+DEFN_SYSCALL0(processId, 24, pid_t);
+DEFN_SYSCALL1(processIdByName, 25, pid_t, const char *);
+DEFN_SYSCALL1(registerName, 12, bool, const char *);
 
-DEFN_SYSCALL1(registerStream, 13, u32, const char *);
-DEFN_SYSCALL3(obtainStreamWriter, 14, u32, const char *, const char *, bool);
-DEFN_SYSCALL2(obtainStreamListener, 15, u32, const char *, const char *);
-DEFN_SYSCALL5(readStream, 16, u32, const char *, const char *, u32, char *, u32);
-DEFN_SYSCALL5(readStreamUnblock, 17, u32, const char *, const char *, u32, char *, u32);
-DEFN_SYSCALL5(writeStream, 18, u32, const char *, const char *, u32, const char *, u32);
+DEFN_SYSCALL1(registerStream, 13, bool, const char *);
+DEFN_SYSCALL3(obtainStreamWriter, 14, u32, pid_t, const char *, bool);
+DEFN_SYSCALL2(obtainStreamListener, 15, u32, pid_t, const char *);
+DEFN_SYSCALL5(readStream, 16, u32, pid_t, const char *, u32, char *, u32);
+DEFN_SYSCALL5(readStreamUnblock, 17, u32, pid_t, const char *, u32, char *, u32);
+DEFN_SYSCALL5(writeStream, 18, u32, pid_t, const char *, u32, const char *, u32);
 

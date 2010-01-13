@@ -26,18 +26,20 @@
 
 namespace User {
 namespace IPC {
+	pid_t processId();
+	pid_t processIdByName(const char *name);
 	bool registerName(const char *name);
 
 	bool registerStream(const char *node);
-	u32 obtainStreamWriter(const char *name, const char *node, bool exclusive);
-	u32 obtainStreamListener(const char *name, const char *node);
-	u32 readStream(const char *name, const char *node, u32 listener, char *buffer, u32 n);
-	u32 readStreamUnblock(const char *name, const char *node, u32 listener, char *buffer, u32 n);
-	u32 writeStream(const char *name, const char *node, u32 writer, const char *buffer, u32 n);
+	u32 obtainStreamWriter(pid_t id, const char *node, bool exclusive);
+	u32 obtainStreamListener(pid_t id, const char *node);
+	u32 readStream(pid_t id, const char *node, u32 listener, char *buffer, u32 n);
+	u32 readStreamUnblock(pid_t id, const char *node, u32 listener, char *buffer, u32 n);
+	u32 writeStream(pid_t id, const char *node, u32 writer, const char *buffer, u32 n);
 
 	class ReadStreamCall : public BlockingCall {
 	public:
-		ReadStreamCall(const char *name, const char *node, u32 listener, char *buffer, u32 n);
+		ReadStreamCall(pid_t id, const char *node, u32 listener, char *buffer, u32 n);
 
 		Tasks::Task::Stream::Listener *getListener() const;
 		u32 operator ()();
@@ -55,14 +57,16 @@ namespace IPC {
 
 #else
 
+DECL_SYSCALL0(processId, pid_t);
+DECL_SYSCALL1(processIdByName, pid_t, const char *);
 DECL_SYSCALL1(registerName, bool, const char *);
 
 DECL_SYSCALL1(registerStream, bool, const char *);
-DECL_SYSCALL3(obtainStreamWriter, u32, const char *, const char *, bool);
-DECL_SYSCALL2(obtainStreamListener, u32, const char *, const char *);
-DECL_SYSCALL5(readStream, u32, const char *, const char *, u32, char *, u32);
-DECL_SYSCALL5(readStreamUnblock, u32, const char *, const char *, u32, char *, u32);
-DECL_SYSCALL5(writeStream, u32, const char *, const char *, u32, const char *, u32);
+DECL_SYSCALL3(obtainStreamWriter, u32, pid_t, const char *, bool);
+DECL_SYSCALL2(obtainStreamListener, u32, pid_t, const char *);
+DECL_SYSCALL5(readStream, u32, pid_t, const char *, u32, char *, u32);
+DECL_SYSCALL5(readStreamUnblock, u32, pid_t, const char *, u32, char *, u32);
+DECL_SYSCALL5(writeStream, u32, pid_t, const char *, u32, const char *, u32);
 
 #endif
 
