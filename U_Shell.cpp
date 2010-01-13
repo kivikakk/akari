@@ -92,7 +92,7 @@ void ShellProcess() {
 		syscall_puts("\n");
 		syscall_free(l);
 
-		// syscall_sendQueue("system.io.ata", 0, "hello", 6);
+		syscall_sendQueue("system.io.ata", 0, "hello", 6);
 	}
 
 	syscall_exit();

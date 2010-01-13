@@ -59,13 +59,12 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer);
 #define ATA_CACHE_FLUSH		0xE7
 #define ATA_IDENTIFY		0xEC
 
-
-static u32 hdd_lba28_addr;
-static char hdd_serial_number[21];
-static char hdd_firmware_revision[9];
-static char hdd_model_number[41];
-
 void ATAProcess() {
+	u32 hdd_lba28_addr;
+	char hdd_serial_number[21];
+	char hdd_firmware_revision[9];
+	char hdd_model_number[41];
+
 	/* LBA48: u32 long li; */
 	u16 returndata[256];
 
@@ -133,9 +132,6 @@ void ATAProcess() {
 	// Now we need to wait and listen for commands!
 	if (!syscall_registerName("system.io.ata"))
 		syscall_panic("could not register system.io.ata");
-
-	//if (!SYSCALL_BOOL(syscall_registerQueue("command")))
-		//syscall_panic("could not register system.io.ata:command");
 
 	syscall_puts("ATA driver entering loop\n");
 	while (true) {
