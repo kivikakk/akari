@@ -99,7 +99,7 @@ namespace IPC {
 
 		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
 
-		u32 id = task->replyQueue->push_back(reply_to, buffer, len);
+		u32 id = task->replyQueue->push_back(Akari->tasks->current->id, reply_to, buffer, len);
 		task->unblockType(ProbeQueueCall::type());
 		return id;
 	}

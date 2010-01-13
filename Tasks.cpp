@@ -392,16 +392,17 @@ u32 Tasks::Task::Stream::_nextId() {
 	return ++_wl_id;
 }
 
-Tasks::Task::Queue::Item::Item(u32 _id, u32 _timestamp, u32 _reply_to, const void *_data, u32 _data_len):
+Tasks::Task::Queue::Item::Item(u32 id, u32 timestamp, pid_t from, u32 reply_to, const void *_data, u32 data_len):
 	data(0)
 {
-	info.id = _id;
-	info.timestamp = _timestamp;
-	info.reply_to = _reply_to;
-	info.data_len = _data_len;
+	info.id = id;
+	info.timestamp = timestamp;
+	info.from = from;
+	info.reply_to = reply_to;
+	info.data_len = data_len;
 
-	data = new char[_data_len];
-	POSIX::memcpy(data, _data, _data_len);
+	data = new char[data_len];
+	POSIX::memcpy(data, _data, data_len);
 }
 
 Tasks::Task::Queue::Item::~Item() {
@@ -411,12 +412,12 @@ Tasks::Task::Queue::Item::~Item() {
 
 Tasks::Task::Queue::Queue() { }
 
-u32 Tasks::Task::Queue::push_back(u32 reply_to, const void *data, u32 data_len) {
+u32 Tasks::Task::Queue::push_back(pid_t from, u32 reply_to, const void *data, u32 data_len) {
 	// This should become some random-ish guid in the future.
 	// I don't like these being guessable.
 	static u32 last_msg_id = 0;		
 
-	Item *item = new Item(++last_msg_id, AkariMicrokernelSwitches, reply_to, data, data_len);
+	Item *item = new Item(++last_msg_id, AkariMicrokernelSwitches, from, reply_to, data, data_len);
 	list.push_back(item);
 	return last_msg_id;
 }

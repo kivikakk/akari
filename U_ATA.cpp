@@ -135,21 +135,15 @@ void ATAProcess() {
 		syscall_panic("could not register system.io.ata");
 
 	syscall_puts("ATA driver entering loop\n");
-	char buffer[42];
+#define ATA_BUFFER 10240
+	char buffer[ATA_BUFFER];
 	while (true) {
 		struct queue_item_info *info = syscall_probeQueue();
-		syscall_puts("ATA got msg id: ");
-		syscall_putl(info->id, 16);
-		syscall_puts(", timestamp: ");
-		syscall_putl(info->timestamp, 16);
-		syscall_puts(", reply_to: ");
-		syscall_putl(info->reply_to, 16);
-		syscall_puts(", data_len: ");
-		syscall_putl(info->data_len, 16);
-		syscall_putc('\n');
-
-		syscall_puts("read result: ");
+		if (info->data_len > ATA_BUFFER) syscall_panic("ATA buffer overflow");
 		u32 r = syscall_readQueue(buffer, 0, info->data_len);
+
+		
+
 		syscall_putl(r, 16);
 		syscall_puts(", data: ");
 		syscall_puts(buffer);

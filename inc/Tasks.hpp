@@ -95,7 +95,7 @@ public:
 		public:
 			class Item {
 			public:
-				Item(u32, u32, u32, const void *, u32);
+				Item(u32, u32, pid_t, u32, const void *, u32);
 				~Item();
 
 				struct queue_item_info info;
@@ -104,7 +104,7 @@ public:
 
 			Queue();
 
-			u32 push_back(u32 reply_to, const void *data, u32 data_len);
+			u32 push_back(pid_t from, u32 reply_to, const void *data, u32 data_len);
 			void shift();
 			Item *first();
 
