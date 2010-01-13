@@ -58,6 +58,9 @@ void MBRProcess() {
 		u32 len = info->data_len;
 		if (len > MBR_BUFFER) syscall_panic("MBR buffer overflow");
 		syscall_readQueue(buffer, 0, len);
+
+		// Be sure to shift before going doing a call out that might want
+		// to read from there ...
 		syscall_shiftQueue();
 
 		if (buffer[0] == 0) {
@@ -92,26 +95,12 @@ void MBRProcess() {
 
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer)
 {
+	// This is being REALLY wasteful by re-requesting the MBR EVERY REQUEST,
+	// but what can you do?
 	master_boot_record_t hdd_mbr;
 	ata_read_data(0, 0, 512, reinterpret_cast<char *>(&hdd_mbr));
 
-	syscall_puts("MBR partitions:\n");
-	syscall_puts("start    length   type\n");
-	syscall_puts("-----    ------   ----\n");
-	for (u32 p = 0; p < 4; ++p)
-	{
-		if (hdd_mbr.partitions[p].system_id == 0)
-			continue;
-		syscall_putl(hdd_mbr.partitions[p].begin_disk_sector, 16);
-		syscall_puts(" ");
-		syscall_putl(hdd_mbr.partitions[p].sector_count, 16);
-		syscall_puts(" ");
-		syscall_putl(static_cast<u32>(hdd_mbr.partitions[p].system_id), 16);
-		syscall_puts("\n");
-	}
-
-	if (hdd_mbr.signature != 0xaa55)
-		syscall_panic("Invalid MBR!\n");
+	if (hdd_mbr.signature != 0xAA55) syscall_panic("Invalid MBR!\n");
 	
 	u32 new_sector = hdd_mbr.partitions[partition_id].begin_disk_sector + sector;
 
@@ -119,21 +108,22 @@ void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, ch
 }
 
 void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer) {
+	// Request to ATA driver: u8 0x0 ('read'), u32 sector, u16 offset, u32 length
+	// Total: 11 bytes
+	
 	char req[] = {
-		0 /*read*/,
+		0,
 		(new_sector >> 24) & 0xFF, (new_sector >> 16) & 0xFF, (new_sector >> 8) & 0xFF, new_sector & 0xFF,
 		(offset >> 8) & 0xFF, offset & 0xFF,
 		(length >> 24) & 0xFF, (length >> 16) & 0xFF, (length >> 8) & 0xFF, length & 0xFF
 	};
-	u32 id = syscall_sendQueue(syscall_processIdByName("system.io.ata"), 0, req, 11);
-	syscall_puts("MBR sent request #"); syscall_putl(id, 16); syscall_putc('\n');
+
+	// u32 id =
+	syscall_sendQueue(syscall_processIdByName("system.io.ata"), 0, req, 11);
 
 	struct queue_item_info *info = syscall_probeQueue();
-	syscall_puts("MBR received reply #"); syscall_putl(info->id, 16);
-	syscall_puts(" to #"); syscall_putl(info->reply_to, 16);
-	syscall_puts(", length "); syscall_putl(info->data_len, 16); syscall_putc('\n');
+	if (info->data_len != length) syscall_panic("MBR's ATA read: not expected number of bytes back?");
 
-	if (info->data_len != length) syscall_panic("not expected number of bytes back?");
 	syscall_readQueue(buffer, 0, info->data_len);
 	syscall_shiftQueue();
 }
