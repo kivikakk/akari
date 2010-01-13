@@ -108,16 +108,16 @@ namespace User {
 	}
 }
 
-DEFN_SYSCALL1(putc, 0, char);
-DEFN_SYSCALL1(puts, 1, const char *);
-DEFN_SYSCALL2(putl, 2, u32, u8);
-DEFN_SYSCALL0(getProcessId, 3);
-DEFN_SYSCALL0(irqWait, 4);
-DEFN_SYSCALL1(irqListen, 5, u32);
-DEFN_SYSCALL1(panic, 6, const char *);
-DEFN_SYSCALL0(exit, 7);
-DEFN_SYSCALL0(defer, 8);
-DEFN_SYSCALL1(malloc, 9, u32);
-DEFN_SYSCALL1(free, 10, void *);
-DEFN_SYSCALL3(memcpy, 11, void *, const void *, u32);
+DEFN_SYSCALL1(putc, 0, void, char);
+DEFN_SYSCALL1(puts, 1, void, const char *);
+DEFN_SYSCALL2(putl, 2, void, u32, u8);
+DEFN_SYSCALL0(getProcessId, 3, u32);
+DEFN_SYSCALL0(irqWait, 4, void);
+DEFN_SYSCALL1(irqListen, 5, void, u32);
+DEFN_SYSCALL1(panic, 6, void, const char *);
+DEFN_SYSCALL0(exit, 7, void);
+DEFN_SYSCALL0(defer, 8, void);
+DEFN_SYSCALL1(malloc, 9, void *, u32);
+DEFN_SYSCALL1(free, 10, void, void *);
+DEFN_SYSCALL3(memcpy, 11, void *, void *, const void *, u32);
 

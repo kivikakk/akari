@@ -94,11 +94,25 @@ class LinkedList {
 				writeHead = &(*writeHead)->next;
 			}
 
+			// XXX: is this vaguely copying-ish behaviour
+			// correct?  Depending on whether T is `type`
+			// or `type*`, we'll see...
 			listNode *newNode = new listNode;
 			newNode->item = new T(data);
 			newNode->next = 0;
 
 			*writeHead = newNode;
+		}
+
+		void shift() {
+			listNode *old = _begin;
+			_begin = _begin->next;
+			delete old->item;
+			delete old;
+		}
+
+		bool empty() const {
+			return !_begin;
 		}
 
 	protected:

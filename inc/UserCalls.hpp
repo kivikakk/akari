@@ -39,18 +39,18 @@ namespace User {
 
 #else
 
-DECL_SYSCALL1(putc, char);
-DECL_SYSCALL1(puts, const char *);
-DECL_SYSCALL2(putl, u32, u8);
-DECL_SYSCALL0(getProcessId);
-DECL_SYSCALL0(irqWait);
-DECL_SYSCALL1(irqListen, u32);
-DECL_SYSCALL1(panic, const char *);
-DECL_SYSCALL0(exit);
-DECL_SYSCALL0(defer);
-DECL_SYSCALL1(malloc, u32);
-DECL_SYSCALL1(free, void *);
-DECL_SYSCALL3(memcpy, void *, const void *, u32);
+DECL_SYSCALL1(putc, void, char);
+DECL_SYSCALL1(puts, void, const char *);
+DECL_SYSCALL2(putl, void, u32, u8);
+DECL_SYSCALL0(getProcessId, u32);
+DECL_SYSCALL0(irqWait, void);
+DECL_SYSCALL1(irqListen, void, u32);
+DECL_SYSCALL1(panic, void, const char *);
+DECL_SYSCALL0(exit, void);
+DECL_SYSCALL0(defer, void);
+DECL_SYSCALL1(malloc, void *, u32);
+DECL_SYSCALL1(free, void, void *);
+DECL_SYSCALL3(memcpy, void *, void *, const void *, u32);
 
 #endif
 

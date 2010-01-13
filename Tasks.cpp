@@ -397,7 +397,7 @@ Tasks::Task::Queue::Item::~Item() {
 
 Tasks::Task::Queue::Queue() { }
 
-u32 Tasks::Task::Queue::add(u32 reply_to, const void *data, u32 data_len) {
+u32 Tasks::Task::Queue::push_back(u32 reply_to, const void *data, u32 data_len) {
 	// This should become some random-ish guid in the future.
 	// I don't like these being guessable.
 	static u32 last_msg_id = 0;		
@@ -407,9 +407,13 @@ u32 Tasks::Task::Queue::add(u32 reply_to, const void *data, u32 data_len) {
 	return last_msg_id;
 }
 
+void Tasks::Task::Queue::shift() {
+	if (list.empty()) return;
+	list.shift();
+}
+
 Tasks::Task::Queue::Item *Tasks::Task::Queue::first() {
-	if (list.begin() == list.end())
-		return 0;
+	if (list.empty()) return 0;
 	return *list.begin();
 }
 

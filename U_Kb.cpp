@@ -87,10 +87,10 @@ void KeyboardProcess() {
 
 	for (int i = 0; i < 1000000; ++i);
 
-	if (!SYSCALL_BOOL(syscall_registerName("system.io.keyboard")))
+	if (!syscall_registerName("system.io.keyboard"))
 		syscall_panic("could not register system.io.keyboard");
 
-	if (!SYSCALL_BOOL(syscall_registerStream("input")))
+	if (!syscall_registerStream("input"))
 		syscall_panic("could not register system.io.keyboard:input");
 
 	u32 writer = syscall_obtainStreamWriter("system.io.keyboard", "input", true);

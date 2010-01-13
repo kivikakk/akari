@@ -130,7 +130,7 @@ void ATAProcess() {
 	 */
 
 	// Now we need to wait and listen for commands!
-	if (!SYSCALL_BOOL(syscall_registerName("system.io.ata")))
+	if (!syscall_registerName("system.io.ata"))
 		syscall_panic("could not register system.io.ata");
 
 	//if (!SYSCALL_BOOL(syscall_registerQueue("command")))

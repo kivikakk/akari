@@ -166,16 +166,21 @@ namespace IPC {
 			}
 
 			_wontBlock();
-			return item->info.data_len;
+
+			// Making sure it's castable to what we're actually wanting before
+			// throwing it as a u32.  I'm not sure if this is even necessary
+			// or correct, but at least it won't break it (static_cast goes away
+			// totally at compile-time ...).
+			return (u32)static_cast<struct queue_item_info *>(&item->info);
 		}
 	
 	protected:
 		Tasks::Task *task;
 	};
 
-	static u32 probeQueue_impl(bool block) {
+	static struct queue_item_info *probeQueue_impl(bool block) {
 		ProbeQueueCall c(Akari->tasks->current);
-		u32 r = c();
+		struct queue_item_info *r = (struct queue_item_info *)c();
 		if (!block || !c.shallBlock())
 			return r;
 
@@ -185,11 +190,11 @@ namespace IPC {
 		return 0;
 	}
 
-	u32 probeQueue() {
+	struct queue_item_info *probeQueue() {
 		return probeQueue_impl(true);
 	}
 
-	u32 probeQueueUnblock() {
+	struct queue_item_info *probeQueueUnblock() {
 		return probeQueue_impl(false);
 	}
 
@@ -211,7 +216,7 @@ namespace IPC {
 	}
 
 	void shiftQueue() {
-		// ...
+		Akari->tasks->current->replyQueue->shift();
 	}
 
 	u32 sendQueue(const char *name, u32 reply_to, const char *buffer, u32 len) {
@@ -221,22 +226,23 @@ namespace IPC {
 
 		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
 
-		return task->replyQueue->add(reply_to, buffer, len);
+		return task->replyQueue->push_back(reply_to, buffer, len);
 	}
 }
 }
 
-DEFN_SYSCALL1(registerName, 12, const char *);
+DEFN_SYSCALL1(registerName, 12, u32, const char *);
 
-DEFN_SYSCALL1(registerStream, 13, const char *);
-DEFN_SYSCALL3(obtainStreamWriter, 14, const char *, const char *, bool);
-DEFN_SYSCALL2(obtainStreamListener, 15, const char *, const char *);
-DEFN_SYSCALL5(readStream, 16, const char *, const char *, u32, char *, u32);
-DEFN_SYSCALL5(readStreamUnblock, 17, const char *, const char *, u32, char *, u32);
-DEFN_SYSCALL5(writeStream, 18, const char *, const char *, u32, const char *, u32);
+DEFN_SYSCALL1(registerStream, 13, u32, const char *);
+DEFN_SYSCALL3(obtainStreamWriter, 14, u32, const char *, const char *, bool);
+DEFN_SYSCALL2(obtainStreamListener, 15, u32, const char *, const char *);
+DEFN_SYSCALL5(readStream, 16, u32, const char *, const char *, u32, char *, u32);
+DEFN_SYSCALL5(readStreamUnblock, 17, u32, const char *, const char *, u32, char *, u32);
+DEFN_SYSCALL5(writeStream, 18, u32, const char *, const char *, u32, const char *, u32);
 
-DEFN_SYSCALL0(probeQueue, 19);
-DEFN_SYSCALL0(probeQueueUnblock, 20);
-DEFN_SYSCALL3(readQueue, 21, char *, u32, u32);
-DEFN_SYSCALL0(shiftQueue, 22);
-DEFN_SYSCALL4(sendQueue, 23, const char *, u32, const char *, u32);
+DEFN_SYSCALL0(probeQueue, 19, struct queue_item_info *);
+DEFN_SYSCALL0(probeQueueUnblock, 20, struct queue_item_info *);
+DEFN_SYSCALL3(readQueue, 21, u32, char *, u32, u32);
+DEFN_SYSCALL0(shiftQueue, 22, void);
+DEFN_SYSCALL4(sendQueue, 23, u32, const char *, u32, const char *, u32);
+

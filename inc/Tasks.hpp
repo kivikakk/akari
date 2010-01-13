@@ -104,7 +104,8 @@ public:
 
 			Queue();
 
-			u32 add(u32 reply_to, const void *data, u32 data_len);
+			u32 push_back(u32 reply_to, const void *data, u32 data_len);
+			void shift();
 			Item *first();
 
 		protected:
