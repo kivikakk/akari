@@ -18,6 +18,7 @@
 #define __BLOCKING_CALL_HPP__
 
 #include <arch.hpp>
+#include <Symbol.hpp>
 
 class BlockingCall {
 public:
@@ -27,6 +28,7 @@ public:
 	bool shallBlock() const;
 
 	virtual u32 operator ()() = 0;
+	virtual Symbol insttype() const = 0;
 
 protected:
 	void _wontBlock();

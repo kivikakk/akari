@@ -18,6 +18,7 @@
 #include <Tasks.hpp>
 #include <Akari.hpp>
 #include <Descriptor.hpp>
+#include <UserIPC.hpp>
 
 Tasks::Tasks(): start(0), current(0), priorityStart(0) {
 	registeredTasks = new HashTable<Symbol, Task *>();
@@ -249,6 +250,11 @@ void Tasks::Task::setIOMap(u16 port, bool enabled) {
 		iomap[port / 8] |= (1 << (port % 8));
 }
 
+void Tasks::Task::unblockType(const Symbol &type) {
+	if (userWaiting && userCall && userCall->insttype() == type)
+		userWaiting = false;
+}
+
 Tasks::Task::Stream::Stream(): _wl_id(0) {
 }
 
@@ -326,7 +332,7 @@ void Tasks::Task::Stream::Listener::append(const char *data, u32 n) {
 	}
 
 	if (_hooked) {
-		_hooked->userWaiting = false;
+		_hooked->unblockType(User::IPC::ReadStreamCall::type());
 	}
 }
 

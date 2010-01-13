@@ -20,12 +20,9 @@
 #include <arch.hpp>
 #include <UserGates.hpp>
 
-struct queue_item_info {
-	u32 id, timestamp, reply_to;
-	u32 data_len;
-};
-
 #ifdef __AKARI_KERNEL__
+
+#include <Tasks.hpp>
 
 namespace User {
 namespace IPC {
@@ -38,11 +35,21 @@ namespace IPC {
 	u32 readStreamUnblock(const char *name, const char *node, u32 listener, char *buffer, u32 n);
 	u32 writeStream(const char *name, const char *node, u32 writer, const char *buffer, u32 n);
 
-	struct queue_item_info *probeQueue();
-	struct queue_item_info *probeQueueUnblock();
-	u32 readQueue(char *dest, u32 offset, u32 len);
-	void shiftQueue();
-	u32 sendQueue(const char *name, u32 reply_to, const char *buffer, u32 len);
+	class ReadStreamCall : public BlockingCall {
+	public:
+		ReadStreamCall(const char *name, const char *node, u32 listener, char *buffer, u32 n);
+
+		Tasks::Task::Stream::Listener *getListener() const;
+		u32 operator ()();
+
+		static Symbol type();
+		Symbol insttype() const;
+
+	protected:
+		Tasks::Task::Stream::Listener *_listener;
+		char *_buffer;
+		u32 _n;
+	};
 }
 }
 
@@ -56,12 +63,6 @@ DECL_SYSCALL2(obtainStreamListener, u32, const char *, const char *);
 DECL_SYSCALL5(readStream, u32, const char *, const char *, u32, char *, u32);
 DECL_SYSCALL5(readStreamUnblock, u32, const char *, const char *, u32, char *, u32);
 DECL_SYSCALL5(writeStream, u32, const char *, const char *, u32, const char *, u32);
-
-DECL_SYSCALL0(probeQueue, struct queue_item_info *);
-DECL_SYSCALL0(probeQueueUnblock, struct queue_item_info *);
-DECL_SYSCALL3(readQueue, u32, char *, u32, u32);
-DECL_SYSCALL0(shiftQueue, void);
-DECL_SYSCALL4(sendQueue, u32, const char *, u32, const char *, u32);
 
 #endif
 

@@ -25,7 +25,7 @@
 #include <List.hpp>
 #include <Symbol.hpp>
 #include <BlockingCall.hpp>
-#include <UserIPC.hpp>
+#include <UserIPCQueue.hpp>
 
 // user task kernel stack is used for state when it's
 // pre-empted, and for system calls, etc.
@@ -117,6 +117,8 @@ public:
 
 		bool getIOMap(u16 port) const;
 		void setIOMap(u16 port, bool enabled);
+
+		void unblockType(const Symbol &type);
 
 		// Task linked list.
 		Task *next, *priorityNext;

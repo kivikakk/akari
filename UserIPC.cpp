@@ -20,7 +20,6 @@
 #include <Symbol.hpp>
 #include <debug.hpp>
 #include <Console.hpp>
-#include <Tasks.hpp>
 #include <Syscall.hpp>
 #include <BlockingCall.hpp>
 
@@ -80,41 +79,38 @@ namespace IPC {
 		return target->registerListener();
 	}
 
-	class ReadStreamCall : public BlockingCall {
-	public:
-		ReadStreamCall(const char *name, const char *node, u32 listener, char *buffer, u32 n):
-			_listener(&getStream(name, node)->getListener(listener)), _buffer(buffer), _n(n)
-		{ }
+	// ReadStreamCall's implementation
 
-		Tasks::Task::Stream::Listener *getListener() const {
-			return _listener;
-		}
+	ReadStreamCall::ReadStreamCall(const char *name, const char *node, u32 listener, char *buffer, u32 n):
+		_listener(&getStream(name, node)->getListener(listener)), _buffer(buffer), _n(n)
+	{ }
 
-		u32 operator ()() {
-			if (_n == 0) {
-				_wontBlock();
-				return 0;
-			}
+	Tasks::Task::Stream::Listener *ReadStreamCall::getListener() const {
+		return _listener;
+	}
 
-			u32 len = _listener->length();
-			if (len == 0) {
-				_willBlock();
-				return 0;
-			}
-
-			if (len > _n) len = _n;
-			POSIX::memcpy(_buffer, _listener->view(), len);
-			_listener->cut(len);
-
+	u32 ReadStreamCall::operator ()() {
+		if (_n == 0) {
 			_wontBlock();
-			return len;
+			return 0;
 		}
 
-	protected:
-		Tasks::Task::Stream::Listener *_listener;
-		char *_buffer;
-		u32 _n;
-	};
+		u32 len = _listener->length();
+		if (len == 0) {
+			_willBlock();
+			return 0;
+		}
+
+		if (len > _n) len = _n;
+		POSIX::memcpy(_buffer, _listener->view(), len);
+		_listener->cut(len);
+
+		_wontBlock();
+		return len;
+	}
+
+	Symbol ReadStreamCall::type() { return Symbol("ReadStreamCall"); }
+	Symbol ReadStreamCall::insttype() const { return type(); }
 
 	// Stream reading calls (can block).
 
@@ -152,82 +148,6 @@ namespace IPC {
 		target->writeAllListeners(buffer, n);
 		return n;		// what else?!
 	}
-
-	class ProbeQueueCall : public BlockingCall {
-	public:
-		ProbeQueueCall(Tasks::Task *_task): task(_task)
-		{ }
-
-		u32 operator()() {
-			Tasks::Task::Queue::Item *item = task->replyQueue->first();
-			if (!item) {
-				_willBlock();
-				return 0;
-			}
-
-			_wontBlock();
-
-			// Making sure it's castable to what we're actually wanting before
-			// throwing it as a u32.  I'm not sure if this is even necessary
-			// or correct, but at least it won't break it (static_cast goes away
-			// totally at compile-time ...).
-			return (u32)static_cast<struct queue_item_info *>(&item->info);
-		}
-	
-	protected:
-		Tasks::Task *task;
-	};
-
-	static struct queue_item_info *probeQueue_impl(bool block) {
-		ProbeQueueCall c(Akari->tasks->current);
-		struct queue_item_info *r = reinterpret_cast<struct queue_item_info *>(c());
-		if (!block || !c.shallBlock())
-			return r;
-
-		Akari->tasks->current->userWaiting = true;
-		Akari->tasks->current->userCall = new ProbeQueueCall(c);
-		Akari->syscall->returnToNextTask();
-		return 0;
-	}
-
-	struct queue_item_info *probeQueue() {
-		return probeQueue_impl(true);
-	}
-
-	struct queue_item_info *probeQueueUnblock() {
-		return probeQueue_impl(false);
-	}
-
-	u32 readQueue(char *dest, u32 offset, u32 len) { 
-		Tasks::Task::Queue::Item *item = Akari->tasks->current->replyQueue->first();
-		if (!item) return 0;		// XXX error out!
-
-		// If offset is out of bounds, just return.
-		if (offset >= item->info.data_len) return item->info.id;
-
-		// If the calculated end bound falls outside of the data,
-		// just adjust the length to make it go to the end.
-		if (offset + len > item->info.data_len) len = item->info.data_len - offset;
-
-		// Sane offset and length. Off we go.
-		POSIX::memcpy(dest, item->data + offset, len);
-
-		return item->info.id;
-	}
-
-	void shiftQueue() {
-		Akari->tasks->current->replyQueue->shift();
-	}
-
-	u32 sendQueue(const char *name, u32 reply_to, const char *buffer, u32 len) {
-		Symbol sName(name);
-		if (!Akari->tasks->registeredTasks->hasKey(sName))
-			AkariPanic("cannot find task in sendQueue?");
-
-		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
-
-		return task->replyQueue->push_back(reply_to, buffer, len);
-	}
 }
 }
 
@@ -239,10 +159,4 @@ DEFN_SYSCALL2(obtainStreamListener, 15, u32, const char *, const char *);
 DEFN_SYSCALL5(readStream, 16, u32, const char *, const char *, u32, char *, u32);
 DEFN_SYSCALL5(readStreamUnblock, 17, u32, const char *, const char *, u32, char *, u32);
 DEFN_SYSCALL5(writeStream, 18, u32, const char *, const char *, u32, const char *, u32);
-
-DEFN_SYSCALL0(probeQueue, 19, struct queue_item_info *);
-DEFN_SYSCALL0(probeQueueUnblock, 20, struct queue_item_info *);
-DEFN_SYSCALL3(readQueue, 21, u32, char *, u32, u32);
-DEFN_SYSCALL0(shiftQueue, 22, void);
-DEFN_SYSCALL4(sendQueue, 23, u32, const char *, u32, const char *, u32);
 

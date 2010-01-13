@@ -16,6 +16,7 @@
 
 #include <UserCalls.hpp>
 #include <UserIPC.hpp>
+#include <UserIPCQueue.hpp>
 
 static char *getline(u32 in) {
 	u32 cs = 8, n = 0;
