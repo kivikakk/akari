@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <entry.hpp>
 #include <Tasks.hpp>
 #include <Akari.hpp>
 #include <Descriptor.hpp>
@@ -237,11 +238,11 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 	return nt;
 }
 
-bool Tasks::Task::getIOMap(u8 port) const {
+bool Tasks::Task::getIOMap(u16 port) const {
 	return (iomap[port / 8] & (1 << (port % 8))) == 0;
 }
 
-void Tasks::Task::setIOMap(u8 port, bool enabled) {
+void Tasks::Task::setIOMap(u16 port, bool enabled) {
 	if (enabled)
 		iomap[port / 8] &= ~(1 << (port % 8));
 	else
@@ -399,7 +400,7 @@ u32 Tasks::Task::Queue::push_back(u32 reply_to, const void *data, u32 data_len) 
 	// I don't like these being guessable.
 	static u32 last_msg_id = 0;		
 
-	Item *item = new Item(++last_msg_id, -1, reply_to, data, data_len);
+	Item *item = new Item(++last_msg_id, AkariMicrokernelSwitches, reply_to, data, data_len);
 	list.push_back(item);
 	return last_msg_id;
 }
@@ -424,7 +425,7 @@ Tasks::Task::Task(u8 cpl):
 	static u32 lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	id = ++lastAssignedId;
 
-	for (u8 i = 0; i < 32; ++i)
+	for (u16 i = 0; i < 8192; ++i)
 		iomap[i] = 0xFF;
 
 	streamsByName = new HashTable<Symbol, Stream *>();

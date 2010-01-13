@@ -28,6 +28,8 @@ extern "C" {
 	void AkariEntry();
 
 	void *AkariMicrokernel(struct modeswitch_registers *r);
+
+	extern u32 AkariMicrokernelSwitches;
 }
 
 #endif

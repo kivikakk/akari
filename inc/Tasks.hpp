@@ -115,8 +115,8 @@ public:
 		static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);
 		static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase);
 
-		bool getIOMap(u8 port) const;
-		void setIOMap(u8 port, bool enabled);
+		bool getIOMap(u16 port) const;
+		void setIOMap(u16 port, bool enabled);
 
 		// Task linked list.
 		Task *next, *priorityNext;
@@ -139,7 +139,7 @@ public:
 		Memory::Heap *heap;
 		u32 heapStart, heapEnd, heapMax;
 		u32 ks;
-		u8 iomap[32];
+		u8 iomap[8192];
 
 		HashTable<Symbol, Stream *> *streamsByName;
 		Queue *replyQueue;

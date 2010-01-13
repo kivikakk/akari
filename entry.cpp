@@ -98,6 +98,17 @@ static void AkariEntryCont() {
 	Tasks::Task *shell = Tasks::Task::CreateTask(reinterpret_cast<u32>(&ShellProcess), 3, true, 0, Akari->memory->_kernelDirectory);
 	kbdriver->next = shell;
 	
+	// ATA driver
+	Tasks::Task *ata = Tasks::Task::CreateTask(reinterpret_cast<u32>(&ATAProcess), 3, true, 0, Akari->memory->_kernelDirectory);
+	ata->setIOMap(0x1F7, true);
+	for (u16 j = 0; j < 8; ++j) {
+		ata->setIOMap(0x1F0 + j, true);
+		ata->setIOMap(0x170 + j, true);
+	}
+	ata->setIOMap(0x3F6, true);
+	ata->setIOMap(0x376, true);
+	shell->next = ata;
+	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);
 
@@ -114,8 +125,11 @@ void IdleProcess() {
 	while (true) asm volatile("hlt");
 }
 
+u32 AkariMicrokernelSwitches = 0;
+
 // Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
+	++AkariMicrokernelSwitches;
 	Akari->tasks->saveRegisterToTask(Akari->tasks->current, r);
 	Akari->tasks->cycleTask();
 	return Akari->tasks->assignInternalTask(Akari->tasks->current);

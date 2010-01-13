@@ -117,7 +117,7 @@ void Descriptor::GDT::setTSSStack(u32 addr) {
 }
 
 void Descriptor::GDT::setTSSIOMap(u8 *const &iomap) {
-	POSIX::memcpy(_tssEntry.iomap, iomap, 32);
+	POSIX::memcpy(_tssEntry.iomap, iomap, 8192);
 }
 
 Descriptor::IDT::IDT() {

@@ -83,7 +83,7 @@ class Descriptor : public Subsystem {
 						u32 ldt;						// unused
 						u16 trap;						// unused
 						u16 iomap_base;
-						u8 iomap[(256 / 8) + 1];
+						u8 iomap[(65536 / 8)];		// We are currently using 8K per TSS just for iomap.. Ugh.
 				} __attribute__((__packed__));
 
 				u32 _entryCount;

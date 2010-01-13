@@ -26,6 +26,7 @@ inline u32 min(u32 a, u32 b) {
 void ata_read_sectors(u32 start, u32 number, u8 *buffer);
 void ata_write_sectors(u32 start, u32 number, u8 *buffer);
 
+#define ATA_BUS 0x1F7
 #define ATA_PRIMARY	0x1F0
 #define ATA_PRIMARY_DCR	0x3F6
 #define ATA_SECONDARY	0x170
@@ -68,7 +69,7 @@ void ATAProcess() {
 	/* LBA48: u32 long li; */
 	u16 returndata[256];
 
-	u8 rs = AkariInB(0x1f7);
+	u8 rs = AkariInB(ATA_BUS);
 	if (rs == 0xff) {
 		syscall_puts("Floating bus! No hard drives?\n");
 		return;
@@ -138,10 +139,10 @@ void ATAProcess() {
 
 	syscall_puts("ATA driver entering loop\n");
 	while (true) {
-		//u32 msgId = syscall_readQueue("command");
-		//syscall_puts("ATA got msg: ");
-		//syscall_putl(msgId, 16);
-		//syscall_putc('\n');
+		struct queue_item_info *info = syscall_probeQueue();
+		syscall_puts("ATA got msg: ");
+		syscall_putl(info->id, 16);
+		syscall_putc('\n');
 	}
 }
 
