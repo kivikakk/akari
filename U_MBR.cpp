@@ -54,8 +54,10 @@ void MBRProcess() {
 	char buffer[MBR_BUFFER];
 
 	while (true) {
-		struct queue_item_info *info = syscall_probeQueue();
-		u32 len = info->data_len;
+		struct queue_item_info info = *syscall_probeQueue();
+		// We assign (copy) this so we don't lose it after shiftQueue().
+
+		u32 len = info.data_len;
 		if (len > MBR_BUFFER) syscall_panic("MBR buffer overflow");
 		syscall_readQueue(buffer, 0, len);
 
@@ -79,13 +81,15 @@ void MBRProcess() {
 			syscall_putl((u32)offset, 16);
 			syscall_puts(", length ");
 			syscall_putl(length, 16);
+			syscall_puts(", for id ");
+			syscall_putl(info.id, 16);
 			syscall_puts("\n");
 
 			if (length > MBR_BUFFER) syscall_panic("Static buffer in MBR too small for req'd amount");
 
 			partition_read_data(partition_id, sector, offset, length, buffer);
 
-			syscall_sendQueue(info->from, info->id, buffer, length);
+			syscall_sendQueue(info.from, info.id, buffer, length);
 		} else {
 			syscall_panic("MBR driver confused");
 		}
