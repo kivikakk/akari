@@ -35,8 +35,8 @@ namespace IPC {
 		return true;
 	}
 
-	bool registerStream(const char *name) {
-		Symbol sNode(name);
+	bool registerStream(const char *node) {
+		Symbol sNode(node);
 		if (!Akari->tasks->current->registeredName) {
 			// TODO: just kill the process, don't kill the system.
 			// TODO: is this correct behaviour? Or could we have registered nodes
@@ -44,7 +44,7 @@ namespace IPC {
 			AkariPanic("name not registered - cannot register node");
 		}
 
-		if (Akari->tasks->current->streamsByName->hasKey(name)) {
+		if (Akari->tasks->current->streamsByName->hasKey(node)) {
 			AkariPanic("node already registered - cannot register atop it");
 		}
 

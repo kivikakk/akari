@@ -28,7 +28,7 @@ namespace User {
 namespace IPC {
 	bool registerName(const char *name);
 
-	bool registerStream(const char *name);
+	bool registerStream(const char *node);
 	u32 obtainStreamWriter(const char *name, const char *node, bool exclusive);
 	u32 obtainStreamListener(const char *name, const char *node);
 	u32 readStream(const char *name, const char *node, u32 listener, char *buffer, u32 n);
