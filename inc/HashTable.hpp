@@ -34,19 +34,6 @@ class HashTable {
 		~HashTable()
 		{ }
 
-		/*const u32 size() const {
-			return 
-			_InternalItem *traverse = head;
-			u32 s = 0;
-
-			while (traverse) {
-				traverse = traverse->next;
-				++s;
-			}
-
-			return s;
-		}*/
-
 		bool hasKey(const K &key) const {
 			for (typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
 				if (it->key == key)
@@ -54,24 +41,6 @@ class HashTable {
 			}
 			return false;
 		}
-/*
-			Akari->console->putString("HasKey[");
-			Akari->console->putInt((u32)head, 16);
-			Akari->console->putString("]");
-			_InternalItem *traverse = head;
-			while (traverse) {
-			Akari->console->putString("(t)");
-				if (traverse->key == key) {
-			Akari->console->putString("(:-))");
-					return true;
-				}
-			Akari->console->putString("n");
-				traverse = traverse->next;
-			Akari->console->putString("!");
-			}
-			Akari->console->putString("(:-()");
-			return false;
-		}*/
 
 		const V &operator[](const K &key) const {
 			for (const typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
