@@ -18,7 +18,9 @@
 #define __AKARI_HPP__
 
 #include <arch.hpp>
+#include <List.hpp>
 
+class Subsystem;
 class Memory;
 class Console;
 class Descriptor;
@@ -33,7 +35,7 @@ class Kernel {
 	public:
 		static Kernel *Construct(u32, u32);
 
-		// TODO: linked list of Subsystems so we can iterate them generically.
+		LinkedList<Subsystem *> subsystems;
 
 		Memory *memory;
 		Console *console;

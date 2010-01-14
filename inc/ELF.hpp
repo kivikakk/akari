@@ -17,7 +17,7 @@
 #ifndef __ELF_HPP__
 #define __ELF_HPP__
 
-#include <cpp.hpp>
+#include <arch.hpp>
 
 #define EI_MAG0		0		// 0x7f
 #define EI_MAG1		1		// 'E'
@@ -31,30 +31,30 @@
 #define EI_PAD		9		// start of padding bytes (0 or left alone for compatibility with future)
 #define EI_NIDENT 	16
 
-cextern typedef enum {
+typedef enum {
 	ELFCLASSNONE	= 0,
 	ELFCLASS32	= 1,
 	ELFCLASS64	= 2
 } ElfClass;
 
-cextern typedef enum {
+typedef enum {
 	ELFDATANONE	= 0,
 	ELFDATA2LSB	= 1,	// little endian
 	ELFDATA2MSB	= 2
 } ElfDataEncoding;
 
-cextern typedef enum {
+typedef enum {
 	ELFOSABI_NONE	= 0
 } ElfOSABI;
 
-cextern typedef unsigned long Elf32_Addr;
-cextern typedef unsigned long Elf32_Off;
-cextern typedef unsigned short Elf32_Half;
-cextern typedef unsigned long Elf32_Word;
-cextern typedef signed long Elf32_Sword ;
+typedef unsigned long Elf32_Addr;
+typedef unsigned long Elf32_Off;
+typedef unsigned short Elf32_Half;
+typedef unsigned long Elf32_Word;
+typedef signed long Elf32_Sword ;
 // To be defined: Elf64_Ehdr, typedefs for Elf64
 
-cextern typedef struct {
+typedef struct {
 	unsigned char	e_ident[EI_NIDENT];	// mark as object file, machine-independent data
 	Elf32_Half	e_type;			// see ET_ constants
 	Elf32_Half	e_machine;		// EM_
@@ -71,7 +71,7 @@ cextern typedef struct {
 	Elf32_Half	e_shstrndx;		// the section header table index of the entry associated with the section name string table (if none, SHN_UNDEF) more complicated rules follow.
 } Elf32_Ehdr;
 
-cextern typedef enum {
+typedef enum {
 	ET_NONE		= 0,
 	ET_REL		= 1,
 	ET_EXEC		= 2,
@@ -83,17 +83,17 @@ cextern typedef enum {
 	ET_HIPROC	= 0xffff
 } ElfType;
 
-cextern typedef enum {
+typedef enum {
 	EM_NONE		= 0,
 	EM_386		= 3
 } ElfMachine;
 
-cextern typedef enum {
+typedef enum {
 	EV_NONE		= 0,
 	EV_CURRENT	= 1
 } ElfVersion;
 
-cextern typedef enum {
+typedef enum {
 	SHN_UNDEF	= 0,
 	SHN_LORESERVE	= 0xff00,
 	SHN_LOPROC	= 0xff00,
@@ -106,7 +106,7 @@ cextern typedef enum {
 	SHN_HIRESERVE	= 0xffff
 } ElfSectionHeaderIndex;
 
-cextern typedef struct {
+typedef struct {
 	Elf32_Word	sh_name;	// name of the section; an index into the section header string table section
 	Elf32_Word	sh_type;	// SHT_*; categorises section's contents & semantics
 	Elf32_Word	sh_flags;	// SHF_*; supports 1-bit flags that describe misc. things
@@ -119,7 +119,7 @@ cextern typedef struct {
 	Elf32_Word	sh_entsize;	// fixed-size entries, e.g. symbol table. this is size in bytes of each entry. 0 if no such table exists
 } Elf32_Shdr;
 
-cextern typedef enum {
+typedef enum {
 	SHT_NULL	= 0,		// inactive
 	SHT_PROGBITS	= 1,		// holds info defined by the program, program-dependent
 	SHT_SYMTAB	= 2,		// holds a symbol table. SYMTAB provides symbols for link editing. DYNSYM for dynamic linking symbols. typically 1 of each max.
@@ -147,7 +147,7 @@ cextern typedef enum {
 
 // Index 0 is always empty. 0, SHT_NULL, 0, 0, 0, unspecified, unspecified, 0, 0, 0. It is mentioned in the table.
 
-cextern typedef enum {
+typedef enum {
 	SHF_WRITE		= 0x1,		// data that should be writable during process exec
 	SHF_ALLOC		= 0x2,		// this section occupies memory during execution. (some do not reside in memory image - this bit is off for those)
 	SHF_EXECINSTR		= 0x4,		// executable machine instructions
@@ -167,7 +167,7 @@ cextern typedef enum {
 #define GRP_MASKPROC		0xf0000000
 
 // symbol table entry
-cextern typedef struct {
+typedef struct {
 	Elf32_Word	st_name;		// index into object file's symbol string table; !0 -> index which gives symbol name, 0 ->  no name.
 	Elf32_Addr	st_value;		// value of associated symbol. see below
 	Elf32_Word	st_size;
@@ -219,7 +219,7 @@ cextern typedef struct {
 // relocatable files: st_value holds a section offset for a defined symbol. st_value is an offset from the beginning of the section that st_shndx identifies
 // executable and shared objects: st_value holds a virtual address. to make these files' symbols more useful for the dynamic linker, the section offset (file interpretation) gives way to a virtual address (memory interpretation) for which the section number is irrelevant
 
-cextern typedef struct {
+typedef struct {
 	Elf32_Addr	r_offset;	// gives the location at which to apply the relocation action. for a relocatable file, the value is the byte offset from beginning of the section to the storage unit affected by the relocation. for an executable/shared object, the value is the virtual address of the storage unit affected by the relocation
 	Elf32_Word	r_info;		// member gives both symbol tbl index with respect to which the relocation must be made, and the type fo relocation to apply.
 } Elf32_Rel;
@@ -245,7 +245,7 @@ typedef struct {
 
 // note that the consequence of the above rules is that the location specified is ignored in all but the first and last. see docs.
 
-cextern typedef struct {
+typedef struct {
 	Elf32_Word	p_type;		// PT_*
 	Elf32_Off	p_offset;	// offset from beginning of file where first byte of segment resides
 	Elf32_Addr	p_vaddr;	// virtual addr at which first bit of segment resides in memory
@@ -256,7 +256,7 @@ cextern typedef struct {
 	Elf32_Word	p_align;	// p_vaddr and p_offset must be congruent, modulo the page size. this gives the value to which segments are aligned; 0/1 mean nothing required. otherwise positive integral power of 2, p_vaddr == p_offset % p_align
 } Elf32_Phdr;
 
-cextern typedef enum {
+typedef enum {
 	PT_NULL		= 0,			// unused
 	PT_LOAD		= 1,			// array element specifies a loadable segment, filesz and memsz are relevant. map to beginning of memory segment. if memsz>filesz, extra bytes following segments initialised area hold 0. filesz>memsz is an error. loadable segment entries in pht appear in ascending order, sorted by vaddr
 	PT_DYNAMIC	= 2,			// dynamic linking info.
@@ -271,15 +271,13 @@ cextern typedef enum {
 	PT_HIPROC	= 0x7fffffff,
 } ElfProgramHeaderType;
 
-cextern typedef enum {
+typedef enum {
 	PF_X		= 0x1,		// execute
 	PF_W		= 0x2,		// write
 	PF_R		= 0x4,		// read
 	PF_MASKOS	= 0x0ff00000,	// unspec
 	PF_MASKPROC	= 0xf0000000	// unspec
 } ElfProgramHeaderFlag;
-
-cextern void tryelf();
 
 #endif
 

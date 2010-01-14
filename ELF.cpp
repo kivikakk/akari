@@ -14,14 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>
 
-#include <elf.hpp>
-#include <file.hpp>
-#include <screen.hpp>
-#include <memory.hpp>
-#include <user_process.hpp>
+#include <ELF.hpp>
 #include <debug.hpp>
-#include <process.hpp>
-#include <map.hpp>
 
 int verify_elf_header(Elf32_Ehdr *hdr) {
 	if (hdr->e_ident[EI_MAG0] != 0x7f) return 0;
@@ -31,6 +25,7 @@ int verify_elf_header(Elf32_Ehdr *hdr) {
 	return 1;
 }
 
+#if 0
 void tryelf() {
 	FILE *hellop = fopen("/hello.p", "r");
 	unsigned char *file_buffer = (unsigned char *)kmalloc(flen(hellop));
@@ -132,3 +127,4 @@ void tryelf() {
 	add_task_to_scheduler(new_task, true);
 }
 
+#endif

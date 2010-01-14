@@ -47,16 +47,17 @@ void AkariEntry() {
 		AkariPanic("Akari: MULTIBOOT hasn't given us enough information about memory.");
 
 	Akari = Kernel::Construct(reinterpret_cast<u32>(&__kend), AkariMultiboot->mem_upper);
+	Akari->subsystems.push_back(Akari->memory);
 
 	// these can only work if Akari = an AkariKernel, since `new' calls Akari->...
 	// how could we integrate these with construction in AkariKernel::Construct
 	// without just doing it all by using placement new with kernel->Alloc?
 	// (which is lame)
-	Akari->console = new Console();
-	Akari->descriptor = new Descriptor();
-	Akari->timer = new Timer();
-	Akari->tasks = new Tasks();
-	Akari->syscall = new Syscall();
+	Akari->console = new Console(); Akari->subsystems.push_back(Akari->console);
+	Akari->descriptor = new Descriptor(); Akari->subsystems.push_back(Akari->descriptor);
+	Akari->timer = new Timer(); Akari->subsystems.push_back(Akari->timer);
+	Akari->tasks = new Tasks(); Akari->subsystems.push_back(Akari->tasks);
+	Akari->syscall = new Syscall(); Akari->subsystems.push_back(Akari->syscall);
 
 	Akari->timer->setTimer(100);
 	Akari->memory->setPaging(true);
@@ -81,9 +82,9 @@ static void AkariEntryCont() {
 
 	LinkedList<module_t> modules;
 	module_t *module_ptr = (module_t *)AkariMultiboot->mods_addr;
-	for (unsigned int i = 0; i < AkariMultiboot->mods_count; i++) {
+	u32 mods_count = AkariMultiboot->mods_count;
+	while (mods_count--)
 		modules.push_back(*module_ptr++);
-	}
 
 	// Initial task
 	Tasks::Task *base = Tasks::Task::BootstrapInitialTask(3, Akari->memory->_kernelDirectory);
