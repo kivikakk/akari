@@ -144,10 +144,10 @@ extern "C" int start() {
 	char buffer[ATA_BUFFER];
 	while (true) {
 		struct queue_item_info *info = syscall_probeQueue();
+		syscall_puts("got a message!");
 		u32 len = info->data_len;
 		if (len > ATA_BUFFER) syscall_panic("ATA buffer overflow");
 		syscall_readQueue(buffer, 0, len);
-		syscall_exit();
 
 		if (buffer[0] == 0) {
 			// Read
@@ -184,7 +184,6 @@ extern "C" int start() {
 }
 
 void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
-	syscall_panic("why is ata_read_sectors running?");
 	u8 rs;
 	u16 returndata;
 	u32 i, sectors_read = 0;

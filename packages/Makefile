@@ -1,6 +1,6 @@
 include ../Makefile.inc
 
-PACKAGES = ATA Shell Kb
+PACKAGES = ATA MBR Kb Shell
 
 all: $(PACKAGES)
 

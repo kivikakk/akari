@@ -6,6 +6,7 @@ title Akari
 root (fd0)
 kernel /Akari
 module /ata
+module /mbr
 module /shell
 module /kb
 boot

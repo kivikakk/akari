@@ -45,10 +45,24 @@ typedef struct
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer);
 void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer);
 
-void MBRProcess() {
+master_boot_record_t hdd_mbr;
+pid_t ata = 0;
+
+extern "C" int start() {
+	syscall_puts("MBR driver waiting for ata\n");
+	while (!ata)
+		ata = syscall_processIdByName("system.io.ata");
+
 	if (!syscall_registerName("system.io.mbr"))
 		syscall_panic("could not register system.io.mbr");
 
+	syscall_puts("MBR: has ata ");
+	syscall_putl(ata, 16);
+	syscall_puts("\n");
+
+	ata_read_data(0, 0, 512, reinterpret_cast<char *>(&hdd_mbr));
+	if (hdd_mbr.signature != 0xAA55) syscall_panic("Invalid MBR!\n");
+	
 	syscall_puts("MBR driver entering loop\n");
 #define MBR_BUFFER 10240
 	char buffer[MBR_BUFFER];
@@ -82,18 +96,14 @@ void MBRProcess() {
 			syscall_panic("MBR driver confused");
 		}
 	}
+
+	syscall_panic("MBR ran off its own loop!");
+	return 1;
 }
 
 
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer)
 {
-	// This is being REALLY wasteful by re-requesting the MBR EVERY REQUEST,
-	// but what can you do?
-	master_boot_record_t hdd_mbr;
-	ata_read_data(0, 0, 512, reinterpret_cast<char *>(&hdd_mbr));
-
-	if (hdd_mbr.signature != 0xAA55) syscall_panic("Invalid MBR!\n");
-	
 	u32 new_sector = hdd_mbr.partitions[partition_id].begin_disk_sector + sector;
 
 	ata_read_data(new_sector, offset, length, buffer);
@@ -111,7 +121,7 @@ void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer) {
 	};
 
 	// u32 id =
-	syscall_sendQueue(syscall_processIdByName("system.io.ata"), 0, req, 11);
+	syscall_sendQueue(ata, 0, req, 11);
 
 	// TODO XXX: need to listen for replies to a certain message, not just the next one.
 

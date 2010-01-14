@@ -150,8 +150,10 @@ static void AkariEntryCont() {
 	Akari->console->putString("ata load done\n");
 	
 	// MBR driver
-	//Tasks::Task *mbr = Tasks::Task::CreateTask(reinterpret_cast<u32>(&MBRProcess), 3, true, 0, Akari->memory->_kernelDirectory);
-	//ata->next = mbr;
+	Tasks::Task *mbr = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "mbr");
+	Akari->elf->loadImageInto(mbr, reinterpret_cast<u8 *>(module_by_name("/mbr")->module));
+	ata->next = mbr;
+	Akari->console->putString("mbr load done\n");
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);
