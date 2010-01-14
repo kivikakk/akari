@@ -52,6 +52,30 @@ DEFN_SYSCALL1(malloc, 9, void *, u32);
 DEFN_SYSCALL1(free, 10, void, void *);
 DEFN_SYSCALL3(memcpy, 11, void *, void *, const void *, u32);
 
+extern "C" void __cxa_pure_virtual() {
+	syscall_panic("__cxa_pure_virtual called in usermode");
+}
+
+void *operator new(size_t n) {
+	return syscall_malloc(n);
+}
+
+void *operator new[](size_t n) {
+	return syscall_malloc(n);
+}
+
+void *operator new(size_t, void *p) {
+	return p;
+}
+
+void operator delete(void *p) {
+	return syscall_free(p);
+}
+
+void operator delete[](void *p) {
+	return syscall_free(p);
+}
+
 #else
 
 DECL_SYSCALL1(putc, void, char);
@@ -66,6 +90,14 @@ DECL_SYSCALL0(defer, void);
 DECL_SYSCALL1(malloc, void *, u32);
 DECL_SYSCALL1(free, void, void *);
 DECL_SYSCALL3(memcpy, void *, void *, const void *, u32);
+
+extern "C" void __cxa_pure_virtual();
+void *operator new(size_t);
+void *operator new[](size_t);
+void *operator new(size_t, void *);
+void operator delete(void *);
+void operator delete[](void *);
+
 
 #endif
 

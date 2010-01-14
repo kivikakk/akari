@@ -49,6 +49,15 @@ inline u16 AkariInW(u16 port) {
 	return r;
 }
 
+inline u32 min(u32 a, u32 b) {
+	return (a < b) ? a : b;
+}
+
+inline u32 max(u32 a, u32 b) {
+	return (a > b) ? a : b;
+}
+
+
 // Compiler-specific things.
 extern "C" void __cxa_pure_virtual();
 void *operator new(size_t);
