@@ -25,6 +25,7 @@
 #include <Console.hpp>
 #include <Timer.hpp>
 #include <Syscall.hpp>
+#include <ELF.hpp>
 
 #define UKERNEL_STACK_POS	0xE0000000
 #define UKERNEL_STACK_SIZE	0x2000
@@ -58,6 +59,7 @@ void AkariEntry() {
 	Akari->timer = new Timer(); Akari->subsystems.push_back(Akari->timer);
 	Akari->tasks = new Tasks(); Akari->subsystems.push_back(Akari->tasks);
 	Akari->syscall = new Syscall(); Akari->subsystems.push_back(Akari->syscall);
+	Akari->elf = new ELF(); Akari->subsystems.push_back(Akari->elf);
 
 	Akari->timer->setTimer(100);
 	Akari->memory->setPaging(true);

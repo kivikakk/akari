@@ -27,6 +27,7 @@ class Descriptor;
 class Timer;
 class Tasks;
 class Syscall;
+class ELF;
 
 /**
  * The base class for the kernel services.
@@ -43,6 +44,7 @@ class Kernel {
 		Timer *timer;
 		Tasks *tasks;
 		Syscall *syscall;
+		ELF *elf;
 	
 	protected:
 		Kernel();

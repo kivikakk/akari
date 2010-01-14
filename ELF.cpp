@@ -15,7 +15,16 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>
 
 #include <ELF.hpp>
+#include <ELFInternal.hpp>
 #include <debug.hpp>
+
+ELF::ELF()
+{ }
+
+u8 ELF::versionMajor() const { return 0; }
+u8 ELF::versionMinor() const { return 1; }
+const char *ELF::versionManufacturer() const { return "Akari"; }
+const char *ELF::versionProduct() const { return "Akari ELF Loader"; }
 
 int verify_elf_header(Elf32_Ehdr *hdr) {
 	if (hdr->e_ident[EI_MAG0] != 0x7f) return 0;

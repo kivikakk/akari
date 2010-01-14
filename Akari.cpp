@@ -22,7 +22,8 @@
 
 Kernel *Akari;
 
-Kernel::Kernel(): memory(0), console(0), descriptor(0), timer(0), tasks(0), syscall(0) {
+Kernel::Kernel():
+		memory(0), console(0), descriptor(0), timer(0), tasks(0), syscall(0), elf(0) {
 }
 
 /**
