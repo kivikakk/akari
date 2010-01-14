@@ -26,12 +26,16 @@ u8 ELF::versionMinor() const { return 1; }
 const char *ELF::versionManufacturer() const { return "Akari"; }
 const char *ELF::versionProduct() const { return "Akari ELF Loader"; }
 
-int verify_elf_header(Elf32_Ehdr *hdr) {
+Tasks::Task *ELF::loadImage(const u8 *image) const {
+	const Elf32_Ehdr *hdr = reinterpret_cast<const Elf32_Ehdr *>(image);
+
 	if (hdr->e_ident[EI_MAG0] != 0x7f) return 0;
 	if (hdr->e_ident[EI_MAG1] != 'E') return 0;
 	if (hdr->e_ident[EI_MAG2] != 'L') return 0;
 	if (hdr->e_ident[EI_MAG3] != 'F') return 0;
-	return 1;
+
+	Tasks::Task *task = 0;
+	return task;
 }
 
 #if 0
@@ -40,9 +44,6 @@ void tryelf() {
 	unsigned char *file_buffer = (unsigned char *)kmalloc(flen(hellop));
 	fread(file_buffer, 1, flen(hellop), hellop);
 	fclose(hellop);
-
-	Elf32_Ehdr *hdr = (Elf32_Ehdr *)file_buffer;
-	ASSERT(verify_elf_header(hdr));
 
 	Task *new_task = Task::InitialiseProcess(hdr->e_entry, true);
 

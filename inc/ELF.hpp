@@ -18,6 +18,7 @@
 #define __ELF_HPP__
 
 #include <Subsystem.hpp>
+#include <Tasks.hpp>
 
 class ELF : public Subsystem {
 public:
@@ -28,6 +29,7 @@ public:
 	const char *versionManufacturer() const;
 	const char *versionProduct() const;
 
+	Tasks::Task *loadImage(const u8 *image) const;
 };
 
 #endif
