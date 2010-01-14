@@ -157,7 +157,7 @@ extern "C" int start() {
 
 			if (length > ATA_BUFFER) syscall_panic("Static buffer in ATA too small for requested amount");
 
-			ata_read_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer));
+			// ata_read_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer));
 
 			syscall_sendQueue(info->from, info->id, buffer, length);
 
@@ -171,7 +171,7 @@ extern "C" int start() {
 			if (len - 11 > length) syscall_panic("ATA driver got more data in msg than msg asked to write");
 			if (len - 11 < length) syscall_panic("ATA driver got LESS data in msg than msg asked to write!");
 
-			ata_write_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer + 11));
+			// ata_write_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer + 11));
 
 			syscall_sendQueue(info->from, info->id, "\1", 1);
 		} else {
@@ -187,7 +187,6 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 	u8 rs;
 	u16 returndata;
 	u32 i, sectors_read = 0;
-
 	while (number > 256) {
 		ata_read_sectors(start, 256, buffer);
 		buffer += 512 * 256;
@@ -208,7 +207,17 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 	AkariOutB(ATA_PRIMARY + ATA_FEATURES, 0x00);
 	AkariOutB(ATA_PRIMARY + ATA_SECTOR, (number == 256) ? 0 : number);	// sector count
 	AkariOutB(ATA_PRIMARY + ATA_PDSA1, static_cast<u8>(start & 0xFF));	// low 8 bits of LBA
-	AkariOutB(ATA_PRIMARY + ATA_PDSA2, static_cast<u8>((start >> 8) & 0xFF));	// next 8
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	// AkariOutB(ATA_PRIMARY + ATA_PDSA2, static_cast<u8>((start >> 8) & 0xFF));	// next 8
+/*
 	AkariOutB(ATA_PRIMARY + ATA_PDSA3, static_cast<u8>((start >> 16) & 0xFF));	// next 8
 	AkariOutB(ATA_PRIMARY + ATA_CMD, ATA_READ_SECTORS);
 
@@ -227,8 +236,9 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 		}
 
 		sectors_read++;
-	}
+	}*/
 }
+#if 0
 
 void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 {
@@ -345,3 +355,4 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer)
 	while ((rs & ATA_BSY))
 		rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 }
+#endif

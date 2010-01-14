@@ -81,6 +81,8 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	// then grab its page so we can point that part of our own perception of memory to wherever
 	// we want.  We set it back to real heap-land after then dealloc.
 	
+	ASSERT(Akari->memory->_kernelDirectory == Akari->memory->_activeDirectory);
+
 	u8 *magic_wand = static_cast<u8 *>(Akari->memory->allocAligned(0x1000));
 	Memory::Page *wand_page = Akari->memory->_kernelDirectory->getPage(reinterpret_cast<u32>(magic_wand), false);
 	ASSERT(wand_page);
@@ -88,48 +90,42 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	// We can now twiddle wand_page->pageAddress to change where 'magic_wand' looks at.
 	u32 old_wand_pA = wand_page->pageAddress;
 
-#if ELF_DEBUG
-	Akari->console->putString("enumerating section header(s):\n");
-#endif
-	for (int i = 0; i < hdr->e_shnum; ++i) {
-		Elf32_Shdr *sh = (Elf32_Shdr *)(image + hdr->e_shoff + hdr->e_shentsize * i);
+	for (int i = 0; i < hdr->e_phnum; ++i) {
+		Elf32_Phdr *ph = (Elf32_Phdr *)(image + hdr->e_phoff + hdr->e_phentsize * i);
 
-		if (sh->sh_addr) {
+		if (ph->p_type == PT_LOAD) {
 #if ELF_DEBUG
-			Akari->console->putString("\t"); Akari->console->putString((char *)(image + stloc + sh->sh_name)); Akari->console->putString(" [");
-
-			switch (sh->sh_type) {
-				case SHT_NULL:		Akari->console->putString("null"); break;
-				case SHT_PROGBITS:	Akari->console->putString("progbits"); break;
-				case SHT_SYMTAB:	Akari->console->putString("symbol table"); break;
-				case SHT_STRTAB:	Akari->console->putString("string table"); break;
-				case SHT_NOBITS:	Akari->console->putString("bss"); break;
-				default:		Akari->console->putString("other("); Akari->console->putInt(sh->sh_type, 16); Akari->console->putString(")"); break;
-			}
-			Akari->console->putString("] at "); Akari->console->putInt(sh->sh_offset, 16);
-			Akari->console->putString(" -> "); Akari->console->putInt(sh->sh_addr, 16);
-			Akari->console->putString("; ");
-			Akari->console->putString("placing in image:\n\t\t");
+			Akari->console->putString("header at "); Akari->console->putInt(ph->p_offset, 16);
+			Akari->console->putString(" mapped to v/p "); Akari->console->putInt(ph->p_vaddr, 16);
+			Akari->console->putString("/"); Akari->console->putInt(ph->p_paddr, 16);
+			Akari->console->putString(" f/msz "); Akari->console->putInt(ph->p_filesz, 16);
+			Akari->console->putString("/"); Akari->console->putInt(ph->p_memsz, 16);
+			Akari->console->putString(" align "); Akari->console->putInt(ph->p_align, 16);
+			Akari->console->putChar('\n');
 #endif
 
-			unsigned long phys = sh->sh_offset, virt = sh->sh_addr, copied = 0;
-			while (copied < sh->sh_size) {
+			unsigned long phys = ph->p_offset, virt = ph->p_vaddr, copied = 0;
+			while (copied < ph->p_memsz) {
 				// we copy up until the end of one frame
 				unsigned long copy = 0x1000 - ((virt + copied) % 0x1000);
-				if (sh->sh_size - copied < copy)
-					copy = sh->sh_size - copied;
+				if (ph->p_memsz - copied < copy)
+					copy = ph->p_memsz - copied;
 
 #if ELF_DEBUG
-				Akari->console->putString("virt 0x");
+				Akari->console->putString("\tvirt 0x");
 				Akari->console->putInt((virt + copied), 16);
 #endif
 
 				Memory::Page *page = task->pageDir->getPage((virt + copied) & 0xfffff000, true);
+				ASSERT(page);
 
 				if (!page->pageAddress)
 					page->allocAnyFrame(false, true);
 
 				wand_page->pageAddress = page->pageAddress;
+				Akari->console->putString(" (wand ");
+				Akari->console->putInt(wand_page->pageAddress, 16);
+				Akari->console->putString(")");
 
 #if ELF_DEBUG
 				Akari->console->putString(" len 0x");
@@ -138,14 +134,18 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 				Akari->console->putInt(page->pageAddress * 0x1000, 16);
 				Akari->console->putString(" off 0x");
 				Akari->console->putInt((virt + copied) % 0x1000, 16);
-				Akari->console->putString(", ");
+				Akari->console->putString("\n");
 #endif
 
 				u8 *dest = magic_wand + ((virt + copied) % 0x1000);
 
-				if (sh->sh_type == SHT_NOBITS) {
+				if (ph->p_filesz == 0) {
+					Akari->console->putString("\nblanking ");
+					Akari->console->putInt(copy, 16);
+					Akari->console->putString("\n");
 					POSIX::memset(dest, 0, copy);
 				} else {
+					ASSERT(ph->p_filesz == ph->p_memsz);
 					POSIX::memcpy(dest, (u8 *)(image + phys + copied), copy);
 				}
 
