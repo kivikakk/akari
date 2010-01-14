@@ -61,4 +61,10 @@ namespace POSIX {
 		*dest = 0;
 		return orig;
 	}
+
+	char *strdup(const char *src) {
+		char *result = new char[strlen(src) + 1];
+		strcpy(result, src);
+		return result;
+	}
 }

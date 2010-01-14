@@ -88,9 +88,6 @@ void Memory::setPaging(bool mode) {
 	switchPageDirectory(_kernelDirectory);
 	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, false, !(KERNEL_HEAP_PROMISC));
 	_placementAddress = 0;
-	
-	// _activeDirectory = _kernelDirectory->Clone();
-	// SwitchPageDirectory(_activeDirectory);
 }
 
 void *Memory::alloc(u32 n, u32 *phys) {

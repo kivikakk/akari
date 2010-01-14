@@ -38,6 +38,14 @@ void IdleProcess();
 
 multiboot_info_t *AkariMultiboot;
 
+typedef struct {
+	char *name;
+	char *module;
+	u32 module_len;
+} loaded_module_t;
+
+LinkedList<loaded_module_t> modules;
+
 void AkariEntry() {
 	if ((AkariMultiboot->flags & 0x41) != 0x41)
 		AkariPanic("Akari: MULTIBOOT hasn't given us enough information about memory.");
@@ -55,6 +63,25 @@ void AkariEntry() {
 	Akari->tasks = new Tasks(); Akari->subsystems.push_back(Akari->tasks);
 	Akari->syscall = new Syscall(); Akari->subsystems.push_back(Akari->syscall);
 	Akari->elf = new ELF(); Akari->subsystems.push_back(Akari->elf);
+
+	// This is done before paging is turned on (otherwise the memory where the
+	// modules reside is protected), but after memory is initialised.
+	module_t *module_ptr = (module_t *)AkariMultiboot->mods_addr;
+	u32 mods_count = AkariMultiboot->mods_count;
+	while (mods_count--) {
+		u32 len = module_ptr->mod_end - module_ptr->mod_start;
+
+		loaded_module_t mod = {
+			POSIX::strdup(reinterpret_cast<const char *>(module_ptr->string)),
+			static_cast<char *>(Akari->memory->alloc(len)),
+			len
+		};
+
+		POSIX::memcpy(mod.module, reinterpret_cast<const void *>(module_ptr->mod_start), len);
+
+		modules.push_back(mod);
+		++module_ptr;
+	}
 
 	Akari->timer->setTimer(100);
 	Akari->memory->setPaging(true);
@@ -76,12 +103,6 @@ static void AkariEntryCont() {
 	ASSERT(Akari->memory->_activeDirectory == Akari->memory->_kernelDirectory);
 	for (u32 i = UKERNEL_STACK_POS; i >= UKERNEL_STACK_POS - UKERNEL_STACK_SIZE; i -= 0x1000)
 		Akari->memory->_activeDirectory->getPage(i, true)->allocAnyFrame(false, true);
-
-	LinkedList<module_t> modules;
-	module_t *module_ptr = (module_t *)AkariMultiboot->mods_addr;
-	u32 mods_count = AkariMultiboot->mods_count;
-	while (mods_count--)
-		modules.push_back(*module_ptr++);
 
 	// Initial task
 	Tasks::Task *base = Tasks::Task::BootstrapInitialTask(3, Akari->memory->_kernelDirectory);
@@ -106,7 +127,10 @@ static void AkariEntryCont() {
 	
 	// ATA driver
 	Tasks::Task *ata = Tasks::Task::CreateTask(0 /* Entry point filled out by ELF loader */, 3, true, 0, Akari->memory->_kernelDirectory, "ata");
-	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(modules.begin()->mod_start));
+	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(modules.begin()->module));
+
+	Akari->console->putString("elf load done");
+	while (true);
 
 	ata->setIOMap(0x1F7, true);
 	for (u16 j = 0; j < 8; ++j) {
