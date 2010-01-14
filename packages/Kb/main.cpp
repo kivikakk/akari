@@ -15,7 +15,6 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <UserCalls.hpp>
-#include <Akari.hpp>
 #include <arch.hpp>
 #include <UserIPC.hpp>
 
@@ -77,7 +76,7 @@ static s8 capslockInvert(s8 c) {
 }
 
 
-void KeyboardProcess() {
+extern "C" int start() {
 	// 128-bit=16 bytes bitfield
 	u8 held_scancodes[16];     
 
@@ -107,7 +106,7 @@ void KeyboardProcess() {
 	u8 scancode = AkariInB(0x60);
 	bool mustUpdateLEDs = false;
 
-	while (1) {
+	while (true) {
 		if (scancode & 0x80) {
 			// release
 			scancode &= ~0x80;
@@ -162,5 +161,8 @@ void KeyboardProcess() {
 		syscall_irqWait();
 		scancode = AkariInB(0x60);
 	}
+
+	syscall_panic("kb driver exited?");
+	return 1;
 }
 

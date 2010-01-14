@@ -31,8 +31,9 @@ LINKAGE_OBJS := $(patsubst %.cpp,obj/linkage/%.cpp.o,$(LINKAGE_CXXSRCS))
 
 all: clean $(TARGET)-copy
 
-$(TARGET)-copy: $(TARGET)
+$(TARGET)-copy: $(TARGET) menu.lst
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
+	$(MTOOLS_BIN)/mcopy -D o menu.lst c:/boot/grub/menu.lst
 
 $(TARGET): $(OBJS) $(LDFILE) packages obj $(LINKAGE_TARGET)
 	$(LD) $(LDOPTS) -T$(LDFILE) $(OBJS) -o $(TARGET)

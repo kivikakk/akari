@@ -75,11 +75,20 @@ int strpos(const char *haystack, const char *needle) {
 }
 
 
-void ShellProcess() {
+extern "C" int start() {
+	syscall_puts("shell starting ...\n");
 	u32 stdin = static_cast<u32>(-1);
 	while (stdin == static_cast<u32>(-1)) {
-		stdin = syscall_obtainStreamListener(syscall_processIdByName("system.io.keyboard"), "input");
+		syscall_puts("^");
+		pid_t pid = syscall_processIdByName("system.io.keyboard");
+		syscall_puts("&");
+		if (pid) {
+			syscall_puts("%");
+			stdin = syscall_obtainStreamListener(pid, "input");
+			syscall_puts("*");
+		}
 	}
+		syscall_puts(":-)");
 
 	syscall_puts("\nstdin is 0x");
 	syscall_putl(stdin, 16);
@@ -114,6 +123,7 @@ void ShellProcess() {
 		syscall_putc('\n');
 	}
 
-	syscall_exit();
+	syscall_panic("shell exited?");
+	return 1;
 }
 

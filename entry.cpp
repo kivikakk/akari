@@ -45,6 +45,13 @@ typedef struct {
 } loaded_module_t;
 
 LinkedList<loaded_module_t> modules;
+static loaded_module_t *module_by_name(const char *name) {
+	for (LinkedList<loaded_module_t>::iterator it = modules.begin(); it != modules.end(); ++it) {
+		if (POSIX::strcmp(name, it->name) == 0)
+			return &*it;
+	}
+	return 0;
+}
 
 void AkariEntry() {
 	if ((AkariMultiboot->flags & 0x41) != 0x41)
@@ -116,21 +123,22 @@ static void AkariEntryCont() {
 	Akari->tasks->current->next = idle;
 
 	// Keyboard driver task
-	//Tasks::Task *kbdriver = Tasks::Task::CreateTask(reinterpret_cast<u32>(&KeyboardProcess), 3, true, 0, Akari->memory->_kernelDirectory);
-	//kbdriver->setIOMap(0x60, true);
-	//kbdriver->setIOMap(0x64, true);
-	//idle->next = kbdriver;
+	Tasks::Task *kb = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "kb");
+	Akari->elf->loadImageInto(kb, reinterpret_cast<u8 *>(module_by_name("/kb")->module));
+	kb->setIOMap(0x60, true);
+	kb->setIOMap(0x64, true);
+	idle->next = kb;
+	Akari->console->putString("kb load done\n");
 
 	// Shell
-	//Tasks::Task *shell = Tasks::Task::CreateTask(reinterpret_cast<u32>(&ShellProcess), 3, true, 0, Akari->memory->_kernelDirectory);
-	//kbdriver->next = shell;
+	Tasks::Task *shell = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "shell");
+	Akari->elf->loadImageInto(shell, reinterpret_cast<u8 *>(module_by_name("/shell")->module));
+	kb->next = shell;
+	Akari->console->putString("shell load done\n");
 	
 	// ATA driver
 	Tasks::Task *ata = Tasks::Task::CreateTask(0 /* Entry point filled out by ELF loader */, 3, true, 0, Akari->memory->_kernelDirectory, "ata");
-	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(modules.begin()->module));
-
-	Akari->console->putString("elf load done");
-
+	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
 	ata->setIOMap(0x1F7, true);
 	for (u16 j = 0; j < 8; ++j) {
 		ata->setIOMap(0x1F0 + j, true);
@@ -138,8 +146,8 @@ static void AkariEntryCont() {
 	}
 	ata->setIOMap(0x3F6, true);
 	ata->setIOMap(0x376, true);
-	//shell->next = ata;
-	idle->next = ata;
+	shell->next = ata;
+	Akari->console->putString("ata load done\n");
 	
 	// MBR driver
 	//Tasks::Task *mbr = Tasks::Task::CreateTask(reinterpret_cast<u32>(&MBRProcess), 3, true, 0, Akari->memory->_kernelDirectory);
