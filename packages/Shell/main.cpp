@@ -18,21 +18,24 @@
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
 
-static char *getline(u32 in) {
+pid_t keyboard_pid = 0;
+u32 stdin = -1;
+
+static char *getline() {
 	u32 cs = 8, n = 0;
-	char *kbbuf = static_cast<char *>(syscall_malloc(cs));
+	char *kbbuf = new char[cs];
 
 	while (true) {
-		u32 incoming = syscall_readStream(syscall_processIdByName("system.io.keyboard"), "input", in, kbbuf + n, 1);
+		u32 incoming = syscall_readStream(keyboard_pid, "input", stdin, kbbuf + n, 1);
 		syscall_putc(kbbuf[n]);
 		if (kbbuf[n] == '\n') break;
 
 		n += incoming;	// 1
 
 		if (n == cs) {
-			char *nkb = static_cast<char *>(syscall_malloc(cs * 2));
+			char *nkb = new char[cs * 2];
 			syscall_memcpy(nkb, kbbuf, n);
-			syscall_free(kbbuf);
+			delete [] kbbuf;
 			kbbuf = nkb;
 			cs *= 2;
 		}
@@ -44,8 +47,7 @@ static char *getline(u32 in) {
 
 int strlen(const char *s) {
 	int i = 0;
-	while (*s)
-		++i, ++s;
+	while (*s) ++i, ++s;
 	return i;
 }
 
@@ -76,28 +78,26 @@ int strpos(const char *haystack, const char *needle) {
 
 
 extern "C" int start() {
-	u32 stdin = static_cast<u32>(-1);
-	while (stdin == static_cast<u32>(-1)) {
-		pid_t pid = syscall_processIdByName("system.io.keyboard");
-		if (pid) {
-			stdin = syscall_obtainStreamListener(pid, "input");
-		}
-	}
+	while (!keyboard_pid)
+		keyboard_pid = syscall_processIdByName("system.io.keyboard");
+
+	while (stdin == (u32)-1)
+		stdin = syscall_obtainStreamListener(keyboard_pid, "input");
 
 	syscall_puts("\nstdin is 0x");
 	syscall_putl(stdin, 16);
 	syscall_puts(".\n");
 
 	while (true) {
-		char *l = getline(stdin);
+		char *l = getline();
 		int s = strpos(l, " ");
 		syscall_puts("space at ");
 		syscall_putl(s, 10);
 		syscall_puts("\n\n");
-		syscall_free(l);
+		delete [] l;
 
 		// Okay, let's grab the first 512 bytes.
-		l = static_cast<char *>(syscall_malloc(512));
+		l = new char[512];
 		char req[] = { 0 /*read*/, 0 /*part 0*/, 0, 0, 0, 0 /*sec 0*/, 0, 0 /*offset 0*/, 0, 0, 2, 0 /*len 512*/ };
 		u32 id = syscall_sendQueue(syscall_processIdByName("system.io.mbr"), 0, req, 11);
 		syscall_puts("sent request #"); syscall_putl(id, 16); syscall_putc('\n');
@@ -115,6 +115,7 @@ extern "C" int start() {
 		for (int i = 0; i < 512; ++i)
 			syscall_putc(l[i]);
 		syscall_putc('\n');
+		delete [] l;
 	}
 
 	syscall_panic("shell exited?");
