@@ -130,7 +130,6 @@ static void AkariEntryCont() {
 	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(modules.begin()->module));
 
 	Akari->console->putString("elf load done");
-	while (true);
 
 	ata->setIOMap(0x1F7, true);
 	for (u16 j = 0; j < 8; ++j) {

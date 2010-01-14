@@ -76,8 +76,8 @@ public:
 
 	class Page {
 	public:
-		void allocAnyFrame(bool, bool);
-		void allocFrame(u32, bool, bool);
+		void allocAnyFrame(bool kernel, bool writeable);
+		void allocFrame(u32, bool kernel, bool writeable);
 
 		union {
 			struct {
