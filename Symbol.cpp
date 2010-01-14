@@ -22,8 +22,28 @@
 Symbol::Symbol(): _content(0)
 { }
 
+// Every symbol has its own copy of the string.  Don't just use the pointer
+// assuming it won't change - it might be from userspace for all you know.
 Symbol::Symbol(const char *content): _content(POSIX::strdup(content))
 { }
+
+// Unfortunately we can't just use the other Symbol's pointer, even though we
+// know they have their own copy, because we don't know when it'll die, and I
+// don't want to do reference counting.
+Symbol::Symbol(const Symbol &symbol): _content(POSIX::strdup(symbol._content))
+{ }
+
+Symbol::~Symbol() {
+	if (_content)
+		delete _content;
+}
+
+Symbol &Symbol::operator =(const Symbol &symbol) {
+	if (_content)
+		delete _content;
+	_content = POSIX::strdup(symbol._content);
+	return *this;
+}
 
 bool Symbol::operator !() const {
 	return !_content;

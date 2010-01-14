@@ -21,6 +21,10 @@ class Symbol {
 	public:
 		Symbol();
 		Symbol(const char *content);
+		Symbol(const Symbol &symbol);
+		~Symbol();
+
+		Symbol &operator =(const Symbol &symbol);
 
 		bool operator !() const;
 		bool operator ==(const Symbol &) const;
