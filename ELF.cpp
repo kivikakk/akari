@@ -26,16 +26,18 @@ u8 ELF::versionMinor() const { return 1; }
 const char *ELF::versionManufacturer() const { return "Akari"; }
 const char *ELF::versionProduct() const { return "Akari ELF Loader"; }
 
-Tasks::Task *ELF::loadImage(const u8 *image) const {
+bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	const Elf32_Ehdr *hdr = reinterpret_cast<const Elf32_Ehdr *>(image);
 
-	if (hdr->e_ident[EI_MAG0] != 0x7f) return 0;
-	if (hdr->e_ident[EI_MAG1] != 'E') return 0;
-	if (hdr->e_ident[EI_MAG2] != 'L') return 0;
-	if (hdr->e_ident[EI_MAG3] != 'F') return 0;
+	if (hdr->e_ident[EI_MAG0] != 0x7f) return false;
+	if (hdr->e_ident[EI_MAG1] != 'E') return false;
+	if (hdr->e_ident[EI_MAG2] != 'L') return false;
+	if (hdr->e_ident[EI_MAG3] != 'F') return false;
 
-	Tasks::Task *task = 0;
-	return task;
+	// Change the EIP in the registers to our entry point.
+	reinterpret_cast<struct modeswitch_registers *>(task->ks)->callback.eip = hdr->e_entry;
+
+	return true;
 }
 
 #if 0

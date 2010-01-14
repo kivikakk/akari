@@ -29,7 +29,7 @@ public:
 	const char *versionManufacturer() const;
 	const char *versionProduct() const;
 
-	Tasks::Task *loadImage(const u8 *image) const;
+	bool loadImageInto(Tasks::Task *task, const u8 *image) const;
 };
 
 #endif
