@@ -39,13 +39,13 @@ extern "C" int start() {
 	while (!mbr)
 		mbr = syscall_processIdByName("system.io.mbr");
 
-	if (!syscall_registerName("system.io.fs.fat"))
-		syscall_panic("FAT: could not register system.io.fs.fat");
-
 	if (!init()) {
 		syscall_puts("FAT: calling it quits in init");
 		syscall_exit();
 	}
+
+	if (!syscall_registerName("system.io.fs.fat"))
+		syscall_panic("FAT: could not register system.io.fs.fat");
 
 	syscall_puts("FAT: entering loop\n");
 

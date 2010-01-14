@@ -54,7 +54,6 @@ extern "C" int start() {
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
-		syscall_puts("ATA: got request\n");
 
 		u32 len = info.data_len;
 		if (len > ATA_MAX_WILL_ALLOC) syscall_panic("ATA: given more data than would like to alloc");
@@ -83,9 +82,7 @@ extern "C" int start() {
 
 			ata_read_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer));
 
-			syscall_puts("ATA: reply length "); syscall_putl(length, 16); syscall_putc('\n');
 			syscall_sendQueue(info.from, info.id, buffer, length);
-
 		} else if (buffer[0] == 1) {
 			// Write
 
@@ -98,7 +95,6 @@ extern "C" int start() {
 
 			ata_write_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer + 11));
 
-			syscall_puts("ATA: reply length "); syscall_putl(1, 16); syscall_putc('\n');
 			syscall_sendQueue(info.from, info.id, "\1", 1);
 		} else {
 			syscall_panic("ATA: confused");

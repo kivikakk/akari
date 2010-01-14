@@ -37,14 +37,13 @@ extern "C" int start() {
 
 	ata_read_data(0, 0, 512, reinterpret_cast<char *>(&hdd_mbr));
 	if (hdd_mbr.signature != 0xAA55) syscall_panic("MBR: invalid MBR!\n");
-	
+
 	syscall_puts("MBR: entering loop\n");
 
 	char *buffer = 0; u32 buffer_len = 0;
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
-		syscall_puts("MBR: got request\n");
 
 		// We assign (copy) this so we don't lose it after shiftQueue().
 		u32 len = info.data_len;
@@ -76,9 +75,17 @@ extern "C" int start() {
 				buffer_len = length;
 			}
 
+			if (length == 0) {
+				syscall_puts("getting 0 bytes from sector ");
+				syscall_putl(sector, 16);
+				syscall_puts(", offset ");
+				syscall_putl(offset, 16);
+				syscall_puts("\n");
+				syscall_panic("MBR: asked to get 0 bytes");
+			}
+
 			partition_read_data(partition_id, sector, offset, length, buffer);
 
-			syscall_puts("MBR: reply length "); syscall_putl(length, 16); syscall_putc('\n');
 			syscall_sendQueue(info.from, info.id, buffer, length);
 		} else {
 			syscall_panic("MBR: confused");
@@ -110,11 +117,7 @@ void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer) {
 	u32 msg_id = syscall_sendQueue(ata, 0, req, 11);
 
 	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
-	syscall_puts("MBR: asked for ");
-	syscall_putl(length, 16);
-	syscall_puts(", got ");
-	syscall_putl(info->data_len, 16);
-	syscall_puts("\n");
+
 	if (info->data_len != length) {
 		syscall_readQueue(info, buffer, 0, min(length, info->data_len));
 		for (u32 i = 0; i < min(length, info->data_len); ++i) {
