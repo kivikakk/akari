@@ -64,8 +64,8 @@ extern "C" int start() {
 			buffer_len = len;
 		}
 
-		syscall_readQueue(buffer, 0, len);
-		syscall_shiftQueue();
+		syscall_readQueue(&info, buffer, 0, len);
+		syscall_shiftQueue(&info);
 
 		if (buffer[0] == 0) {
 			// Read

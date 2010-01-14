@@ -107,7 +107,10 @@ public:
 
 			u32 push_back(pid_t from, u32 reply_to, const void *data, u32 data_len);
 			void shift();
+			void remove(Item *item);
 			Item *first();
+			Item *itemByReplyTo(u32 reply_to);
+			Item *itemById(u32 id);
 
 		protected:
 			LinkedList<Item *> list;

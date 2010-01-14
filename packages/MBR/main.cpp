@@ -55,11 +55,11 @@ extern "C" int start() {
 			buffer_len = len;
 		}
 
-		syscall_readQueue(buffer, 0, len);
+		syscall_readQueue(&info, buffer, 0, len);
 
 		// Be sure to shift before going doing a call out that might want
 		// to read from there ...
-		syscall_shiftQueue();
+		syscall_shiftQueue(&info);
 
 		if (buffer[0] == 0) {
 			// Read
@@ -107,19 +107,16 @@ void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer) {
 		(length >> 24) & 0xFF, (length >> 16) & 0xFF, (length >> 8) & 0xFF, length & 0xFF
 	};
 
-	// u32 id =
-	syscall_sendQueue(ata, 0, req, 11);
+	u32 msg_id = syscall_sendQueue(ata, 0, req, 11);
 
-	// TODO XXX: need to listen for replies to a certain message, not just the next one.
-
-	struct queue_item_info *info = syscall_probeQueue();
+	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
 	syscall_puts("MBR: asked for ");
 	syscall_putl(length, 16);
 	syscall_puts(", got ");
 	syscall_putl(info->data_len, 16);
 	syscall_puts("\n");
 	if (info->data_len != length) {
-		syscall_readQueue(buffer, 0, min(length, info->data_len));
+		syscall_readQueue(info, buffer, 0, min(length, info->data_len));
 		for (u32 i = 0; i < min(length, info->data_len); ++i) {
 			syscall_putl((u8)buffer[i], 16);
 			syscall_putc(' ');
@@ -127,6 +124,6 @@ void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer) {
 		syscall_panic("MBR: ATA read not expected number of bytes back");
 	}
 
-	syscall_readQueue(buffer, 0, info->data_len);
-	syscall_shiftQueue();
+	syscall_readQueue(info, buffer, 0, info->data_len);
+	syscall_shiftQueue(info);
 }

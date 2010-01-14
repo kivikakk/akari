@@ -28,11 +28,16 @@ namespace User {
 namespace IPC {
 	class ProbeQueueCall : public BlockingCall {
 	public:
-		ProbeQueueCall(Tasks::Task *_task): task(_task)
+		ProbeQueueCall(Tasks::Task *_task, u32 _reply_to): task(_task), reply_to(_reply_to)
 		{ }
 
 		u32 operator()() {
-			Tasks::Task::Queue::Item *item = task->replyQueue->first();
+			Tasks::Task::Queue::Item *item;
+			if (reply_to == 0)
+				item = task->replyQueue->first();
+			else
+				item = task->replyQueue->itemByReplyTo(reply_to);
+
 			if (!item) {
 				_willBlock();
 				return 0;
@@ -52,10 +57,11 @@ namespace IPC {
 	
 	protected:
 		Tasks::Task *task;
+		u32 reply_to;
 	};
 
 	static struct queue_item_info *probeQueue_impl(bool block, u32 reply_to=0) {
-		ProbeQueueCall c(Akari->tasks->current);
+		ProbeQueueCall c(Akari->tasks->current, reply_to);
 		struct queue_item_info *r = reinterpret_cast<struct queue_item_info *>(c());
 		if (!block || !c.shallBlock())
 			return r;
@@ -82,8 +88,8 @@ namespace IPC {
 		return probeQueue_impl(false, reply_to);
 	}
 
-	u32 readQueue(char *dest, u32 offset, u32 len) { 
-		Tasks::Task::Queue::Item *item = Akari->tasks->current->replyQueue->first();
+	u32 readQueue(struct queue_item_info *info, char *dest, u32 offset, u32 len) { 
+		Tasks::Task::Queue::Item *item = Akari->tasks->current->replyQueue->itemById(info->id);
 		if (!item) return 0;		// XXX error out!
 
 		// If offset is out of bounds, just return.
@@ -98,7 +104,7 @@ namespace IPC {
 		return len;
 	}
 
-	void shiftQueue() {
+	void shiftQueue(struct queue_item_info *info) {
 		Akari->tasks->current->replyQueue->shift();
 	}
 

@@ -429,9 +429,29 @@ void Tasks::Task::Queue::shift() {
 	list.shift();
 }
 
+void Tasks::Task::Queue::remove(Item *item) {
+	list.remove(item);
+}
+
 Tasks::Task::Queue::Item *Tasks::Task::Queue::first() {
 	if (list.empty()) return 0;
 	return *list.begin();
+}
+
+Tasks::Task::Queue::Item *Tasks::Task::Queue::itemByReplyTo(u32 reply_to) {
+	for (LinkedList<Tasks::Task::Queue::Item *>::iterator it = list.begin(); it != list.end(); ++it) {
+		if ((*it)->info.reply_to == reply_to)
+			return *it;
+	}
+	return 0;
+}
+
+Tasks::Task::Queue::Item *Tasks::Task::Queue::itemById(u32 id) {
+	for (LinkedList<Tasks::Task::Queue::Item *>::iterator it = list.begin(); it != list.end(); ++it) {
+		if ((*it)->info.id == id)
+			return *it;
+	}
+	return 0;
 }
 
 Tasks::Task::Task(u8 cpl, const ASCIIString &name):

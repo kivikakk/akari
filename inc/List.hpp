@@ -113,6 +113,20 @@ public:
 		delete old;
 	}
 
+	void remove(const T &data) {
+		listNode **writeHead = &_begin;
+		while (*writeHead) {
+			if (*(*writeHead)->item == data) {
+				listNode *old = *writeHead;
+				*writeHead = (*writeHead)->next;
+				delete old->item;
+				delete old;
+				break;
+			}
+			writeHead = &(*writeHead)->next;
+		}
+	}
+
 	bool empty() const {
 		return !_begin;
 	}

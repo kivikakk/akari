@@ -63,7 +63,8 @@ extern "C" int start() {
 			buffer_len = len;
 		}
 
-		syscall_shiftQueue();
+		syscall_readQueue(&info, buffer, 0, len);
+		syscall_shiftQueue(&info);
 
 		if (buffer[0] == VFS_OP_READ) {
 			// Read
@@ -171,14 +172,11 @@ void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, ch
 		(length >> 24) & 0xFF, (length >> 16) & 0xFF, (length >> 8) & 0xFF, length & 0xFF
 	};
 
-	// u32 id =
-	syscall_sendQueue(mbr, 0, req, 12);
+	u32 msg_id = syscall_sendQueue(mbr, 0, req, 12);
 
-	// TODO XXX: need to listen for replies to a certain message, not just the next one.
-
-	struct queue_item_info *info = syscall_probeQueue();
+	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
 	if (info->data_len != length) syscall_panic("FAT: MBR read not expected number of bytes back?");
 
-	syscall_readQueue(buffer, 0, info->data_len);
-	syscall_shiftQueue();
+	syscall_readQueue(info, buffer, 0, info->data_len);
+	syscall_shiftQueue(info);
 }
