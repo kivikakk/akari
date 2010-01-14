@@ -50,88 +50,85 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 		case ET_CORE:	Akari->console->putString("core\n"); break;
 	}
 
+	Akari->console->putString("\nenumerating program header(s):\n");
+	int i; for (i = 0; i < hdr->e_phnum; ++i) {
+		Elf32_Phdr *ph = (Elf32_Phdr *)(image + hdr->e_phoff + hdr->e_phentsize * i);
+		switch (ph->p_type) {
+			case PT_NULL:		Akari->console->putString("\tnull\n"); break;
+			case PT_LOAD:		Akari->console->putString("\tloadable\n"); break;
+			case PT_DYNAMIC:	Akari->console->putString("\tdynamic linkage\n"); break;
+			default:		Akari->console->putString("\tother("); Akari->console->putInt(ph->p_type, 16); Akari->console->putString(")\n"); break;
+		}
+		Akari->console->putString("\t\tvaddr/paddr: "); Akari->console->putInt(ph->p_vaddr, 16); Akari->console->putString("/"); Akari->console->putInt(ph->p_paddr, 16); Akari->console->putChar('\n');
+		Akari->console->putString("\t\tfilesz/memsz: "); Akari->console->putInt(ph->p_filesz, 16); Akari->console->putString("/"); Akari->console->putInt(ph->p_memsz, 16); Akari->console->putChar('\n');
+		Akari->console->putString("\t\toffset/align: "); Akari->console->putInt(ph->p_offset, 16); Akari->console->putString("/"); Akari->console->putInt(ph->p_align, 16); Akari->console->putChar('\n');
+
+	}
+
 	return true;
 }
 
 #if 0
-/*
 	*/
 
-/*
-	puts("\nenumerating program header(s):\n");
-	int i; for (i = 0; i < hdr->e_phnum; ++i) {
-		Elf32_Phdr *ph = (Elf32_Phdr *)(file_buffer + hdr->e_phoff + hdr->e_phentsize * i);
-		switch (ph->p_type) {
-			case PT_NULL:		puts("\tnull\n"); break;
-			case PT_LOAD:		puts("\tloadable\n"); break;
-			case PT_DYNAMIC:	puts("\tdynamic linkage\n"); break;
-			default:		puts("\tother("); puthexlong(ph->p_type); puts(")\n"); break;
-		}
-		puts("\t\tvaddr/paddr: "); puthexlong(ph->p_vaddr); puts("/"); puthexlong(ph->p_paddr); locatenl();
-		puts("\t\tfilesz/memsz: "); puthexlong(ph->p_filesz); puts("/"); puthexlong(ph->p_memsz); locatenl();
-		puts("\t\toffset/align: "); puthexlong(ph->p_offset); puts("/"); puthexlong(ph->p_align); locatenl();
-
-	}
-	*/
-
-	// unsigned long stloc = ((Elf32_Shdr *)(file_buffer + hdr->e_shoff + hdr->e_shentsize * hdr->e_shstrndx))->sh_offset;
+	// unsigned long stloc = ((Elf32_Shdr *)(image + hdr->e_shoff + hdr->e_shentsize * hdr->e_shstrndx))->sh_offset;
 	
 	Map<unsigned long, unsigned long> program_space;
 
-	// puts("enumerating section header(s):\n");
+	// Akari->console->putString("enumerating section header(s):\n");
 	for (int i = 0; i < hdr->e_shnum; ++i) {
-		Elf32_Shdr *sh = (Elf32_Shdr *)(file_buffer + hdr->e_shoff + hdr->e_shentsize * i);
-		// puts("\t"); puts((char *)(file_buffer + stloc + sh->sh_name)); puts(" [");
+		Elf32_Shdr *sh = (Elf32_Shdr *)(image + hdr->e_shoff + hdr->e_shentsize * i);
+		// Akari->console->putString("\t"); Akari->console->putString((char *)(image + stloc + sh->sh_name)); Akari->console->putString(" [");
 
 /*
 		switch (sh->sh_type) {
-			case SHT_NULL:		puts("null"); break;
-			case SHT_PROGBITS:	puts("progbits"); break;
-			case SHT_SYMTAB:	puts("symbol table"); break;
-			case SHT_STRTAB:	puts("string table"); break;
-			default:		puts("other("); puthexlong(sh->sh_type); puts(")"); break;
+			case SHT_NULL:		Akari->console->putString("null"); break;
+			case SHT_PROGBITS:	Akari->console->putString("progbits"); break;
+			case SHT_SYMTAB:	Akari->console->putString("symbol table"); break;
+			case SHT_STRTAB:	Akari->console->putString("string table"); break;
+			default:		Akari->console->putString("other("); Akari->console->putInt(sh->sh_type, 16); Akari->console->putString(")"); break;
 		}
-		puts("] at "); puthexlong(sh->sh_offset);
-		puts(" -> "); puthexlong(sh->sh_addr);
-		puts("; ");
+		Akari->console->putString("] at "); Akari->console->putInt(sh->sh_offset, 16);
+		Akari->console->putString(" -> "); Akari->console->putInt(sh->sh_addr, 16);
+		Akari->console->putString("; ");
 		*/
 
 		if (sh->sh_addr) {
-		//	puts("placing in image");
+		//	Akari->console->putString("placing in image");
 
 			unsigned long phys = sh->sh_offset, virt = sh->sh_addr, copied = 0;
 			while (copied < sh->sh_size) {
 				// we copy up until the end of one frame
 				unsigned long copy = 0x1000 - (virt % 0x1000);
-				puts("locating "); puthexlong((virt + copied) & 0xfffff000); puts(" ... ");
+				Akari->console->putString("locating "); Akari->console->putInt((virt + copied) & 0xfffff000, 16); Akari->console->putString(" ... ");
 				Page *page = new_task->page_directory->get_page((virt + copied) & 0xfffff000, true);
 
 				unsigned long virt_frame;
 				if (page->page_address) {
 					// retrieve old virt frame
-					puts("searching "); puthexlong(page->page_address * 0x1000); locatenl();
+					Akari->console->putString("searching "); Akari->console->putInt(page->page_address * 0x1000, 16); Akari->console->putChar('\n');
 					virt_frame = program_space.get(page->page_address * 0x1000);
 				} else {
 					unsigned long phys_frame;
 					virt_frame = (unsigned long)kmalloc_ap(0x1000, &phys_frame);
 					page->direct_frame(phys_frame, false, true);	// make sure we put the phys one in here; TODO permissions
 					program_space.set(phys_frame, virt_frame);
-					puts("storing "); puthexlong(phys_frame); locatenl();
+					Akari->console->putString("storing "); Akari->console->putInt(phys_frame, 16); Akari->console->putChar('\n');
 				}
 
 				unsigned char *dest = (unsigned char *)(virt_frame + ((virt + copied) % 0x1000));
-				memcpy(dest, (unsigned char *)(file_buffer + phys + copied), copy);
+				memcpy(dest, (unsigned char *)(image + phys + copied), copy);
 
 				copied += copy;
 			}
 		} else {
-			// puts("ignored");
+			// Akari->console->putString("ignored");
 		}
 
-		// locatenl();
+		// Akari->console->putChar('\n');
 	}
 
-	kfree(file_buffer);
+	kfree(image);
 
 	add_task_to_scheduler(new_task, true);
 }
