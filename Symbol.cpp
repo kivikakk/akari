@@ -35,12 +35,12 @@ Symbol::Symbol(const Symbol &symbol): _content(POSIX::strdup(symbol._content))
 
 Symbol::~Symbol() {
 	if (_content)
-		delete _content;
+		delete [] _content;
 }
 
 Symbol &Symbol::operator =(const Symbol &symbol) {
 	if (_content)
-		delete _content;
+		delete [] _content;
 	_content = POSIX::strdup(symbol._content);
 	return *this;
 }
