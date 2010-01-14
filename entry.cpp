@@ -17,6 +17,7 @@
 #include <entry.hpp>
 #include <debug.hpp>
 #include <Akari.hpp>
+#include <List.hpp>
 #include <UserGates.hpp>
 #include <Tasks.hpp>
 #include <Memory.hpp>
@@ -77,6 +78,12 @@ static void AkariEntryCont() {
 	ASSERT(Akari->memory->_activeDirectory == Akari->memory->_kernelDirectory);
 	for (u32 i = UKERNEL_STACK_POS; i >= UKERNEL_STACK_POS - UKERNEL_STACK_SIZE; i -= 0x1000)
 		Akari->memory->_activeDirectory->getPage(i, true)->allocAnyFrame(false, true);
+
+	LinkedList<module_t> modules;
+	module_t *module_ptr = (module_t *)AkariMultiboot->mods_addr;
+	for (unsigned int i = 0; i < AkariMultiboot->mods_count; i++) {
+		modules.push_back(*module_ptr++);
+	}
 
 	// Initial task
 	Tasks::Task *base = Tasks::Task::BootstrapInitialTask(3, Akari->memory->_kernelDirectory);
