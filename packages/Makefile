@@ -8,5 +8,5 @@ $(PACKAGES): force_subdir
 	cd $@; $(MAKE) $(MFLAGS) all
 
 force_subdir:
-	true
+	@true
 

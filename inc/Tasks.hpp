@@ -113,7 +113,7 @@ public:
 		};
 
 		static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);
-		static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase);
+		static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase, const char *name);
 
 		bool getIOMap(u16 port) const;
 		void setIOMap(u16 port, bool enabled);
@@ -133,6 +133,7 @@ public:
 
 		// GUID and other identifying information.
 		pid_t id;
+		ASCIIString name;
 		Symbol registeredName;
 		
 		// Real task process data.

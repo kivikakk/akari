@@ -33,12 +33,7 @@
 #define INIT_STACK_SIZE		0x2000
 
 static void AkariEntryCont();
-void SubProcess();
 
-void KeyboardProcess();
-void ShellProcess();
-void ATAProcess();
-void MBRProcess();
 void IdleProcess();
 
 multiboot_info_t *AkariMultiboot;
@@ -96,21 +91,21 @@ static void AkariEntryCont() {
 	Akari->descriptor->gdt->setTSSIOMap(base->iomap);
 
 	// Idle task
-	Tasks::Task *idle = Tasks::Task::CreateTask(reinterpret_cast<u32>(&IdleProcess), 0, true, 0, Akari->memory->_kernelDirectory);
+	Tasks::Task *idle = Tasks::Task::CreateTask(reinterpret_cast<u32>(&IdleProcess), 0, true, 0, Akari->memory->_kernelDirectory, "idle");
 	Akari->tasks->current->next = idle;
 
 	// Keyboard driver task
-	Tasks::Task *kbdriver = Tasks::Task::CreateTask(reinterpret_cast<u32>(&KeyboardProcess), 3, true, 0, Akari->memory->_kernelDirectory);
-	kbdriver->setIOMap(0x60, true);
-	kbdriver->setIOMap(0x64, true);
-	idle->next = kbdriver;
+	//Tasks::Task *kbdriver = Tasks::Task::CreateTask(reinterpret_cast<u32>(&KeyboardProcess), 3, true, 0, Akari->memory->_kernelDirectory);
+	//kbdriver->setIOMap(0x60, true);
+	//kbdriver->setIOMap(0x64, true);
+	//idle->next = kbdriver;
 
 	// Shell
-	Tasks::Task *shell = Tasks::Task::CreateTask(reinterpret_cast<u32>(&ShellProcess), 3, true, 0, Akari->memory->_kernelDirectory);
-	kbdriver->next = shell;
+	//Tasks::Task *shell = Tasks::Task::CreateTask(reinterpret_cast<u32>(&ShellProcess), 3, true, 0, Akari->memory->_kernelDirectory);
+	//kbdriver->next = shell;
 	
 	// ATA driver
-	Tasks::Task *ata = Tasks::Task::CreateTask(0 /* Entry point filled out by ELF loader */, 3, true, 0, Akari->memory->_kernelDirectory);
+	Tasks::Task *ata = Tasks::Task::CreateTask(0 /* Entry point filled out by ELF loader */, 3, true, 0, Akari->memory->_kernelDirectory, "ata");
 	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(modules.begin()->mod_start));
 
 	ata->setIOMap(0x1F7, true);
@@ -120,11 +115,12 @@ static void AkariEntryCont() {
 	}
 	ata->setIOMap(0x3F6, true);
 	ata->setIOMap(0x376, true);
-	shell->next = ata;
+	//shell->next = ata;
+	idle->next = ata;
 	
 	// MBR driver
-	Tasks::Task *mbr = Tasks::Task::CreateTask(reinterpret_cast<u32>(&MBRProcess), 3, true, 0, Akari->memory->_kernelDirectory);
-	ata->next = mbr;
+	//Tasks::Task *mbr = Tasks::Task::CreateTask(reinterpret_cast<u32>(&MBRProcess), 3, true, 0, Akari->memory->_kernelDirectory);
+	//ata->next = mbr;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);

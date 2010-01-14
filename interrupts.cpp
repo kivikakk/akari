@@ -68,7 +68,11 @@ void *isr_handler(struct modeswitch_registers *r) {
 		Akari->console->putInt(r->callback.eflags, 16);
 		Akari->console->putString(", user ESP (may be garbage): ");
 		Akari->console->putInt(r->useresp, 16);
-		Akari->console->putString("\nProcess killed.\n");
+		Akari->console->putString("\nProcess 0x");
+		Akari->console->putInt(Akari->tasks->current->id, 16);
+		Akari->console->putString(" \"");
+		Akari->console->putString(Akari->tasks->current->name.getCString());
+		Akari->console->putString("\" killed.\n");
 
 		// TODO OMG: refactor this code! It's terrible! Half-copied from
 		// UserCalls.cpp and the surrounding architecture to skip a killed

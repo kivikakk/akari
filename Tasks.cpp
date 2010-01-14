@@ -197,8 +197,9 @@ Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pa
 	return nt;
 }
 
-Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase) {
+Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase, const char *name) {
 	Task *nt = new Task(cpl);
+	nt->name = name;
 
 	nt->pageDir = pageDirBase->clone();
 
