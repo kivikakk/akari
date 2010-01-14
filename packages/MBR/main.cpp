@@ -19,28 +19,7 @@
 #include <UserIPCQueue.hpp>
 #include <debug.hpp>
 
-typedef struct
-{
-	u8 bootable;	/* 0x80 if bootable, 0 otherwise */
-	u8 begin_head;
-	unsigned begin_cylinderhi : 2; /* 2 high bits of start cylinder */
-	unsigned begin_sector : 6;
-	u8 begin_cylinderlo; /* low bits of start cylinder */
-	u8 system_id;
-	u8 end_head;
-	unsigned end_cylinderhi : 2; /* 2 high bits of end cylinder */
-	unsigned end_sector : 6;
-	u8 end_cylinderlo; /* low bits of end cylinder */
-	u32 begin_disk_sector;
-	u32 sector_count;
-} __attribute__ ((__packed__)) primary_partition_t;
-
-typedef struct
-{
-	u8 boot[446];
-	primary_partition_t partitions[4];
-	u16 signature; /* should always be 0xaa55 */
-} __attribute__ ((__packed__)) master_boot_record_t;
+#include "main.hpp"
 
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer);
 void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer);
@@ -56,23 +35,24 @@ extern "C" int start() {
 	if (!syscall_registerName("system.io.mbr"))
 		syscall_panic("could not register system.io.mbr");
 
-	syscall_puts("MBR: has ata ");
-	syscall_putl(ata, 16);
-	syscall_puts("\n");
-
 	ata_read_data(0, 0, 512, reinterpret_cast<char *>(&hdd_mbr));
 	if (hdd_mbr.signature != 0xAA55) syscall_panic("Invalid MBR!\n");
 	
 	syscall_puts("MBR driver entering loop\n");
-#define MBR_BUFFER 10240
-	char buffer[MBR_BUFFER];
+
+	char *buffer = 0; u32 buffer_len = 0;
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
 		// We assign (copy) this so we don't lose it after shiftQueue().
-
 		u32 len = info.data_len;
-		if (len > MBR_BUFFER) syscall_panic("MBR buffer overflow");
+		if (len > MBR_MAX_WILL_ALLOC) syscall_panic("MBR driver given more data than would like to alloc");
+		if (len > buffer_len) {
+			if (buffer) delete [] buffer;
+			buffer = new char[len];
+			buffer_len = len;
+		}
+
 		syscall_readQueue(buffer, 0, len);
 
 		// Be sure to shift before going doing a call out that might want
@@ -87,7 +67,12 @@ extern "C" int start() {
 			u16 offset = buffer[6] << 8 | buffer[7];
 			u32 length = buffer[8] << 24 | buffer[9] << 16 | buffer[10] << 8 | buffer[11];
 
-			if (length > MBR_BUFFER) syscall_panic("Static buffer in MBR too small for req'd amount");
+			if (length > MBR_MAX_WILL_ALLOC) syscall_panic("MBR request asked for more than we'd like to alloc");
+			if (length > buffer_len) {
+				delete [] buffer;
+				buffer = new char[length];
+				buffer_len = length;
+			}
 
 			partition_read_data(partition_id, sector, offset, length, buffer);
 
@@ -102,13 +87,12 @@ extern "C" int start() {
 }
 
 
-void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer)
-{
+void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer) {
 	u32 new_sector = hdd_mbr.partitions[partition_id].begin_disk_sector + sector;
-
 	ata_read_data(new_sector, offset, length, buffer);
 }
 
+// TODO: place this outside.
 void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer) {
 	// Request to ATA driver: u8 0x0 ('read'), u32 sector, u16 offset, u32 length
 	// Total: 11 bytes

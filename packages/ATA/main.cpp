@@ -52,8 +52,8 @@ extern "C" int start() {
 	char *buffer = 0; u32 buffer_len = 0;
 
 	while (true) {
-		struct queue_item_info *info = syscall_probeQueue();
-		u32 len = info->data_len;
+		struct queue_item_info info = *syscall_probeQueue();
+		u32 len = info.data_len;
 		if (len > ATA_MAX_WILL_ALLOC) syscall_panic("ATA driver given more data than would like to alloc");
 		if (len > buffer_len) {
 			if (buffer) delete [] buffer;
@@ -62,6 +62,7 @@ extern "C" int start() {
 		}
 
 		syscall_readQueue(buffer, 0, len);
+		syscall_shiftQueue();
 
 		if (buffer[0] == 0) {
 			// Read
@@ -79,7 +80,7 @@ extern "C" int start() {
 
 			ata_read_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer));
 
-			syscall_sendQueue(info->from, info->id, buffer, length);
+			syscall_sendQueue(info.from, info.id, buffer, length);
 
 		} else if (buffer[0] == 1) {
 			// Write
@@ -93,12 +94,10 @@ extern "C" int start() {
 
 			ata_write_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer + 11));
 
-			syscall_sendQueue(info->from, info->id, "\1", 1);
+			syscall_sendQueue(info.from, info.id, "\1", 1);
 		} else {
 			syscall_panic("ATA driver confused");
 		}
-
-		syscall_shiftQueue();
 	}
 
 	syscall_panic("ATA ran off the end of the infinite loop");
