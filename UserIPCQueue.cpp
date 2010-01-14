@@ -105,7 +105,7 @@ namespace IPC {
 	}
 
 	void shiftQueue(struct queue_item_info *info) {
-		Akari->tasks->current->replyQueue->shift();
+		Akari->tasks->current->replyQueue->remove(info);
 	}
 
 	u32 sendQueue(pid_t id, u32 reply_to, const char *buffer, u32 len) {
