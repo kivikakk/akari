@@ -35,6 +35,9 @@ namespace User {
 	void *malloc(u32 n);
 	void free(void *p);
 	void *memcpy(void *dest, const void *src, u32 n);
+	char *strcpy(char *dest, const char *src);
+	s32 strcmp(const char *s1, const char *s2);
+	s32 stricmp(const char *s1, const char *s2);
 }
 
 #elif defined(__AKARI_LINKAGE)
@@ -51,6 +54,9 @@ DEFN_SYSCALL0(defer, 8, void);
 DEFN_SYSCALL1(malloc, 9, void *, u32);
 DEFN_SYSCALL1(free, 10, void, void *);
 DEFN_SYSCALL3(memcpy, 11, void *, void *, const void *, u32);
+DEFN_SYSCALL2(strcpy, 28, char *, char *, const char *);
+DEFN_SYSCALL2(strcmp, 29, s32, const char *, const char *);
+DEFN_SYSCALL2(stricmp, 30, s32, const char *, const char *);
 
 extern "C" void __cxa_pure_virtual() {
 	syscall_panic("__cxa_pure_virtual called in usermode");
@@ -90,6 +96,9 @@ DECL_SYSCALL0(defer, void);
 DECL_SYSCALL1(malloc, void *, u32);
 DECL_SYSCALL1(free, void, void *);
 DECL_SYSCALL3(memcpy, void *, void *, const void *, u32);
+DECL_SYSCALL2(strcpy, char *, char *, const char *);
+DECL_SYSCALL2(strcmp, s32, const char *, const char *);
+DECL_SYSCALL2(stricmp, s32, const char *, const char *);
 
 extern "C" void __cxa_pure_virtual();
 void *operator new(size_t);

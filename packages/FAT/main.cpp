@@ -23,7 +23,12 @@
 #include "../VFS/VFSProto.hpp"
 
 bool init();
+void fat_read_cluster(u32 cluster, char *buffer);
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer);
+u32 fat_read_data(u32 inode, u32 offset, u32 length, char *buffer);
+VFSDirent *fat_readdir(u32 inode, u32 index);
+VFSNode *fat_finddir(u32 inode, const char *name);
+static char *get_filename(const fat_dirent_t *fd);
 
 pid_t mbr = 0;
 
@@ -67,12 +72,9 @@ extern "C" int start() {
 		syscall_shiftQueue(&info);
 
 		if (buffer[0] == VFS_OP_READ) {
-			// Read
-
-			u8 partition_id = buffer[1];
-			u32 sector = buffer[2] << 24 | buffer[3] << 16 | buffer[4] << 8 | buffer[5];
-			u16 offset = buffer[6] << 8 | buffer[7];
-			u32 length = buffer[8] << 24 | buffer[9] << 16 | buffer[10] << 8 | buffer[11];
+			u32 inode = buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4],
+				offset = buffer[5] << 24 | buffer[6] << 16 | buffer[7] << 8 | buffer[8],
+				length = buffer[9] << 24 | buffer[10] << 16 | buffer[11] << 8 | buffer[12];
 
 			if (length > FAT_MAX_WILL_ALLOC) syscall_panic("FAT: request asked for more than we'd like to alloc");
 			if (length > buffer_len) {
@@ -81,10 +83,13 @@ extern "C" int start() {
 				buffer_len = length;
 			}
 
-			partition_read_data(partition_id, sector, offset, length, buffer);
+			u32 bytes_read = fat_read_data(inode, offset, length, buffer);
+			syscall_sendQueue(info.from, info.id, buffer, bytes_read);
+		} else if (buffer[0] == VFS_OP_READDIR) {
+			u32 inode = buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4],
+				index = buffer[5] << 24 | buffer[6] << 16 | buffer[7] << 8 | buffer[8];
 
-			syscall_puts("FAT: reply length "); syscall_putl(length, 16); syscall_putc('\n');
-			syscall_sendQueue(info.from, info.id, buffer, length);
+			fat_readdir(inode, index);
 		} else {
 			syscall_panic("FAT: confused");
 		}
@@ -160,6 +165,10 @@ bool init() {
 	return true;
 }
 
+void fat_read_cluster(u32 cluster, char *buffer) {
+	partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
+}
+
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer) {
 	// Request to MBR driver: u8 0x0 ('read'), u8 parition_id, u32 sector, u16 offset, u32 length
 	// Total: 12 bytes
@@ -179,4 +188,160 @@ void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, ch
 
 	syscall_readQueue(info, buffer, 0, info->data_len);
 	syscall_shiftQueue(info);
+}
+
+
+u32 fat_read_data(u32 inode, u32 offset, u32 length, char *buffer) {
+	// TODO: follow clusters while offset >= 2048
+	// TODO: figure out what the above TODO means
+	
+	u32 current_cluster = inode;
+	static char scratch[2048];
+
+	// XXX We don't know node->length!
+	/*
+	if (length + offset > node->length) {
+		if (offset > node->length) return 0;
+		length = node->length - offset;
+	}
+	*/
+
+	u32 copied = 0;
+	while (length > 0) {
+		fat_read_cluster(current_cluster, scratch);
+		u16 copy_len = min(length, 2048 - offset);
+		syscall_memcpy(buffer, scratch + offset, copy_len);
+
+		buffer += copy_len; length -= copy_len; copied += copy_len;
+
+		if (length) {
+			// follow cluster
+			if (fat32esque) {
+				// u32 fat_entry = reinterpret_cast<u32 *>(fat_data)[current_cluster];
+			} else {
+				u32 fat_entry = reinterpret_cast<u32 *>(fat_data)[current_cluster];
+				if (fat_entry == 0) syscall_panic("FAT: lead to a free cluster!");
+				else if (fat_entry == 1) syscall_panic("FAT: lead to a reserved cluster!");
+				else if (fat_entry >= 0xFFF0 && fat_entry <= 0xFFF7) syscall_panic("FAT: lead to an end-reserved cluster!");
+				else if (fat_entry >= 0xFFF8) {
+					// looks like end-of-file.
+					return copied;
+				} else {
+					current_cluster = fat_entry;
+				}
+			}
+		}
+	}
+
+	return copied;
+}
+
+VFSDirent *fat_readdir(u32 inode, u32 index) {
+
+	if (inode == 0) {
+		// root
+		char *cluster = new char[512 * root_dir_sectors];
+		partition_read_data(0, root_cluster, 0, 512 * root_dir_sectors, cluster);
+		
+		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
+
+		u32 current = 0;
+		for (u32 position = 0; position < (512 / 32) * root_dir_sectors; ++position, ++fd) {
+			if (fd->filename[0] == 0)
+				break;
+			else if (fd->filename[0] == 0xe5)
+				continue;
+			else if (fd->filename[11] == 0x0f)
+				continue;	// TODO LFN
+			else if (fd->attributes & FAT_VOLUME_ID)
+				continue;	// fd->filename is vol ID
+
+			// dir or file now!
+			else if (current++ == index) {
+				// bingo!
+				VFSDirent *dirent = new VFSDirent;
+
+				char *filename = get_filename(fd);
+				syscall_strcpy(dirent->name, filename);
+				delete [] filename;
+
+				dirent->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
+
+				delete [] cluster;
+				return dirent;
+			}
+		}
+
+		delete [] cluster;
+		return 0;
+	}
+
+	syscall_panic("FAT: oops. can't readdir not-0 now.");
+	return 0;
+}
+
+VFSNode *fat_finddir(u32 inode, const char *name) {
+	if (inode == 0) {
+		// root
+		char *cluster = new char[512 * root_dir_sectors];
+		partition_read_data(0, root_cluster, 0, 512 * root_dir_sectors, cluster);
+
+		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
+		for (u32 position = 0; position < (512 / 32) * root_dir_sectors; ++position, ++fd) {
+			if (fd->filename[0] == 0)
+				break;
+			else if (fd->filename[0] == 0xe5)
+				continue;
+			else if (fd->filename[11] == 0x0f)
+				continue;	// TODO LFN
+			else if (fd->attributes & FAT_VOLUME_ID)
+				continue;
+
+			char *filename = get_filename(fd);
+			if (syscall_stricmp(filename, name) == 0) {
+				delete [] filename;
+
+				VFSNode *node = new VFSNode;
+				syscall_strcpy(node->name, name);
+				node->flags = (fd->attributes & FAT_DIRECTORY) ? VFS_DIRECTORY : VFS_FILE;
+				node->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
+				node->length = fd->size;
+				node->impl = 0;
+
+				// TODO: set node fs to FAT
+				delete [] cluster;
+				return node;
+			}
+			delete [] filename;
+		}
+
+		delete [] cluster;
+		return 0;
+	}
+
+	syscall_panic("FAT: oops. can't finddir not-0");
+	return 0;
+}
+
+static char *get_filename(const fat_dirent_t *fd) {
+	char *filename_return = new char[13];
+
+	char *write = filename_return;
+	const char *read = fd->filename;
+	u8 read_past_tense = 0;
+	while (read_past_tense < 8 && *read > 0x20) {
+		read_past_tense++;
+		*write++ = *read++;
+	}
+	read += (8 - read_past_tense);
+	read_past_tense = 0;
+	if (*read > 0x20) {
+		*write++ = '.';
+		while (read_past_tense < 3 && *read > 0x20) {
+			read_past_tense++;
+			*write++ = *read++;
+		}
+	}
+	*write++ = 0;
+	return filename_return;
 }

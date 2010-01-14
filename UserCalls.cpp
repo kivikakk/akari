@@ -108,5 +108,17 @@ namespace User {
 			*w++ = *r++;
 		return dest;
 	}
+
+	char *strcpy(char *dest, const char *src) {
+		return POSIX::strcpy(dest, src);
+	}
+
+	s32 strcmp(const char *s1, const char *s2) {
+		return POSIX::strcmp(s1, s2);
+	}
+
+	s32 stricmp(const char *s1, const char *s2) {
+		return POSIX::stricmp(s1, s2);
+	}
 }
 #endif

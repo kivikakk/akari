@@ -54,6 +54,28 @@ namespace POSIX {
 		return 0;
 	}
 
+	char tolower(char c) {
+		if (c < 'A' || c > 'Z') return c;
+		return c + ('a' - 'A');
+	}
+
+	char toupper(char c) {
+		if (c < 'a' || c > 'z') return c;
+		return c - ('a' - 'A');
+	}
+
+	s32 stricmp(const char *s1, const char *s2) {
+		while (*s1 && *s2) {
+			if (toupper(*s1) < toupper(*s2)) return -1;
+			if (toupper(*s1) > toupper(*s2)) return 1;
+			++s1, ++s2;
+		}
+		// One or both may be NUL.
+		if (toupper(*s1) < toupper(*s2)) return -1;
+		if (toupper(*s1) > toupper(*s2)) return 1;
+		return 0;
+	}
+
 	char *strcpy(char *dest, const char *src) {
 		char *orig = dest;
 		while (*src)

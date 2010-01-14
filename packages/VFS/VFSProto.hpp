@@ -24,5 +24,25 @@
 #define VFS_OP_READDIR	0x4
 #define VFS_OP_FINDDIR	0x5
 
+#define VFS_FILE     0x01
+#define VFS_DIRECTORY    0x02
+#define VFS_CHARDEVICE   0x03
+#define VFS_BLOCKDEVICE  0x04
+#define VFS_PIPE     0x05
+#define VFS_SYMLINK  0x06
+#define VFS_NON_MOUNT_MASK   0x07
+#define VFS_MOUNTPOINT   0x08
+
+
+typedef struct {
+	char name[128];
+	u32 inode;
+} VFSDirent;
+
+typedef struct {
+	char name[128];
+	u32 flags, inode, length, impl;
+} VFSNode;
+
 #endif
 

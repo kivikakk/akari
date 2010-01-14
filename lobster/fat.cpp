@@ -30,117 +30,6 @@ static unsigned long root_dir_sectors = 0xdeadbeef, first_data_sector = 0xdeadbe
 static unsigned char fat_type, fat32esque;
 static unsigned long root_cluster = 0xdeadbeef;
 
-void installfat(void)
-{
-	/* We'll just try one. */
-	partition_read_data(0, 0, 0, sizeof(fat_boot_record_t), (unsigned char *)&boot_record);
-
-	fat32esque = 0xff;
-	if ((boot_record.total_sectors_small > 0) && (boot_record.ebr.signature == 0x28 || boot_record.ebr.signature == 0x29))
-		fat32esque = 0;
-	else if ((boot_record.total_sectors_large > 0) && (boot_record.fat32_ebr.fat_record.signature == 0x28 || boot_record.fat32_ebr.fat_record.signature == 0x29))
-		fat32esque = 1;
-	
-	if (fat_type == 0xff) {
-		puts("We don't understand this sort of FAT.\n");
-		return;
-	}
-
-	if (!fat32esque) {
-		root_dir_sectors = ((boot_record.directory_entries * 32) + (boot_record.bytes_per_sector - 1)) / boot_record.bytes_per_sector;
-		fat_sectors = boot_record.sectors_per_fat;
-		first_data_sector = boot_record.reserved_sectors + fat_sectors * boot_record.fats;
-		first_fat_sector = boot_record.reserved_sectors;
-		data_sectors = boot_record.total_sectors_small - (boot_record.reserved_sectors + (boot_record.fats * boot_record.sectors_per_fat) + root_dir_sectors);
-		total_clusters = data_sectors / boot_record.sectors_per_cluster;
-
-		root_cluster = first_data_sector;
-
-		if (total_clusters < 4095)
-			fat_type = 12;
-		else if (total_clusters < 65525)
-			fat_type = 16;
-		else if (total_clusters == 0)
-			panic("We think it's not FAT32 yet the cluster count is 0.\n");
-		else
-			panic("We think it's not FAT32 yet the cluster count is 65525+.\n");
-	} else {
-		/* FAT32 */
-		fat_sectors = (boot_record.fat32_ebr.fat_size + (boot_record.bytes_per_sector - 1)) / boot_record.bytes_per_sector;
-		first_data_sector = boot_record.reserved_sectors + fat_sectors * boot_record.fats;
-		first_fat_sector = boot_record.reserved_sectors;
-
-		root_cluster = boot_record.fat32_ebr.root_directory_cluster;
-		fat_type = 32;
-	}
-
-	#ifdef SHOW_FAT_INFORMATION
-		puts("No. of FATs: "); puthexlong(boot_record.fats); locatenl();
-		puts("Sectors per FAT: "); puthexlong(fat_sectors); locatenl();
-		puts("Bytes per sector: "); puthexlong(boot_record.bytes_per_sector); locatenl();
-		puts("Sectors per cluster: "); puthexlong(boot_record.sectors_per_cluster); locatenl();
-		puts("First data sector: "); puthexlong(first_data_sector); locatenl();
-		puts("First FAT sector: "); puthexlong(first_fat_sector); locatenl();
-
-		if (!fat32esque) {
-			puts("Total data sectors: "); puthexlong(data_sectors); locatenl();
-			puts("Total clusters: "); puthexlong(total_clusters); locatenl();
-			puts("Root dir sectors: "); puthexlong(root_dir_sectors); locatenl();
-		}
-
-		puts("Root cluster: "); puthexlong(root_cluster); locatenl();
-	#endif
-
-	fat_data = (unsigned char *)kmalloc(boot_record.sectors_per_cluster * boot_record.bytes_per_sector);
-
-	partition_read_data(0, first_fat_sector, 0, boot_record.sectors_per_cluster * boot_record.bytes_per_sector, fat_data);
-}
-
-unsigned long read_data_fat(fs_node_t *node, unsigned long offset, unsigned long size, unsigned char *buffer)
-{ 
-	unsigned long current_cluster = node->inode, fat_entry;
-	unsigned short copy_len;
-	unsigned long copied = 0;
-	unsigned char scratch[2048];
-
-	// TODO: follow clusters while offset>=2048
-
-	// cap the read to the actual bounds of the file
-	if (size + offset > node->length)
-		size = node->length - offset;	// if it goes negative, the loop will just never go through
-
-	while (size > 0) {
-		fat_read_cluster(current_cluster, scratch);
-		copy_len = (size > (2048 - offset) ? (2048 - offset) : size);
-		memcpy(buffer, scratch + offset, copy_len);
-
-		buffer += copy_len; size -= copy_len; copied += copy_len;
-		offset = 0;
-
-		// follow cluster if we have to
-		if (size) {
-			if (fat32esque) {
-				fat_entry = ((unsigned long *)fat_data)[current_cluster];
-			} else {
-				fat_entry = ((unsigned short *)fat_data)[current_cluster];
-				if (fat_entry == 0)
-					panic("Lead to a free cluster!\n");
-				else if (fat_entry == 1)
-					panic("Lead to a reserved cluster!\n");
-				else if (fat_entry >= 0xfff0 && fat_entry <= 0xfff7)
-					panic("Lead to an end-reserved cluster!\n");
-				else if (fat_entry >= 0xfff8)
-					return copied;
-				else
-					current_cluster = fat_entry;
-			}
-		}
-	}
-
-
-	return copied;
-}
-
 unsigned long write_data_fat(fs_node_t *node, unsigned long offset, unsigned long size, unsigned char *buffer)
 {
 	panic("woahh, tiger\n");
@@ -149,48 +38,6 @@ unsigned long write_data_fat(fs_node_t *node, unsigned long offset, unsigned lon
 // TODO
 void open_fat(fs_node_t *node) { }
 void close_fat(fs_node_t *node) { }
-
-dirent_t *readdir_fat(fs_node_t *node, unsigned long index)
-{
-	unsigned char *cluster = (unsigned char *)kmalloc(512 * root_dir_sectors);
-
-	if (node->inode == 0) {
-		// root inode
-		// <-- note this next line completely disagrees with how we do FAT32
-		partition_read_data(0, root_cluster, 0, 512 * root_dir_sectors, cluster);
-		
-		fat_dirent_t *fd = (fat_dirent_t *)cluster;
-		unsigned long current = 0, position;
-		for (position = 0; position < (512 / 32) * root_dir_sectors; ++position, ++fd) {
-			if (fd->filename[0] == 0)
-				break;
-			else if(fd->filename[0] == (signed char)0xe5)
-				continue;
-			else if (fd->filename[11] == 0x0f)
-				continue;	// TODO LFN
-			else if (fd->attributes & FAT_VOLUME_ID)
-				continue;	// fd->filename is VOL ID
-
-			// it must be a directory or file by this stage
-			else if (current++ == index) {
-				// we found it, baby.
-				dirent_t *my_dirent = (dirent_t *)kmalloc(sizeof(dirent_t));
-				char *filename = get_filename(fd);
-				strcpy(my_dirent->name, filename);
-				kfree(filename);
-				my_dirent->ino = (fd->first_cluster_high << 16) | fd->first_cluster_low;
-				kfree(cluster);
-				return my_dirent;
-			}
-		}
-
-		kfree(cluster);
-		return 0;		// 404 Not Found
-	} 
-
-	kfree(cluster);
-	panic("whoops.\n");
-}
 
 fs_node_t *finddir_fat(fs_node_t *node, const char *name)
 {
@@ -252,12 +99,6 @@ unsigned long fat_root_dir_length()
 		return 0xdeadbeef;
 	else
 		return root_dir_sectors;
-}
-
-void fat_read_cluster(unsigned long cluster, unsigned char *buffer)
-{
-	/* `absolute' cluster */
-	partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
 }
 
 static char *get_filename(const fat_dirent_t *fd)
