@@ -16,6 +16,5 @@
 
 TARGET = ATA
 
-include ../../Makefile.inc
 include ../PackageMakefile.inc
 

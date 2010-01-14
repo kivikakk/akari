@@ -68,7 +68,7 @@ char hdd_serial_number[21];
 char hdd_firmware_revision[9];
 char hdd_model_number[41];
 
-int start(int argc, char **argv) {
+extern "C" int start(int argc, char **argv) {
 
 	/* LBA48: u32 long li; */
 	u16 returndata[256];

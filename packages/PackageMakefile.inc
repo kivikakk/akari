@@ -14,12 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Akari.  If not, see <http://www.gnu.org/licenses/
 
+
+# This is from the perspective of a package.
+include ../../Makefile.inc
+
 COPYDEST = c:/$(TARGET)
 
 ASMSRCS := $(wildcard *.s)
-CSRCS := $(wildcard *.c)
 CXXSRCS := $(wildcard *.cpp)
-OBJS := $(patsubst %.s,obj/%.s.o,$(ASMSRCS)) $(patsubst %.c,obj/%.c.o,$(CSRCS)) $(patsubst %.cpp,obj/%.cpp.o,$(CXXSRCS))
+OBJS := $(patsubst %.s,obj/%.s.o,$(ASMSRCS)) $(patsubst %.cpp,obj/%.cpp.o,$(CXXSRCS))
 
 COPTS += -I../../inc
 CXXOPTS += -I../../inc
@@ -29,13 +32,11 @@ all: clean $(TARGET)-copy
 $(TARGET)-copy: $(TARGET)
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
 
-$(TARGET): $(OBJS) obj
-	$(LD) $(OBJS) -o $(TARGET)
+$(TARGET): $(OBJS) ../../$(LINKAGE_TARGET) obj
+	$(LD) $(OBJS) ../../$(LINKAGE_TARGET) -o $(TARGET)
 
 obj/%.s.o: %.s obj
 	$(AS) $(ASOPTS) -o $@ $<
-obj/%.c.o: %.c obj
-	$(CC) $(COPTS) -c -o $@ $<
 obj/%.cpp.o: %.cpp obj
 	$(CXX) $(CXXOPTS) -D__CPLUSPLUS -c -o $@ $<
 
