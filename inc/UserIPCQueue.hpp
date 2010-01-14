@@ -26,7 +26,7 @@ struct queue_item_info {
 	u32 data_len;
 };
 
-#ifdef __AKARI_KERNEL__
+#if defined(__AKARI_KERNEL)
 
 #include <Tasks.hpp>
 
@@ -39,6 +39,14 @@ namespace IPC {
 	u32 sendQueue(pid_t id, u32 reply_to, const char *buffer, u32 len);
 }
 }
+
+#elif defined(__AKARI_LINKAGE)
+
+DEFN_SYSCALL0(probeQueue, 19, struct queue_item_info *);
+DEFN_SYSCALL0(probeQueueUnblock, 20, struct queue_item_info *);
+DEFN_SYSCALL3(readQueue, 21, u32, char *, u32, u32);
+DEFN_SYSCALL0(shiftQueue, 22, void);
+DEFN_SYSCALL4(sendQueue, 23, u32, pid_t, u32, const char *, u32);
 
 #else
 

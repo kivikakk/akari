@@ -37,27 +37,20 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	// Change the EIP in the registers to our entry point.
 	reinterpret_cast<struct modeswitch_registers *>(task->ks)->callback.eip = hdr->e_entry;
 
+	Akari->console->putString("type: ");
+	switch (hdr->e_type) {
+		case ET_NONE:	Akari->console->putString("none\n"); break;
+		case ET_REL:	Akari->console->putString("relocatable\n"); break;
+		case ET_EXEC:	Akari->console->putString("executable\n"); break;
+		case ET_DYN:	Akari->console->putString("shared object\n"); break;
+		case ET_CORE:	Akari->console->putString("core\n"); break;
+	}
+
 	return true;
 }
 
 #if 0
-void tryelf() {
-	FILE *hellop = fopen("/hello.p", "r");
-	unsigned char *file_buffer = (unsigned char *)kmalloc(flen(hellop));
-	fread(file_buffer, 1, flen(hellop), hellop);
-	fclose(hellop);
-
-	Task *new_task = Task::InitialiseProcess(hdr->e_entry, true);
-
 /*
-	puts("type: ");
-	switch (hdr->e_type) {
-		case ET_NONE:	puts("none\n"); break;
-		case ET_REL:	puts("relocatable\n"); break;
-		case ET_EXEC:	puts("executable\n"); break;
-		case ET_DYN:	puts("shared object\n"); break;
-		case ET_CORE:	puts("core\n"); break;
-	}
 	*/
 
 /*

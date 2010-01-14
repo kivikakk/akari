@@ -20,7 +20,7 @@
 #include <arch.hpp>
 #include <UserGates.hpp>
 
-#ifdef __AKARI_KERNEL__
+#if defined(__AKARI_KERNEL)
 
 #include <Tasks.hpp>
 
@@ -54,6 +54,19 @@ namespace IPC {
 	};
 }
 }
+
+#elif defined(__AKARI_LINKAGE)
+
+DEFN_SYSCALL0(processId, 24, pid_t);
+DEFN_SYSCALL1(processIdByName, 25, pid_t, const char *);
+DEFN_SYSCALL1(registerName, 12, bool, const char *);
+
+DEFN_SYSCALL1(registerStream, 13, bool, const char *);
+DEFN_SYSCALL3(obtainStreamWriter, 14, u32, pid_t, const char *, bool);
+DEFN_SYSCALL2(obtainStreamListener, 15, u32, pid_t, const char *);
+DEFN_SYSCALL5(readStream, 16, u32, pid_t, const char *, u32, char *, u32);
+DEFN_SYSCALL5(readStreamUnblock, 17, u32, pid_t, const char *, u32, char *, u32);
+DEFN_SYSCALL5(writeStream, 18, u32, pid_t, const char *, u32, const char *, u32);
 
 #else
 

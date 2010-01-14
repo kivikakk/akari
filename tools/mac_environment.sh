@@ -1,3 +1,4 @@
+export AR=/opt/local/bin/i386-elf-ar
 export AS=/opt/local/bin/i386-elf-as
 export LD=/opt/local/bin/i386-elf-ld
 export CC=/opt/local/bin/i386-elf-gcc-4.3.2

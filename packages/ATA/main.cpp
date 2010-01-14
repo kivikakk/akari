@@ -63,11 +63,12 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer);
 void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
 void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
 
-void ATAProcess() {
-	u32 hdd_lba28_addr;
-	char hdd_serial_number[21];
-	char hdd_firmware_revision[9];
-	char hdd_model_number[41];
+u32 hdd_lba28_addr;
+char hdd_serial_number[21];
+char hdd_firmware_revision[9];
+char hdd_model_number[41];
+
+int start(int argc, char **argv) {
 
 	/* LBA48: u32 long li; */
 	u16 returndata[256];
@@ -75,7 +76,7 @@ void ATAProcess() {
 	u8 rs = AkariInB(ATA_BUS);
 	if (rs == 0xff) {
 		syscall_puts("Floating bus! No hard drives?\n");
-		return;
+		return 1;
 	}
 
 	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER);
@@ -88,7 +89,7 @@ void ATAProcess() {
 	rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 	if (rs == 0) {
 		syscall_puts("No hard drives.\n");
-		return;
+		return 1;
 	}
 
 	while (rs & ATA_BSY)

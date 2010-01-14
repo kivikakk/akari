@@ -15,6 +15,8 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <UserIPCQueue.hpp>
+
+#if defined(__AKARI_KERNEL)
 #include <Akari.hpp>
 #include <POSIX.hpp>
 #include <Symbol.hpp>
@@ -100,10 +102,5 @@ namespace IPC {
 	}
 }
 }
-
-DEFN_SYSCALL0(probeQueue, 19, struct queue_item_info *);
-DEFN_SYSCALL0(probeQueueUnblock, 20, struct queue_item_info *);
-DEFN_SYSCALL3(readQueue, 21, u32, char *, u32, u32);
-DEFN_SYSCALL0(shiftQueue, 22, void);
-DEFN_SYSCALL4(sendQueue, 23, u32, pid_t, u32, const char *, u32);
+#endif
 

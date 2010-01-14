@@ -15,6 +15,8 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <UserCalls.hpp>
+
+#if defined(__AKARI_KERNEL)
 #include <Akari.hpp>
 #include <POSIX.hpp>
 #include <Symbol.hpp>
@@ -107,17 +109,4 @@ namespace User {
 		return dest;
 	}
 }
-
-DEFN_SYSCALL1(putc, 0, void, char);
-DEFN_SYSCALL1(puts, 1, void, const char *);
-DEFN_SYSCALL2(putl, 2, void, u32, u8);
-DEFN_SYSCALL0(getProcessId, 3, u32);
-DEFN_SYSCALL0(irqWait, 4, void);
-DEFN_SYSCALL1(irqListen, 5, void, u32);
-DEFN_SYSCALL1(panic, 6, void, const char *);
-DEFN_SYSCALL0(exit, 7, void);
-DEFN_SYSCALL0(defer, 8, void);
-DEFN_SYSCALL1(malloc, 9, void *, u32);
-DEFN_SYSCALL1(free, 10, void, void *);
-DEFN_SYSCALL3(memcpy, 11, void *, void *, const void *, u32);
-
+#endif
