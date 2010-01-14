@@ -34,6 +34,8 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 
 	Akari->console->putString("image is at 0x");
 	Akari->console->putInt(reinterpret_cast<u32>(image), 16);
+	Akari->console->putString(", entry point apparently 0x");
+	Akari->console->putInt(hdr->e_entry, 16);
 	Akari->console->putString("\n");
 
 	if (hdr->e_ident[EI_MAG0] != 0x7f) return false;

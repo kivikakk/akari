@@ -19,10 +19,19 @@
 #include <UserIPCQueue.hpp>
 #include <debug.hpp>
 
+u32 hdd_lba28_addr;
+char hdd_serial_number[21];
+char hdd_firmware_revision[9];
+char hdd_model_number[41];
+u16 returndata[256];
+
 inline u32 min(u32 a, u32 b) {
 	if (a > b) return b;
 	return a;
 }
+
+void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
+void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
 
 void ata_read_sectors(u32 start, u32 number, u8 *buffer);
 void ata_write_sectors(u32 start, u32 number, u8 *buffer);
@@ -60,23 +69,13 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer);
 #define ATA_CACHE_FLUSH		0xE7
 #define ATA_IDENTIFY		0xEC
 
-void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
-void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
-
-u32 hdd_lba28_addr;
-char hdd_serial_number[21];
-char hdd_firmware_revision[9];
-char hdd_model_number[41];
-
-extern "C" int start(int argc, char **argv) {
-
-	/* LBA48: u32 long li; */
-	u16 returndata[256];
+extern "C" int start() {
+	syscall_puts("ATA is here to rock your world\n");
 
 	u8 rs = AkariInB(ATA_BUS);
 	if (rs == 0xff) {
 		syscall_puts("Floating bus! No hard drives?\n");
-		return 1;
+		syscall_exit();
 	}
 
 	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER);
@@ -139,6 +138,7 @@ extern "C" int start(int argc, char **argv) {
 		syscall_panic("could not register system.io.ata");
 
 	syscall_puts("ATA driver entering loop\n");
+
 #define ATA_BUFFER 10240
 	char buffer[ATA_BUFFER];
 	while (true) {
@@ -146,6 +146,7 @@ extern "C" int start(int argc, char **argv) {
 		u32 len = info->data_len;
 		if (len > ATA_BUFFER) syscall_panic("ATA buffer overflow");
 		syscall_readQueue(buffer, 0, len);
+		syscall_exit();
 
 		if (buffer[0] == 0) {
 			// Read
@@ -178,6 +179,54 @@ extern "C" int start(int argc, char **argv) {
 		}
 
 		syscall_shiftQueue();
+	}
+}
+
+void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
+	syscall_panic("why is ata_read_sectors running?");
+	u8 rs;
+	u16 returndata;
+	u32 i, sectors_read = 0;
+
+	while (number > 256) {
+		ata_read_sectors(start, 256, buffer);
+		buffer += 512 * 256;
+		start += 256;
+		number -= 256;
+	}
+	
+	if (number == 0)
+		syscall_panic("Reading 0 sectors?\n");
+
+	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER_OP | ((start >> 24) & 0x0F));
+
+	// replace with more intelligence later
+	AkariInB(ATA_PRIMARY_DCR);
+	AkariInB(ATA_PRIMARY_DCR);
+	AkariInB(ATA_PRIMARY_DCR);
+	AkariInB(ATA_PRIMARY_DCR);	
+	AkariOutB(ATA_PRIMARY + ATA_FEATURES, 0x00);
+	AkariOutB(ATA_PRIMARY + ATA_SECTOR, (number == 256) ? 0 : number);	// sector count
+	AkariOutB(ATA_PRIMARY + ATA_PDSA1, static_cast<u8>(start & 0xFF));	// low 8 bits of LBA
+	AkariOutB(ATA_PRIMARY + ATA_PDSA2, static_cast<u8>((start >> 8) & 0xFF));	// next 8
+	AkariOutB(ATA_PRIMARY + ATA_PDSA3, static_cast<u8>((start >> 16) & 0xFF));	// next 8
+	AkariOutB(ATA_PRIMARY + ATA_CMD, ATA_READ_SECTORS);
+
+	while (sectors_read < number) {
+		rs = AkariInB(ATA_PRIMARY + ATA_CMD);
+		while (!(!(rs & ATA_BSY) && (rs & ATA_DRQ)) && !(rs & ATA_ERR) && !(rs & ATA_DF))
+			rs = AkariInB(ATA_PRIMARY + ATA_CMD);
+		
+		if (rs & ATA_ERR) 	syscall_panic("ATA_ERR in ata_read_sectors\n");
+		else if (rs & ATA_DF) 	syscall_panic("ATA_DF in ata_read_sectors\n");
+
+		for (i = 0; i < 256; ++i) {
+			returndata = AkariInW(ATA_PRIMARY + ATA_DATA);
+			*buffer++ = returndata & 0xff;
+			*buffer++ = (returndata >> 8) & 0xff;
+		}
+
+		sectors_read++;
 	}
 }
 
@@ -216,51 +265,6 @@ void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 	}
 }
 
-void ata_read_sectors(u32 start, u32 number, u8 *buffer)
-{
-	u8 rs;
-	u16 returndata;
-	u32 i, sectors_read = 0;
-
-	while (number > 256) {
-		ata_read_sectors(start, 256, buffer);
-		buffer += 512 * 256;
-		start += 256;
-		number -= 256;
-	}
-	
-	if (number == 0)
-		syscall_panic("Reading 0 sectors?\n");
-
-	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER_OP | ((start >> 24) & 0x0F));
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);	/* replace with more intelligence later */
-	AkariOutB(ATA_PRIMARY + ATA_FEATURES, 0x00);
-	AkariOutB(ATA_PRIMARY + ATA_SECTOR, (number == 256) ? 0 : number);	/* sector count */
-	AkariOutB(ATA_PRIMARY + ATA_PDSA1, static_cast<u8>(start & 0xFF));	/* low 8 bits of LBA */
-	AkariOutB(ATA_PRIMARY + ATA_PDSA2, static_cast<u8>((start >> 8) & 0xFF));	/* next 8 */
-	AkariOutB(ATA_PRIMARY + ATA_PDSA3, static_cast<u8>((start >> 16) & 0xFF));	/* next 8 */
-	AkariOutB(ATA_PRIMARY + ATA_CMD, ATA_READ_SECTORS);
-
-	while (sectors_read < number) {
-		rs = AkariInB(ATA_PRIMARY + ATA_CMD);
-		while (!(!(rs & ATA_BSY) && (rs & ATA_DRQ)) && !(rs & ATA_ERR) && !(rs & ATA_DF))
-			rs = AkariInB(ATA_PRIMARY + ATA_CMD);
-		
-		if (rs & ATA_ERR) 	syscall_panic("ATA_ERR in ata_read_sectors\n");
-		else if (rs & ATA_DF) 	syscall_panic("ATA_DF in ata_read_sectors\n");
-
-		for (i = 0; i < 256; ++i) {
-			returndata = AkariInW(ATA_PRIMARY + ATA_DATA);
-			*buffer++ = returndata & 0xff;
-			*buffer++ = (returndata >> 8) & 0xff;
-		}
-
-		sectors_read++;
-	}
-}
 
 void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 {
@@ -341,4 +345,3 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer)
 	while ((rs & ATA_BSY))
 		rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 }
-
