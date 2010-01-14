@@ -155,6 +155,12 @@ static void AkariEntryCont() {
 	ata->next = mbr;
 	Akari->console->putString("mbr load done\n");
 	
+	// FAT driver
+	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "fat");
+	Akari->elf->loadImageInto(fat, reinterpret_cast<u8 *>(module_by_name("/fat")->module));
+	mbr->next = fat;
+	Akari->console->putString("fat load done\n");
+	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);
 

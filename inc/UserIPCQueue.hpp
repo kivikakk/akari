@@ -34,6 +34,8 @@ namespace User {
 namespace IPC {
 	struct queue_item_info *probeQueue();
 	struct queue_item_info *probeQueueUnblock();
+	struct queue_item_info *probeQueueFor(u32 reply_to);
+	struct queue_item_info *probeQueueForUnblock(u32 reply_to);
 	u32 readQueue(char *dest, u32 offset, u32 len);
 	void shiftQueue();
 	u32 sendQueue(pid_t id, u32 reply_to, const char *buffer, u32 len);
@@ -44,6 +46,8 @@ namespace IPC {
 
 DEFN_SYSCALL0(probeQueue, 19, struct queue_item_info *);
 DEFN_SYSCALL0(probeQueueUnblock, 20, struct queue_item_info *);
+DEFN_SYSCALL1(probeQueueFor, 26, struct queue_item_info *, u32);
+DEFN_SYSCALL1(probeQueueForUnblock, 27, struct queue_item_info *, u32);
 DEFN_SYSCALL3(readQueue, 21, u32, char *, u32, u32);
 DEFN_SYSCALL0(shiftQueue, 22, void);
 DEFN_SYSCALL4(sendQueue, 23, u32, pid_t, u32, const char *, u32);
@@ -52,6 +56,8 @@ DEFN_SYSCALL4(sendQueue, 23, u32, pid_t, u32, const char *, u32);
 
 DECL_SYSCALL0(probeQueue, struct queue_item_info *);
 DECL_SYSCALL0(probeQueueUnblock, struct queue_item_info *);
+DECL_SYSCALL1(probeQueueFor, struct queue_item_info *, u32);
+DECL_SYSCALL1(probeQueueForUnblock, struct queue_item_info *, u32);
 DECL_SYSCALL3(readQueue, u32, char *, u32, u32);
 DECL_SYSCALL0(shiftQueue, void);
 DECL_SYSCALL4(sendQueue, u32, pid_t id, u32, const char *, u32);

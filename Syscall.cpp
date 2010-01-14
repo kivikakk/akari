@@ -49,6 +49,8 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 
 	addSyscall(19, reinterpret_cast<void *>(&User::IPC::probeQueue));
 	addSyscall(20, reinterpret_cast<void *>(&User::IPC::probeQueueUnblock));
+	addSyscall(26, reinterpret_cast<void *>(&User::IPC::probeQueueFor));
+	addSyscall(27, reinterpret_cast<void *>(&User::IPC::probeQueueForUnblock));
 	addSyscall(21, reinterpret_cast<void *>(&User::IPC::readQueue));
 	addSyscall(22, reinterpret_cast<void *>(&User::IPC::shiftQueue));
 	addSyscall(23, reinterpret_cast<void *>(&User::IPC::sendQueue));

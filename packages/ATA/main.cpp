@@ -37,24 +37,27 @@ u16 returndata[256];
 bool init_drives();
 
 extern "C" int start() {
+	syscall_puts("ATA: initting drives\n");
 	if (!init_drives()) {
-		syscall_puts("ATA driver failed init\n");
+		syscall_puts("ATA: failed init\n");
 		syscall_exit();
 		return 1;
 	}
 
 	// Now we need to wait and listen for commands!
 	if (!syscall_registerName("system.io.ata"))
-		syscall_panic("could not register system.io.ata");
+		syscall_panic("ATA: could not register system.io.ata");
 
-	syscall_puts("ATA driver entering loop\n");
+	syscall_puts("ATA: entering loop\n");
 
 	char *buffer = 0; u32 buffer_len = 0;
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
+		syscall_puts("ATA: got request\n");
+
 		u32 len = info.data_len;
-		if (len > ATA_MAX_WILL_ALLOC) syscall_panic("ATA driver given more data than would like to alloc");
+		if (len > ATA_MAX_WILL_ALLOC) syscall_panic("ATA: given more data than would like to alloc");
 		if (len > buffer_len) {
 			if (buffer) delete [] buffer;
 			buffer = new char[len];
@@ -71,7 +74,7 @@ extern "C" int start() {
 			u16 offset = buffer[5] << 8 | buffer[6];
 			u32 length = buffer[7] << 24 | buffer[8] << 16 | buffer[9] << 8 | buffer[10];
 
-			if (length > ATA_MAX_WILL_ALLOC) syscall_panic("ATA request asked for more than we'd like to alloc");
+			if (length > ATA_MAX_WILL_ALLOC) syscall_panic("ATA: request asked for more than we'd like to alloc");
 			if (length > buffer_len) {
 				delete [] buffer;
 				buffer = new char[length];
@@ -80,6 +83,7 @@ extern "C" int start() {
 
 			ata_read_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer));
 
+			syscall_puts("ATA: reply length "); syscall_putl(length, 16); syscall_putc('\n');
 			syscall_sendQueue(info.from, info.id, buffer, length);
 
 		} else if (buffer[0] == 1) {
@@ -89,25 +93,26 @@ extern "C" int start() {
 			u16 offset = buffer[5] << 8 | buffer[6];
 			u32 length = buffer[7] << 24 | buffer[8] << 16 | buffer[9] << 8 | buffer[10];
 
-			if (len - 11 > length) syscall_panic("ATA driver got more data in msg than msg asked to write");
-			if (len - 11 < length) syscall_panic("ATA driver got LESS data in msg than msg asked to write!");
+			if (len - 11 > length) syscall_panic("ATA: got more data in msg than msg asked to write");
+			if (len - 11 < length) syscall_panic("ATA: got LESS data in msg than msg asked to write!");
 
 			ata_write_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer + 11));
 
+			syscall_puts("ATA: reply length "); syscall_putl(1, 16); syscall_putc('\n');
 			syscall_sendQueue(info.from, info.id, "\1", 1);
 		} else {
-			syscall_panic("ATA driver confused");
+			syscall_panic("ATA: confused");
 		}
 	}
 
-	syscall_panic("ATA ran off the end of the infinite loop");
+	syscall_panic("ATA: ran off the end of the infinite loop");
 	return 1;
 }
 
 bool init_drives() {
 	u8 rs = AkariInB(ATA_BUS);
 	if (rs == 0xff) {
-		syscall_puts("Floating bus! No hard drives?\n");
+		syscall_puts("ATA: floating bus! No hard drives?\n");
 		return false;
 	}
 
@@ -120,7 +125,7 @@ bool init_drives() {
 
 	rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 	if (rs == 0) {
-		syscall_puts("No hard drives.\n");
+		syscall_puts("ATA: no hard drives.\n");
 		return false;
 	}
 
@@ -128,9 +133,9 @@ bool init_drives() {
 		rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 	
 	if (rs & ATA_ERR)
-		syscall_panic("ATA error on IDENTIFY.\n");
+		syscall_panic("ATA: error on IDENTIFY.\n");
 	else if (!(rs & ATA_DRQ))
-		syscall_panic("No error on ATA IDENTIFY, but no DRQ?\n");
+		syscall_panic("ATA: no error on IDENTIFY, but no DRQ?\n");
 
 	for (u32 i = 0; i < 256; ++i)
 		returndata[i] = AkariInW(ATA_PRIMARY + ATA_DATA);
@@ -154,7 +159,7 @@ bool init_drives() {
 	hdd_model_number[40] = 0;
 
 	if (!(returndata[60] || returndata[61]))
-		syscall_panic("Hard drive does not support LBA28?");
+		syscall_panic("ATA: hard drive does not support LBA28?");
 
 	hdd_lba28_addr = returndata[60] | (returndata[61] << 16);
 
@@ -197,8 +202,8 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 		while (!(!(rs & ATA_BSY) && (rs & ATA_DRQ)) && !(rs & ATA_ERR) && !(rs & ATA_DF))
 			rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 		
-		if (rs & ATA_ERR) 	syscall_panic("ATA_ERR in ata_read_sectors\n");
-		else if (rs & ATA_DF) 	syscall_panic("ATA_DF in ata_read_sectors\n");
+		if (rs & ATA_ERR) 	syscall_panic("ATA: ATA_ERR in ata_read_sectors\n");
+		else if (rs & ATA_DF) 	syscall_panic("ATA: ATA_DF in ata_read_sectors\n");
 
 		for (u32 i = 0; i < 256; ++i) {
 			u16 incoming = AkariInW(ATA_PRIMARY + ATA_DATA);
@@ -285,9 +290,9 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer)
 	u32 i, sectors_written = 0;
 
 	if (number > 256)
-		syscall_panic("We haven't implemented writing more than 256 sectors at once yet (> 128KiB)\n");
+		syscall_panic("ATA: we haven't implemented writing more than 256 sectors at once yet (> 128KiB)\n");
 	else if (number == 0)
-		syscall_panic("Writing 0 sectors?\n");
+		syscall_panic("ATA: writing 0 sectors?\n");
 
 	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER_OP | ((start >> 24) & 0x0F));
 	AkariInB(ATA_PRIMARY_DCR);
@@ -306,8 +311,8 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer)
 		while (!(!(rs & ATA_BSY) && (rs & ATA_DRQ)) && !(rs & ATA_ERR) && !(rs & ATA_DF))
 			rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 		
-		if (rs & ATA_ERR) 	syscall_panic("ATA_ERR in ata_write_sectors\n");
-		else if (rs & ATA_DF) 	syscall_panic("ATA_DF in ata_write_sectors\n");
+		if (rs & ATA_ERR) 	syscall_panic("ATA: ATA_ERR in ata_write_sectors\n");
+		else if (rs & ATA_DF) 	syscall_panic("ATA: ATA_DF in ata_write_sectors\n");
 
 		for (i = 0; i < 256; ++i) {
 			AkariOutW(ATA_PRIMARY + ATA_DATA, buffer[0] | (buffer[1] << 8));

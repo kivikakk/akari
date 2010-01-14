@@ -54,7 +54,7 @@ namespace IPC {
 		Tasks::Task *task;
 	};
 
-	static struct queue_item_info *probeQueue_impl(bool block) {
+	static struct queue_item_info *probeQueue_impl(bool block, u32 reply_to=0) {
 		ProbeQueueCall c(Akari->tasks->current);
 		struct queue_item_info *r = reinterpret_cast<struct queue_item_info *>(c());
 		if (!block || !c.shallBlock())
@@ -72,6 +72,14 @@ namespace IPC {
 
 	struct queue_item_info *probeQueueUnblock() {
 		return probeQueue_impl(false);
+	}
+
+	struct queue_item_info *probeQueueFor(u32 reply_to) {
+		return probeQueue_impl(true, reply_to);
+	}
+
+	struct queue_item_info *probeQueueForUnblock(u32 reply_to) {
+		return probeQueue_impl(false, reply_to);
 	}
 
 	u32 readQueue(char *dest, u32 offset, u32 len) { 
