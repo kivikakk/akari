@@ -34,19 +34,11 @@ namespace IPC {
 	pid_t processIdByName(const char *name) {
 		Symbol sName(name);
 
-		Akari->console->putString("{PidByName}");
-		ASSERT(Akari);
-		ASSERT(Akari->tasks);
-		ASSERT(Akari->tasks->registeredTasks);
-		Akari->console->putInt((u32)Akari->tasks->registeredTasks, 16);
 		if (!Akari->tasks->registeredTasks->hasKey(sName))
 			return 0;
 
-		Akari->console->putString("<");
 		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
-		Akari->console->putString("?");
 		pid_t r = task->id;
-		Akari->console->putString(":");
 		return r;
 	}
 

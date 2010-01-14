@@ -35,8 +35,6 @@ bool Symbol::operator ==(const Symbol &r) const {
 	if (!_content) return !r._content;
 	if (!r._content) return false;
 
-	Akari->console->putString("{SYMC}");
-
 	return (POSIX::strcmp(_content, r._content) == 0);
 }
 
