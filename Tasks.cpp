@@ -178,7 +178,8 @@ void *Tasks::assignInternalTask(Task *task) {
 }
 
 Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase) {
-	Task *nt = new Task(cpl);
+	Task *nt = new Task(cpl, "initial task");
+
 	if (cpl > 0)
 		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE)) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 	else {
@@ -198,8 +199,7 @@ Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pa
 }
 
 Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase, const char *name) {
-	Task *nt = new Task(cpl);
-	nt->name = name;
+	Task *nt = new Task(cpl, name);
 
 	nt->pageDir = pageDirBase->clone();
 
@@ -434,10 +434,10 @@ Tasks::Task::Queue::Item *Tasks::Task::Queue::first() {
 	return *list.begin();
 }
 
-Tasks::Task::Task(u8 cpl):
+Tasks::Task::Task(u8 cpl, const ASCIIString &name):
 		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
 		userWaiting(false), userCall(0),
-		id(0), registeredName(),
+		id(0), name(name), registeredName(),
 		cpl(cpl), pageDir(0),
 		heap(0), heapStart(0), heapEnd(0), heapMax(0),
 		ks(0) {

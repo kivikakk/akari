@@ -148,7 +148,7 @@ public:
 		Queue *replyQueue;
 
 	protected:
-		Task(u8 cpl);
+		Task(u8 cpl, const ASCIIString &name);
 		~Task();
 	};
 

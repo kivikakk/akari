@@ -24,11 +24,11 @@ class ASCIIString {
 	public:
 		ASCIIString();
 		ASCIIString(const ASCIIString &);
-		ASCIIString(const char *&);
+		ASCIIString(const char *);
 		~ASCIIString();
 		
 		ASCIIString &operator =(const ASCIIString &);
-		ASCIIString &operator =(const char *&);
+		ASCIIString &operator =(const char *);
 
 		bool operator ==(const ASCIIString &) const;
 		bool operator ==(const char *) const;

@@ -24,7 +24,7 @@ ASCIIString::ASCIIString(const ASCIIString &src) {
 	operator =(src);
 }
 
-ASCIIString::ASCIIString(const char *&src) {
+ASCIIString::ASCIIString(const char *src) {
 	operator =(src);
 }
 
@@ -50,7 +50,7 @@ ASCIIString &ASCIIString::operator =(const ASCIIString &src) {
 	return *this;
 }
 
-ASCIIString &ASCIIString::operator =(const char *&src) {
+ASCIIString &ASCIIString::operator =(const char *src) {
 	if (_data)
 		delete [] _data;
 
