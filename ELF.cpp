@@ -19,7 +19,7 @@
 #include <debug.hpp>
 #include <HashTable.hpp>
 
-#define ELF_DEBUG false
+#define ELF_DEBUG true
 
 ELF::ELF()
 { }
@@ -56,7 +56,8 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 		case ET_CORE:	Akari->console->putString("core\n"); break;
 	}
 
-	Akari->console->putString("\nenumerating program header(s):\n");
+	// Program header stuff, we ignore for now.
+	#if 0
 	int i; for (i = 0; i < hdr->e_phnum; ++i) {
 		Elf32_Phdr *ph = (Elf32_Phdr *)(image + hdr->e_phoff + hdr->e_phentsize * i);
 		switch (ph->p_type) {
@@ -70,6 +71,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 		Akari->console->putString("\t\toffset/align: "); Akari->console->putInt(ph->p_offset, 16); Akari->console->putString("/"); Akari->console->putInt(ph->p_align, 16); Akari->console->putChar('\n');
 
 	}
+	#endif
 
 	unsigned long stloc = ((Elf32_Shdr *)(image + hdr->e_shoff + hdr->e_shentsize * hdr->e_shstrndx))->sh_offset;
 #endif
@@ -92,23 +94,21 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	for (int i = 0; i < hdr->e_shnum; ++i) {
 		Elf32_Shdr *sh = (Elf32_Shdr *)(image + hdr->e_shoff + hdr->e_shentsize * i);
 
-#if ELF_DEBUG
-		Akari->console->putString("\t"); Akari->console->putString((char *)(image + stloc + sh->sh_name)); Akari->console->putString(" [");
-
-		switch (sh->sh_type) {
-			case SHT_NULL:		Akari->console->putString("null"); break;
-			case SHT_PROGBITS:	Akari->console->putString("progbits"); break;
-			case SHT_SYMTAB:	Akari->console->putString("symbol table"); break;
-			case SHT_STRTAB:	Akari->console->putString("string table"); break;
-			default:		Akari->console->putString("other("); Akari->console->putInt(sh->sh_type, 16); Akari->console->putString(")"); break;
-		}
-		Akari->console->putString("] at "); Akari->console->putInt(sh->sh_offset, 16);
-		Akari->console->putString(" -> "); Akari->console->putInt(sh->sh_addr, 16);
-		Akari->console->putString("; ");
-#endif
-
 		if (sh->sh_addr) {
 #if ELF_DEBUG
+			Akari->console->putString("\t"); Akari->console->putString((char *)(image + stloc + sh->sh_name)); Akari->console->putString(" [");
+
+			switch (sh->sh_type) {
+				case SHT_NULL:		Akari->console->putString("null"); break;
+				case SHT_PROGBITS:	Akari->console->putString("progbits"); break;
+				case SHT_SYMTAB:	Akari->console->putString("symbol table"); break;
+				case SHT_STRTAB:	Akari->console->putString("string table"); break;
+				case SHT_NOBITS:	Akari->console->putString("bss"); break;
+				default:		Akari->console->putString("other("); Akari->console->putInt(sh->sh_type, 16); Akari->console->putString(")"); break;
+			}
+			Akari->console->putString("] at "); Akari->console->putInt(sh->sh_offset, 16);
+			Akari->console->putString(" -> "); Akari->console->putInt(sh->sh_addr, 16);
+			Akari->console->putString("; ");
 			Akari->console->putString("placing in image:\n\t\t");
 #endif
 
@@ -116,6 +116,8 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 			while (copied < sh->sh_size) {
 				// we copy up until the end of one frame
 				unsigned long copy = 0x1000 - ((virt + copied) % 0x1000);
+				if (sh->sh_size - copied < copy)
+					copy = sh->sh_size - copied;
 
 #if ELF_DEBUG
 				Akari->console->putString("virt 0x");
@@ -140,18 +142,22 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 #endif
 
 				u8 *dest = magic_wand + ((virt + copied) % 0x1000);
-				POSIX::memcpy(dest, (u8 *)(image + phys + copied), copy);
+
+				if (sh->sh_type == SHT_NOBITS) {
+					POSIX::memset(dest, 0, copy);
+				} else {
+					POSIX::memcpy(dest, (u8 *)(image + phys + copied), copy);
+				}
 
 				copied += copy;
 			}
+
+#if ELF_DEBUG
+			Akari->console->putChar('\n');
+#endif
 		} else {
-#if ELF_DEBUG
-			Akari->console->putString("ignored");
-#endif
+			// Ignore it.
 		}
-#if ELF_DEBUG
-		Akari->console->putChar('\n');
-#endif
 	}
 
 	// Cleaning up our hole in memory.
