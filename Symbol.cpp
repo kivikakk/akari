@@ -55,17 +55,6 @@ bool Symbol::operator ==(const Symbol &r) const {
 	if (!_content) return !r._content;
 	if (!r._content) return false;
 
-	Akari->console->putString("<");
-	Akari->console->putString("(");
-	Akari->console->putInt((u32)_content, 16);
-	Akari->console->putString(")");
-	Akari->console->putString(_content);
-	Akari->console->putString(" v (");
-	Akari->console->putInt((u32)r._content, 16);
-	Akari->console->putString(")");
-	Akari->console->putString(r._content);
-	Akari->console->putString("> ");
-
 	return (POSIX::strcmp(_content, r._content) == 0);
 }
 

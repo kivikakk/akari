@@ -76,7 +76,6 @@ int strpos(const char *haystack, const char *needle) {
 
 
 extern "C" int start() {
-	syscall_puts("shell starting ...\n");
 	u32 stdin = static_cast<u32>(-1);
 	while (stdin == static_cast<u32>(-1)) {
 		pid_t pid = syscall_processIdByName("system.io.keyboard");

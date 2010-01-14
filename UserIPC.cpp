@@ -34,9 +34,6 @@ namespace IPC {
 	pid_t processIdByName(const char *name) {
 		Symbol sName(name);
 
-		Akari->console->putString("processIdByName(");
-		Akari->console->putString(name);
-		Akari->console->putString(") ");
 		if (!Akari->tasks->registeredTasks->hasKey(sName))
 			return 0;
 
@@ -48,9 +45,6 @@ namespace IPC {
 	bool registerName(const char *name) {
 		Symbol sName(name);
 
-		Akari->console->putString("registerName(");
-		Akari->console->putString(name);
-		Akari->console->putString(") ");
 		if (Akari->tasks->registeredTasks->hasKey(sName))
 			return false;
 
