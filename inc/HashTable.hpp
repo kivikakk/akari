@@ -19,6 +19,7 @@
 
 #include <Akari.hpp>
 #include <Console.hpp>
+#include <List.hpp>
 
 // Note this is not in fact a hash table, just an associative array.
 // We should make it a hash table in the future, though.
@@ -27,19 +28,14 @@
 template <typename K, typename V>
 class HashTable {
 	public:
-		HashTable(): head(0) {
-		}
+		HashTable()
+		{ }
 
-		~HashTable() {
-			_InternalItem *traverse = head, *next;
-			while (traverse) {
-				next = traverse->next;
-				delete traverse;
-				traverse = next;
-			}
-		}
+		~HashTable()
+		{ }
 
-		const u32 size() const {
+		/*const u32 size() const {
+			return 
 			_InternalItem *traverse = head;
 			u32 s = 0;
 
@@ -49,56 +45,62 @@ class HashTable {
 			}
 
 			return s;
-		}
+		}*/
 
 		bool hasKey(const K &key) const {
-			_InternalItem *traverse = head;
-			while (traverse) {
-				if (traverse->key == key) {
+			for (typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
+				if (it->key == key)
 					return true;
-				}
-				traverse = traverse->next;
 			}
 			return false;
 		}
-
-		const V &operator[](const K &key) const {
+/*
+			Akari->console->putString("HasKey[");
+			Akari->console->putInt((u32)head, 16);
+			Akari->console->putString("]");
 			_InternalItem *traverse = head;
 			while (traverse) {
-				if (traverse->key == key)
-					return traverse->value;
+			Akari->console->putString("(t)");
+				if (traverse->key == key) {
+			Akari->console->putString("(:-))");
+					return true;
+				}
+			Akari->console->putString("n");
 				traverse = traverse->next;
+			Akari->console->putString("!");
+			}
+			Akari->console->putString("(:-()");
+			return false;
+		}*/
+
+		const V &operator[](const K &key) const {
+			for (const typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
+				if (it->key == key)
+					return it->value;
 			}
 			return V();
 		}
 
 		V &operator[](const K &key) {
-			_InternalItem **traverse = &head;
-			while (*traverse) {
-				if ((*traverse)->key == key)
-					return (*traverse)->value;
-
-				traverse = &(*traverse)->next;
+			for (typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
+				if (it->key == key)
+					return it->value;
 			}
 
-			_InternalItem *add = new _InternalItem();
-			add->key = key;
-			add->value = V();
-			add->next = 0;
-			*traverse = add;
+			_InternalItem add = { key, V() };
+			add.key = key;
+			add.value = V();
 			
-			return add->value;
+			return items.push_back(add).value;
 		}
 
 	protected:
 		struct _InternalItem {
-			public:
-				K key;
-				V value;
-				_InternalItem *next;
+			K key;
+			V value;
 		};
 
-		_InternalItem *head;
+		LinkedList<_InternalItem> items;
 };
 
 #endif

@@ -19,104 +19,106 @@
 
 template <typename T>
 class LinkedList {
+public:
+	struct listNode {
+		T *item;
+		listNode *next;
+	};
+
+	class iterator {
+	friend class LinkedList;
 	public:
-		struct listNode {
-			T *item;
-			listNode *next;
-		};
-
-		class iterator {
-			friend class LinkedList;
-			public:
-				bool operator ==(const iterator &r) const {
-					return _data == r._data;
-				}
-
-				bool operator !=(const iterator &r) const {
-					return _data != r._data;
-				}
-
-				T &operator *() {
-					 return *_data->item;
-				}
-
-				const T &operator *() const {
-					 return *_data->item;
-				}
-
-				T *&operator ->() {
-					return _data->item;
-				}
-
-				T *const &operator ->() const {
-					return _data->item;
-				}
-
-				iterator next() const {
-					return iterator(_data->next);
-				}
-
-				iterator &operator ++() {
-					_data = _data->next;
-					return *this;
-				}
-
-			protected:
-				iterator(listNode *data) {
-					_data = data;
-				}
-
-				listNode *_data;
-		};
-
-		LinkedList(): _begin(0) {
+		bool operator ==(const iterator &r) const {
+			return _data == r._data;
 		}
 
-		iterator begin() {
-			return iterator(_begin);
+		bool operator !=(const iterator &r) const {
+			return _data != r._data;
 		}
 
-		const iterator begin() const {
-			return iterator(_begin);
+		T &operator *() {
+			 return *_data->item;
 		}
 
-		iterator end() {
-			return iterator(0);
+		const T &operator *() const {
+			 return *_data->item;
 		}
 
-		const iterator end() const {
-			return iterator(0);
+		T *&operator ->() {
+			return _data->item;
 		}
 
-		void push_back(const T &data) {
-			listNode **writeHead = &_begin;
-			while (*writeHead) {
-				writeHead = &(*writeHead)->next;
-			}
-
-			// XXX: is this vaguely copying-ish behaviour
-			// correct?  Depending on whether T is `type`
-			// or `type*`, we'll see...
-			listNode *newNode = new listNode;
-			newNode->item = new T(data);
-			newNode->next = 0;
-
-			*writeHead = newNode;
+		T *const &operator ->() const {
+			return _data->item;
 		}
 
-		void shift() {
-			listNode *old = _begin;
-			_begin = _begin->next;
-			delete old->item;
-			delete old;
+		iterator next() const {
+			return iterator(_data->next);
 		}
 
-		bool empty() const {
-			return !_begin;
+		iterator &operator ++() {
+			_data = _data->next;
+			return *this;
 		}
 
 	protected:
-		listNode *_begin;
+		iterator(listNode *data) {
+			_data = data;
+		}
+
+		listNode *_data;
+	};
+
+	LinkedList(): _begin(0) {
+	}
+
+	iterator begin() {
+		return iterator(_begin);
+	}
+
+	const iterator begin() const {
+		return iterator(_begin);
+	}
+
+	iterator end() {
+		return iterator(0);
+	}
+
+	const iterator end() const {
+		return iterator(0);
+	}
+
+	T &push_back(const T &data) {
+		listNode **writeHead = &_begin;
+		while (*writeHead) {
+			writeHead = &(*writeHead)->next;
+		}
+
+		// XXX: is this vaguely copying-ish behaviour
+		// correct?  Depending on whether T is `type`
+		// or `type*`, we'll see...
+		listNode *newNode = new listNode;
+		newNode->item = new T(data);
+		newNode->next = 0;
+
+		*writeHead = newNode;
+
+		return *newNode->item;
+	}
+
+	void shift() {
+		listNode *old = _begin;
+		_begin = _begin->next;
+		delete old->item;
+		delete old;
+	}
+
+	bool empty() const {
+		return !_begin;
+	}
+
+protected:
+	listNode *_begin;
 };
 
 #endif
