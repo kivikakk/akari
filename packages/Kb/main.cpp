@@ -89,6 +89,7 @@ extern "C" int start() {
 	if (!syscall_registerName("system.io.keyboard"))
 		syscall_panic("could not register system.io.keyboard");
 
+	while(true);
 	if (!syscall_registerStream("input"))
 		syscall_panic("could not register system.io.keyboard:input");
 

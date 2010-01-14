@@ -22,7 +22,7 @@
 Symbol::Symbol(): _content(0)
 { }
 
-Symbol::Symbol(const char *content): _content(content)
+Symbol::Symbol(const char *content): _content(POSIX::strdup(content))
 { }
 
 bool Symbol::operator !() const {
@@ -34,6 +34,17 @@ bool Symbol::operator ==(const Symbol &r) const {
 	// If they've got no content (we already know we do), we're inequal.
 	if (!_content) return !r._content;
 	if (!r._content) return false;
+
+	Akari->console->putString("<");
+	Akari->console->putString("(");
+	Akari->console->putInt((u32)_content, 16);
+	Akari->console->putString(")");
+	Akari->console->putString(_content);
+	Akari->console->putString(" v (");
+	Akari->console->putInt((u32)r._content, 16);
+	Akari->console->putString(")");
+	Akari->console->putString(r._content);
+	Akari->console->putString("> ");
 
 	return (POSIX::strcmp(_content, r._content) == 0);
 }

@@ -36,7 +36,7 @@ class HashTable {
 
 		bool hasKey(const K &key) const {
 			for (typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
-				if (it->key == key)
+				if (key == it->key)
 					return true;
 			}
 			return false;
@@ -44,7 +44,7 @@ class HashTable {
 
 		const V &operator[](const K &key) const {
 			for (const typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
-				if (it->key == key)
+				if (key == it->key)
 					return it->value;
 			}
 			return V();
@@ -52,7 +52,7 @@ class HashTable {
 
 		V &operator[](const K &key) {
 			for (typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
-				if (it->key == key)
+				if (key == it->key)
 					return it->value;
 			}
 
