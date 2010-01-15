@@ -38,9 +38,9 @@ u16 returndata[256];
 bool init_drives();
 
 extern "C" int start() {
-	syscall_puts("ATA: initting drives\n");
+	printf("ATA: initting drives\n");
 	if (!init_drives()) {
-		syscall_puts("ATA: failed init\n");
+		printf("ATA: failed init\n");
 		syscall_exit();
 		return 1;
 	}
@@ -49,7 +49,7 @@ extern "C" int start() {
 	if (!syscall_registerName("system.io.ata"))
 		syscall_panic("ATA: could not register system.io.ata");
 
-	syscall_puts("ATA: entering loop\n");
+	printf("ATA: entering loop\n");
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
@@ -82,7 +82,7 @@ extern "C" int start() {
 bool init_drives() {
 	u8 rs = AkariInB(ATA_BUS);
 	if (rs == 0xff) {
-		syscall_puts("ATA: floating bus! No hard drives?\n");
+		printf("ATA: floating bus! No hard drives?\n");
 		return false;
 	}
 
@@ -95,7 +95,7 @@ bool init_drives() {
 
 	rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 	if (rs == 0) {
-		syscall_puts("ATA: no hard drives.\n");
+		printf("ATA: no hard drives.\n");
 		return false;
 	}
 
@@ -134,11 +134,11 @@ bool init_drives() {
 	hdd_lba28_addr = returndata[60] | (returndata[61] << 16);
 
 	/* LBA48
-	syscall_puts("\nSupports LBA48 mode: ");
-	syscall_puts((returndata[83] & (1 << 10)) ? "yes" : "no");
-	syscall_puts("\nAddressable LBA48 sectors: ");
+	printf("\nSupports LBA48 mode: ");
+	printf((returndata[83] & (1 << 10)) ? "yes" : "no");
+	printf("\nAddressable LBA48 sectors: ");
 	li = returndata[100] | (returndata[101] << 16) | ((u32 long)returndata[102] << 32) | ((u32 long)returndata[103] << 48);
-	puthexlong(li); syscall_puts(" ("); putdec(li * 512 / 1024); syscall_puts(" KiB)");
+	puthexlong(li); printf(" ("); putdec(li * 512 / 1024); printf(" KiB)");
 	 */
 
 	return true;

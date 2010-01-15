@@ -30,7 +30,7 @@ master_boot_record_t hdd_mbr;
 pid_t ata = 0;
 
 extern "C" int start() {
-	syscall_puts("MBR: waiting for ata\n");
+	printf("MBR: waiting for ata\n");
 	while (!ata)
 		ata = syscall_processIdByName("system.io.ata");
 
@@ -40,7 +40,7 @@ extern "C" int start() {
 	ata_read_data(0, 0, 512, reinterpret_cast<u8 *>(&hdd_mbr));
 	if (hdd_mbr.signature != 0xAA55) syscall_panic("MBR: invalid MBR!\n");
 
-	syscall_puts("MBR: entering loop\n");
+	printf("MBR: entering loop\n");
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
@@ -89,7 +89,7 @@ void ata_read_data(u32 new_sector, u16 offset, u32 length, u8 *buffer) {
 	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
 
 	if (info->data_len != length) {
-		syscall_puts("asked for "); syscall_putl(length, 16); syscall_puts(", got "); syscall_putl(info->data_len, 16); syscall_puts("\n");
+		printf("asked for 0x%x, got 0x%x\n", length, info->data_len);
 		syscall_panic("MBR: ATA read not expected number of bytes back");
 	}
 

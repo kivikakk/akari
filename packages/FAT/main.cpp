@@ -48,7 +48,7 @@ extern "C" int start() {
 
 	// Initialize our important stuff
 	if (!init()) {
-		syscall_puts("FAT: calling it quits in init");
+		printf("FAT: calling it quits in init");
 		syscall_exit();
 	}
 
@@ -57,13 +57,13 @@ extern "C" int start() {
 		syscall_panic("FAT: could not register system.io.fs.fat");
 
 	// Find VFS
-	syscall_puts("FAT: waiting for vfs\n");
+	printf("FAT: waiting for vfs\n");
 	while (!vfs)
 		vfs = syscall_processIdByName("system.io.vfs");
 
 	// Register with VFS
 	{
-		syscall_puts("FAT: registering with vfs\n");
+		printf("FAT: registering with vfs\n");
 		VFSOpRegisterDriver *register_driver_op = static_cast<VFSOpRegisterDriver *>(syscall_malloc(sizeof(VFSOpRegisterDriver) + 3));
 		register_driver_op->cmd = VFS_OP_REGISTER_DRIVER;
 		syscall_memcpy(&register_driver_op->name, "fat", 3);
@@ -79,19 +79,17 @@ extern "C" int start() {
 		syscall_shiftQueue(info);
 
 		if (!reply.success) {
-			syscall_puts("FAT: failed to register; VFS said "); syscall_putl(reply.driver, 16); syscall_puts("\n");
+			printf("FAT: failed to register; VFS said 0x%x\n", reply.driver);
 			syscall_panic("FAT: failed to register with VFS");
 		}
 
 		vfs_driver_no = reply.driver;
-		syscall_puts("FAT: registered as #");
-		syscall_putl(vfs_driver_no, 16);
-		syscall_puts("\n");
+		printf("FAT: registered as 0x%x\n", vfs_driver_no);
 	}
 	
 	// Mount ourselves as root
 	{
-		syscall_puts("FAT: mounting self as root\n");
+		printf("FAT: mounting self as root\n");
 		VFSOpMountRoot mount_root_op = { VFS_OP_MOUNT_ROOT, vfs_driver_no, 0 };
 		
 		u32 msg_id = syscall_sendQueue(vfs, 0, reinterpret_cast<u8 *>(&mount_root_op), sizeof(mount_root_op));
@@ -101,11 +99,11 @@ extern "C" int start() {
 		if (syscall_strcmp(reinterpret_cast<char *>(reply), "\1") != 0) syscall_panic("FAT: couldn't mount self as root");
 		delete [] reply;
 
-		syscall_puts("FAT: mounted self as root\n");
+		printf("FAT: mounted self as root\n");
 	}
 
 	// All done.
-	syscall_puts("FAT: entering loop\n");
+	printf("FAT: entering loop\n");
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
@@ -147,7 +145,7 @@ bool init() {
 		fat32esque = 1;
 	
 	if (fat_type == 0xff) {
-		syscall_puts("FAT: we don't understand this sort of FAT.\n");
+		printf("FAT: we don't understand this sort of FAT.\n");
 		return false;
 	}
 
@@ -180,20 +178,20 @@ bool init() {
 	}
 
 	#ifdef SHOW_FAT_INFORMATION
-		syscall_puts("FAT: No. of FATs: "); syscall_putl(boot_record.fats, 16); syscall_putc('\n');
-		syscall_puts("FAT: Sectors per FAT: "); syscall_putl(fat_sectors, 16); syscall_putc('\n');
-		syscall_puts("FAT: Bytes per sector: "); syscall_putl(boot_record.bytes_per_sector, 16); syscall_putc('\n');
-		syscall_puts("FAT: Sectors per cluster: "); syscall_putl(boot_record.sectors_per_cluster, 16); syscall_putc('\n');
-		syscall_puts("FAT: First data sector: "); syscall_putl(first_data_sector, 16); syscall_putc('\n');
-		syscall_puts("FAT: First FAT sector: "); syscall_putl(first_fat_sector, 16); syscall_putc('\n');
+		printf("FAT: No. of FATs: 0x%x\n", boot_record.fats);
+		printf("FAT: Sectors per FAT: 0x%x\n", fat_sectors);
+		printf("FAT: Bytes per sector: 0x%x\n", boot_record.bytes_per_sector);
+		printf("FAT: Sectors per cluster: 0x%x\n", boot_record.sectors_per_cluster);
+		printf("FAT: First data sector: 0x%x\n", first_data_sector);
+		printf("FAT: First FAT sector: 0x%x\n", first_fat_sector);
 
 		if (!fat32esque) {
-			syscall_puts("FAT: Total data sectors: "); syscall_putl(data_sectors, 16); syscall_putc('\n');
-			syscall_puts("FAT: Total clusters: "); syscall_putl(total_clusters, 16); syscall_putc('\n');
-			syscall_puts("FAT: Root dir sectors: "); syscall_putl(root_dir_sectors, 16); syscall_putc('\n');
+			printf("FAT: Total data sectors: 0x%x\n", data_sectors);
+			printf("FAT: Total clusters: 0x%x\n", total_clusters);
+			printf("FAT: Root dir sectors: 0x%x\n", root_dir_sectors);
 		}
 
-		syscall_puts("FAT: Root cluster: "); syscall_putl(root_cluster, 16); syscall_putc('\n');
+		printf("FAT: Root cluster: 0x%x\n", root_cluster);
 	#endif
 
 	fat_data = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];

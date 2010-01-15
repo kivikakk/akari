@@ -42,16 +42,14 @@ extern "C" int start() {
 	if (!syscall_registerName("system.io.vfs"))
 		syscall_panic("VFS: could not register system.io.vfs");
 
-	syscall_puts("VFS: entering loop\n");
+	printf("VFS: entering loop\n");
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
 		u8 *request = syscall_grabQueue(&info);
 		syscall_shiftQueue(&info);
 
-		syscall_puts("VFS: got request 0x");
-		syscall_putl(request[0], 16);
-		syscall_puts("\n");
+		printf("VFS: got request 0x%x\n", request[0]);
 
 		if (request[0] == VFS_OP_READ) {
 			VFSOpRead *op = reinterpret_cast<VFSOpRead *>(request);
@@ -81,9 +79,7 @@ extern "C" int start() {
 
 			drivers.push_back(driver);
 
-			syscall_puts("VFS: registered '");
-			syscall_puts(driver.name);
-			syscall_puts("' driver\n");
+			printf("VFS: registered '%s' driver\n", driver.name);
 
 			VFSReplyRegisterDriver reply = { true, drivers.length() - 1 };
 			syscall_sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&reply), sizeof(reply));

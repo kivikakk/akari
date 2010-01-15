@@ -86,16 +86,10 @@ extern "C" int start() {
 	while (stdin == (u32)-1)
 		stdin = syscall_obtainStreamListener(keyboard_pid, "input");
 
-	syscall_puts("\nstdin is 0x");
-	syscall_putl(stdin, 16);
-	syscall_puts(".\n");
-
 	while (true) {
 		char *l = getline();
 		int s = strpos(l, " ");
-		syscall_puts("space at ");
-		syscall_putl(s, 10);
-		syscall_puts("\n\n");
+		printf("space at %d\n\n", s);
 		delete [] l;
 
 		// Okay, let's grab the first 512 bytes of something.
@@ -114,11 +108,9 @@ extern "C" int start() {
 		syscall_readQueue(info, reinterpret_cast<u8 *>(&dirent), 0, info->data_len);
 		syscall_shiftQueue(info);
 
-		syscall_puts("dirent:\n\tname:  ");
-		syscall_puts(dirent.name);
-		syscall_puts("\n\tinode: ");
-		syscall_putl(dirent.inode, 16);
-		syscall_puts("\n\n");
+		printf("dirent:\n");
+		printf("\tname:  %s\n", dirent.name);
+		printf("\tinode: %x\n\n", dirent.inode);
 	}
 
 	syscall_panic("shell exited?");
