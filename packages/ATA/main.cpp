@@ -28,21 +28,34 @@ void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
 void ata_read_sectors(u32 start, u32 number, u8 *buffer);
 void ata_write_sectors(u32 start, u32 number, u8 *buffer);
 
+typedef struct {
+	bool ok;
 
-u32 hdd_lba28_addr;
-char hdd_serial_number[21];
-char hdd_firmware_revision[9];
-char hdd_model_number[41];
+	u32 hdd_lba28_addr;
+	char hdd_serial_number[21];
+	char hdd_firmware_revision[9];
+	char hdd_model_number[41];
+} ATAHDDInfo;
+
+ATAHDDInfo hddinfo[4];
 u16 returndata[256];
 
-bool init_drives();
+bool init_drives(bool primary, bool master);
 
 extern "C" int start() {
-	if (!init_drives()) {
-		printf("ATA: failed init\n");
+	// Try all four drives.
+	hddinfo[0].ok = init_drives(true, true);
+	hddinfo[1].ok = init_drives(true, false);
+	hddinfo[2].ok = init_drives(false, true);
+	hddinfo[3].ok = init_drives(false, false);
+
+	if (!hddinfo[0].ok && !hddinfo[1].ok && !hddinfo[2].ok && !hddinfo[3].ok) {
+		printf("ATA: failed init - totally no hard drives\n");
 		exit();
 		return 1;
 	}
+
+	// printf("hddinfo(%s %s %s %s) ", hddinfo[0].ok ? "ok" : "-", hddinfo[1].ok ? "ok" : "-", hddinfo[2].ok ? "ok" : "-", hddinfo[3].ok ? "ok" : "-");
 
 	// Now we need to wait and listen for commands!
 	if (!registerName("system.io.ata"))
@@ -78,59 +91,64 @@ extern "C" int start() {
 	return 1;
 }
 
-bool init_drives() {
+bool init_drives(bool primary, bool master) {
 	u8 rs = AkariInB(ATA_BUS);
 	if (rs == 0xff) {
-		printf("ATA: floating bus! No hard drives?\n");
 		return false;
 	}
 
-	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER);
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariOutB(ATA_PRIMARY + ATA_CMD, ATA_IDENTIFY);
+	u32 ata_controller = primary ? ATA_PRIMARY : ATA_SECONDARY,
+		index = (primary ? 0 : 2) + (master ? 0 : 1);
 
-	rs = AkariInB(ATA_PRIMARY + ATA_CMD);
+	AkariOutB(ata_controller + ATA_DRIVE, master ? ATA_SELECT_MASTER : ATA_SELECT_SLAVE);
+	AkariInB(ata_controller + ATA_DCR);
+	AkariInB(ata_controller + ATA_DCR);
+	AkariInB(ata_controller + ATA_DCR);
+	AkariInB(ata_controller + ATA_DCR);
+	AkariOutB(ata_controller + ATA_CMD, ATA_IDENTIFY);
+
+	rs = AkariInB(ata_controller + ATA_CMD);
 	if (rs == 0) {
-		printf("ATA: no hard drives.\n");
 		return false;
 	}
 
 	while (rs & ATA_BSY)
-		rs = AkariInB(ATA_PRIMARY + ATA_CMD);
+		rs = AkariInB(ata_controller + ATA_CMD);
 	
-	if (rs & ATA_ERR)
-		panic("ATA: error on IDENTIFY.\n");
-	else if (!(rs & ATA_DRQ))
-		panic("ATA: no error on IDENTIFY, but no DRQ?\n");
+	if (rs & ATA_ERR) {
+		return false;
+	} else if (!(rs & ATA_DRQ)) {
+		printf("ATA: no error on IDENTIFY, but no DRQ?\n");
+		return false;
+	}
 
 	for (u32 i = 0; i < 256; ++i)
-		returndata[i] = AkariInW(ATA_PRIMARY + ATA_DATA);
+		returndata[i] = AkariInW(ata_controller + ATA_DATA);
 	
 	for (u32 i = 10; i < 20; ++i) {
-		hdd_serial_number[(i - 10) * 2] = (returndata[i] >> 8) & 0xff;
-		hdd_serial_number[(i - 10) * 2 + 1] = returndata[i] & 0xff;
+		hddinfo[index].hdd_serial_number[(i - 10) * 2] = (returndata[i] >> 8) & 0xff;
+		hddinfo[index].hdd_serial_number[(i - 10) * 2 + 1] = returndata[i] & 0xff;
 	}
-	hdd_serial_number[20] = 0;
+	hddinfo[index].hdd_serial_number[20] = 0;
 
 	for (u32 i = 23; i < 27; ++i) {
-		hdd_firmware_revision[(i - 23) * 2] = (returndata[i] >> 8) & 0xff;
-		hdd_firmware_revision[(i - 23) * 2 + 1] = returndata[i] & 0xff;
+		hddinfo[index].hdd_firmware_revision[(i - 23) * 2] = (returndata[i] >> 8) & 0xff;
+		hddinfo[index].hdd_firmware_revision[(i - 23) * 2 + 1] = returndata[i] & 0xff;
 	}
-	hdd_firmware_revision[8] = 0;
+	hddinfo[index].hdd_firmware_revision[8] = 0;
 
 	for (u32 i = 27; i < 47; ++i) { 
-		hdd_model_number[(i - 27) * 2] = (returndata[i] >> 8) & 0xff;
-		hdd_model_number[(i - 27) * 2 + 1] = returndata[i] & 0xff;
+		hddinfo[index].hdd_model_number[(i - 27) * 2] = (returndata[i] >> 8) & 0xff;
+		hddinfo[index].hdd_model_number[(i - 27) * 2 + 1] = returndata[i] & 0xff;
 	}
-	hdd_model_number[40] = 0;
+	hddinfo[index].hdd_model_number[40] = 0;
 
-	if (!(returndata[60] || returndata[61]))
-		panic("ATA: hard drive does not support LBA28?");
+	if (!(returndata[60] || returndata[61])) {
+		printf("ATA: hard drive does not support LBA28?");
+		return false;
+	}
 
-	hdd_lba28_addr = returndata[60] | (returndata[61] << 16);
+	hddinfo[index].hdd_lba28_addr = returndata[60] | (returndata[61] << 16);
 
 	/* LBA48
 	printf("\nSupports LBA48 mode: ");
@@ -154,10 +172,10 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER_OP | ((start >> 24) & 0x0F));
 
 	// replace with more intelligence later
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);	
+	AkariInB(ATA_PRIMARY + ATA_DCR);
+	AkariInB(ATA_PRIMARY + ATA_DCR);
+	AkariInB(ATA_PRIMARY + ATA_DCR);
+	AkariInB(ATA_PRIMARY + ATA_DCR);	
 	AkariOutB(ATA_PRIMARY + ATA_FEATURES, 0x00);
 	AkariOutB(ATA_PRIMARY + ATA_SECTOR, (number == 256) ? 0 : number);	// sector count
 	AkariOutB(ATA_PRIMARY + ATA_PDSA1, static_cast<u8>(start & 0xFF));	// low 8 bits of LBA
@@ -264,10 +282,10 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer)
 		panic("ATA: writing 0 sectors?\n");
 
 	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER_OP | ((start >> 24) & 0x0F));
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);
-	AkariInB(ATA_PRIMARY_DCR);	/* see above */
+	AkariInB(ATA_PRIMARY + ATA_DCR);
+	AkariInB(ATA_PRIMARY + ATA_DCR);
+	AkariInB(ATA_PRIMARY + ATA_DCR);
+	AkariInB(ATA_PRIMARY + ATA_DCR);	/* see above */
 	AkariOutB(ATA_PRIMARY + ATA_FEATURES, 0x00);
 	AkariOutB(ATA_PRIMARY + ATA_SECTOR, (number == 256) ? 0 : number);
 	AkariOutB(ATA_PRIMARY + ATA_PDSA1, static_cast<u8>(start & 0xFF));

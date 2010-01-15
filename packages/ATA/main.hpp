@@ -19,9 +19,10 @@
 
 #define ATA_BUS 0x1F7
 #define ATA_PRIMARY	0x1F0
-#define ATA_PRIMARY_DCR	0x3F6
 #define ATA_SECONDARY	0x170
-#define ATA_SECONDARY_DCR	0x376
+// It just happens that PRIMARY_DCR and SECONDARY_DCR are
+// the same distance from their non-_DCR equivalent.
+#define ATA_DCR 0x206
 
 #define ATA_DATA	0x0
 #define ATA_FEATURES	0x1
