@@ -1,2 +1,3 @@
 drive a: file="/Users/celtic/Code/Akari/disk.img" partition=0
 drive c: file="/Users/celtic/Code/Akari/16disk.img" partition=1
+drive d: file="/Users/celtic/Code/Akari/32disk.img" partition=1
