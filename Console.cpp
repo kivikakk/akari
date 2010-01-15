@@ -68,6 +68,16 @@ void Console::putInt(u32 n, u8 base) {
 	ASSERT(base >= 2 && base <= 36);
 	u32 index = 1, digits = 1;
 
+	u32 separator = 0;
+
+	switch (base) {
+	case 10: separator = 3; break;
+
+	case 2:
+	case 8: 
+	case 16: separator = 4; break;
+	}
+
 	while (n / index >= base)
 		index *= base, ++digits;
 
@@ -78,7 +88,9 @@ void Console::putInt(u32 n, u8 base) {
 		putChar( (c >= 0 && c <= 9) ? (c + '0') : (c - 10 + 'a') );
 		index /= base;
 
-		if (--digits % 4 == 0 && index >= 1)
+		--digits;
+
+		if (separator > 0 && digits % separator == 0 && index >= 1)
 			putChar(',');
 	} while (index >= 1);
 }
