@@ -88,7 +88,7 @@ namespace IPC {
 		return probeQueue_impl(false, reply_to);
 	}
 
-	u32 readQueue(struct queue_item_info *info, char *dest, u32 offset, u32 len) { 
+	u32 readQueue(struct queue_item_info *info, u8 *dest, u32 offset, u32 len) { 
 		Tasks::Task::Queue::Item *item = Akari->tasks->current->replyQueue->itemById(info->id);
 		if (!item) return 0;		// XXX error out!
 
@@ -104,12 +104,18 @@ namespace IPC {
 		return len;
 	}
 
+	u8 *grabQueue(struct queue_item_info *info) {
+		u8 *data = new u8[info->data_len];
+		readQueue(info, data, 0, info->data_len);
+		return data;
+	}
+
 	void shiftQueue(struct queue_item_info *info) {
 		Tasks::Task::Queue::Item *item = Akari->tasks->current->replyQueue->itemById(info->id);
 		Akari->tasks->current->replyQueue->remove(item);
 	}
 
-	u32 sendQueue(pid_t id, u32 reply_to, const char *buffer, u32 len) {
+	u32 sendQueue(pid_t id, u32 reply_to, const u8 *buffer, u32 len) {
 		Tasks::Task *task = Akari->tasks->getTaskById(id);
 		u32 msg_id = task->replyQueue->push_back(Akari->tasks->current->id, reply_to, buffer, len);
 		task->unblockType(ProbeQueueCall::type());

@@ -22,17 +22,17 @@
 
 typedef struct {
 	u8 cmd;
-	u32 sector_offset;
+	u32 sector;
 	u16 offset;
 	u32 length;
 } ATAOpRead;
 
 typedef struct {
 	u8 cmd;
-	u32 sector_offset;
+	u32 sector;
 	u16 offset;
 	u32 length;
-	char data[];
+	u8 data[];
 } ATAOpWrite;
 
 #endif

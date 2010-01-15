@@ -24,6 +24,9 @@
 #define VFS_OP_READDIR	0x5
 #define VFS_OP_FINDDIR	0x6
 
+#define VFS_OP_REGISTER_DRIVER	0xE0
+#define VFS_OP_MOUNT_ROOT		0xE1
+
 typedef struct {
 	u8 cmd;
 	u32 inode, offset, length;
@@ -57,6 +60,21 @@ typedef struct {
 	char name[];
 } VFSOpFinddir;
 
+typedef struct {
+	u8 cmd;
+	char name[];
+} VFSOpRegisterDriver;
+
+typedef struct {
+	bool success;
+	u32 driver;
+} VFSReplyRegisterDriver;
+
+typedef struct {
+	u8 cmd;
+	u32 driver, inode;
+} VFSOpMountRoot;
+
 #define VFS_FILE     		0x01
 #define VFS_DIRECTORY    	0x02
 #define VFS_CHARDEVICE  	0x03
@@ -66,6 +84,10 @@ typedef struct {
 #define VFS_NON_MOUNT_MASK	0x07
 #define VFS_MOUNTPOINT   	0x08
 
+typedef struct {
+	char name[128];
+	pid_t pid;
+} VFSDriver;
 
 typedef struct {
 	char name[128];
@@ -75,6 +97,7 @@ typedef struct {
 typedef struct {
 	char name[128];
 	u32 flags, inode, length, impl;
+	u32 driver;
 } VFSNode;
 
 #endif

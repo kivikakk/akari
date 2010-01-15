@@ -107,11 +107,11 @@ extern "C" int start() {
 			0
 		};
 
-		u32 msg_id = syscall_sendQueue(syscall_processIdByName("system.io.vfs"), 0, reinterpret_cast<char *>(&op), sizeof(op));
+		u32 msg_id = syscall_sendQueue(syscall_processIdByName("system.io.vfs"), 0, reinterpret_cast<u8 *>(&op), sizeof(op));
 
 		struct queue_item_info *info = syscall_probeQueueFor(msg_id);
 		VFSDirent dirent;
-		syscall_readQueue(info, reinterpret_cast<char *>(&dirent), 0, info->data_len);
+		syscall_readQueue(info, reinterpret_cast<u8 *>(&dirent), 0, info->data_len);
 		syscall_shiftQueue(info);
 
 		syscall_puts("dirent:\n\tname:  ");

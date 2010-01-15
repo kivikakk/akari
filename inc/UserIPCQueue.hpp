@@ -36,9 +36,10 @@ namespace IPC {
 	struct queue_item_info *probeQueueUnblock();
 	struct queue_item_info *probeQueueFor(u32 reply_to);
 	struct queue_item_info *probeQueueForUnblock(u32 reply_to);
-	u32 readQueue(struct queue_item_info *info, char *dest, u32 offset, u32 len);
+	u32 readQueue(struct queue_item_info *info, u8 *dest, u32 offset, u32 len);
+	u8 *grabQueue(struct queue_item_info *info);
 	void shiftQueue(struct queue_item_info *info);
-	u32 sendQueue(pid_t id, u32 reply_to, const char *buffer, u32 len);
+	u32 sendQueue(pid_t id, u32 reply_to, const u8 *buffer, u32 len);
 }
 }
 
@@ -48,9 +49,10 @@ DEFN_SYSCALL0(probeQueue, 19, struct queue_item_info *);
 DEFN_SYSCALL0(probeQueueUnblock, 20, struct queue_item_info *);
 DEFN_SYSCALL1(probeQueueFor, 26, struct queue_item_info *, u32);
 DEFN_SYSCALL1(probeQueueForUnblock, 27, struct queue_item_info *, u32);
-DEFN_SYSCALL4(readQueue, 21, u32, struct queue_item_info *, char *, u32, u32);
+DEFN_SYSCALL4(readQueue, 21, u32, struct queue_item_info *, u8 *, u32, u32);
+DEFN_SYSCALL1(grabQueue, 31, u8 *, struct queue_item_info *);
 DEFN_SYSCALL1(shiftQueue, 22, void, struct queue_item_info *);
-DEFN_SYSCALL4(sendQueue, 23, u32, pid_t, u32, const char *, u32);
+DEFN_SYSCALL4(sendQueue, 23, u32, pid_t, u32, const u8 *, u32);
 
 #else
 
@@ -58,9 +60,10 @@ DECL_SYSCALL0(probeQueue, struct queue_item_info *);
 DECL_SYSCALL0(probeQueueUnblock, struct queue_item_info *);
 DECL_SYSCALL1(probeQueueFor, struct queue_item_info *, u32);
 DECL_SYSCALL1(probeQueueForUnblock, struct queue_item_info *, u32);
-DECL_SYSCALL4(readQueue, u32, struct queue_item_info *, char *, u32, u32);
+DECL_SYSCALL4(readQueue, u32, struct queue_item_info *, u8 *, u32, u32);
+DECL_SYSCALL1(grabQueue, u8 *, struct queue_item_info *);
 DECL_SYSCALL1(shiftQueue, void, struct queue_item_info *);
-DECL_SYSCALL4(sendQueue, u32, pid_t id, u32, const char *, u32);
+DECL_SYSCALL4(sendQueue, u32, pid_t id, u32, const u8 *, u32);
 
 #endif
 

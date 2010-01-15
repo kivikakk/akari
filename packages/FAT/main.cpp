@@ -24,14 +24,15 @@
 #include "../MBR/MBRProto.hpp"
 
 bool init();
-void fat_read_cluster(u32 cluster, char *buffer);
-void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer);
-u32 fat_read_data(u32 inode, u32 offset, u32 length, char *buffer);
+void fat_read_cluster(u32 cluster, u8 *buffer);
+void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer);
+u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer);
 VFSDirent *fat_readdir(u32 inode, u32 index);
 VFSNode *fat_finddir(u32 inode, const char *name);
 static char *get_filename(const fat_dirent_t *fd);
 
-pid_t mbr = 0;
+pid_t mbr = 0, vfs = 0;
+u32 vfs_driver_no = 0;
 
 static fat_boot_record_t boot_record;
 static u8 *fat_data;
@@ -53,48 +54,59 @@ extern "C" int start() {
 	if (!syscall_registerName("system.io.fs.fat"))
 		syscall_panic("FAT: could not register system.io.fs.fat");
 
-	syscall_puts("FAT: entering loop\n");
+	syscall_puts("FAT: waiting for vfs\n");
+	while (!vfs)
+		vfs = syscall_processIdByName("system.io.vfs");
 
-	char *buffer = 0; u32 buffer_len = 0;
+	syscall_puts("FAT: registering with vfs\n");
+
+	VFSOpRegisterDriver *register_driver_op = static_cast<VFSOpRegisterDriver *>(syscall_malloc(sizeof(VFSOpRegisterDriver) + 3));
+	register_driver_op->cmd = VFS_OP_REGISTER_DRIVER;
+	syscall_memcpy(&register_driver_op->name, "fat", 3);
+
+	u32 msg_id = syscall_sendQueue(vfs, 0, reinterpret_cast<u8 *>(register_driver_op), sizeof(sizeof(VFSOpRegisterDriver) + 3));
+
+	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
+	if (info->data_len != sizeof(VFSReplyRegisterDriver)) syscall_panic("FAT: VFS gave weird reply to attempt to register");
+
+	VFSReplyRegisterDriver reply;
+	syscall_readQueue(info, reinterpret_cast<u8 *>(&reply), 0, info->data_len);
+	syscall_shiftQueue(info);
+
+	if (!reply.success) {
+		syscall_puts("FAT: failed to register; VFS said "); syscall_putl(reply.driver, 16); syscall_puts("\n");
+		syscall_panic("FAT: failed to register with VFS");
+	}
+
+	vfs_driver_no = reply.driver;
+
+	syscall_puts("FAT: registered\n");
+	syscall_puts("FAT: entering loop\n");
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
-		syscall_puts("FAT: got request\n");
-
-		u32 len = info.data_len;
-		if (len > FAT_MAX_WILL_ALLOC) syscall_panic("FAT: given more data than would like to alloc");
-		if (len > buffer_len) {
-			if (buffer) delete [] buffer;
-			buffer = new char[len];
-			buffer_len = len;
-		}
-
-		syscall_readQueue(&info, buffer, 0, len);
+		u8 *request = syscall_grabQueue(&info);
 		syscall_shiftQueue(&info);
 
-		if (buffer[0] == VFS_OP_READ) {
-			VFSOpRead op = *reinterpret_cast<VFSOpRead *>(buffer);
+		if (request[0] == VFS_OP_READ) {
+			VFSOpRead *op = reinterpret_cast<VFSOpRead *>(request);
 
-			if (op.length > FAT_MAX_WILL_ALLOC) syscall_panic("FAT: request asked for more than we'd like to alloc");
-			if (op.length > buffer_len) {
-				delete [] buffer;
-				buffer = new char[op.length];
-				buffer_len = op.length;
-			}
-
-			u32 bytes_read = fat_read_data(op.inode, op.offset, op.length, buffer);
+			u8 *buffer = new u8[op->length];
+			u32 bytes_read = fat_read_data(op->inode, op->offset, op->length, buffer);
 			syscall_sendQueue(info.from, info.id, buffer, bytes_read);
-		} else if (buffer[0] == VFS_OP_READDIR) {
-			VFSOpReaddir op = *reinterpret_cast<VFSOpReaddir *>(buffer);
+			delete [] buffer;
+		} else if (request[0] == VFS_OP_READDIR) {
+			VFSOpReaddir *op = reinterpret_cast<VFSOpReaddir *>(request);
 
-			VFSDirent *dirent = fat_readdir(op.inode, op.index);
+			VFSDirent *dirent = fat_readdir(op->inode, op->index);
 			if (!dirent) syscall_panic("no dirent!");
-
-			syscall_sendQueue(info.from, info.id, reinterpret_cast<char *>(dirent), sizeof(VFSDirent));
+			syscall_sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
 			delete dirent;
 		} else {
 			syscall_panic("FAT: confused");
 		}
+
+		delete [] request;
 	}
 
 	syscall_panic("FAT: went off the edge");
@@ -102,7 +114,7 @@ extern "C" int start() {
 }
 
 bool init() {
-	partition_read_data(0, 0, 0, sizeof(fat_boot_record_t), reinterpret_cast<char *>(&boot_record));
+	partition_read_data(0, 0, 0, sizeof(fat_boot_record_t), reinterpret_cast<u8 *>(&boot_record));
 
 	fat32esque = 0xff;
 	if ((boot_record.total_sectors_small > 0) && (boot_record.ebr.signature == 0x28 || boot_record.ebr.signature == 0x29))
@@ -162,16 +174,16 @@ bool init() {
 
 	fat_data = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
 
-	partition_read_data(0, first_fat_sector, 0, boot_record.sectors_per_cluster * boot_record.bytes_per_sector, reinterpret_cast<char *>(fat_data));
+	partition_read_data(0, first_fat_sector, 0, boot_record.sectors_per_cluster * boot_record.bytes_per_sector, reinterpret_cast<u8 *>(fat_data));
 
 	return true;
 }
 
-void fat_read_cluster(u32 cluster, char *buffer) {
+void fat_read_cluster(u32 cluster, u8 *buffer) {
 	partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
 }
 
-void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer) {
+void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer) {
 	// Request to MBR driver: u8 0x0 ('read'), u8 parition_id, u32 sector, u16 offset, u32 length
 	// Total: 12 bytes
 	
@@ -183,7 +195,7 @@ void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, ch
 		length
 	};
 
-	u32 msg_id = syscall_sendQueue(mbr, 0, reinterpret_cast<char *>(&op), sizeof(MBROpRead));
+	u32 msg_id = syscall_sendQueue(mbr, 0, reinterpret_cast<u8 *>(&op), sizeof(MBROpRead));
 
 	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
 	if (info->data_len != length) syscall_panic("FAT: MBR read not expected number of bytes back?");
@@ -193,12 +205,12 @@ void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, ch
 }
 
 
-u32 fat_read_data(u32 inode, u32 offset, u32 length, char *buffer) {
+u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 	// TODO: follow clusters while offset >= 2048
 	// TODO: figure out what the above TODO means
 	
 	u32 current_cluster = inode;
-	static char scratch[2048];
+	static u8 scratch[2048];
 
 	// XXX We don't know node->length!
 	/*
@@ -242,7 +254,7 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 
 	if (inode == 0) {
 		// root
-		char *cluster = new char[512 * root_dir_sectors];
+		u8 *cluster = new u8[512 * root_dir_sectors];
 		partition_read_data(0, root_cluster, 0, 512 * root_dir_sectors, cluster);
 		
 		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
@@ -285,7 +297,7 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 VFSNode *fat_finddir(u32 inode, const char *name) {
 	if (inode == 0) {
 		// root
-		char *cluster = new char[512 * root_dir_sectors];
+		u8 *cluster = new u8[512 * root_dir_sectors];
 		partition_read_data(0, root_cluster, 0, 512 * root_dir_sectors, cluster);
 
 		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);

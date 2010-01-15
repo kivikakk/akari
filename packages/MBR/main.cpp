@@ -23,8 +23,8 @@
 #include "../ATA/ATAProto.hpp"
 #include "main.hpp"
 
-void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer);
-void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer);
+void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer);
+void ata_read_data(u32 new_sector, u16 offset, u32 length, u8 *buffer);
 
 master_boot_record_t hdd_mbr;
 pid_t ata = 0;
@@ -37,56 +37,29 @@ extern "C" int start() {
 	if (!syscall_registerName("system.io.mbr"))
 		syscall_panic("MBR: could not register system.io.mbr");
 
-	ata_read_data(0, 0, 512, reinterpret_cast<char *>(&hdd_mbr));
+	ata_read_data(0, 0, 512, reinterpret_cast<u8 *>(&hdd_mbr));
 	if (hdd_mbr.signature != 0xAA55) syscall_panic("MBR: invalid MBR!\n");
 
 	syscall_puts("MBR: entering loop\n");
 
-	char *buffer = 0; u32 buffer_len = 0;
-
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
-
-		// We assign (copy) this so we don't lose it after shiftQueue().
-		u32 len = info.data_len;
-		if (len > MBR_MAX_WILL_ALLOC) syscall_panic("MBR: given more data than would like to alloc");
-		if (len > buffer_len) {
-			if (buffer) delete [] buffer;
-			buffer = new char[len];
-			buffer_len = len;
-		}
-
-		syscall_readQueue(&info, buffer, 0, len);
-
-		// Be sure to shift before going doing a call out that might want
-		// to read from there ...
+		u8 *request = syscall_grabQueue(&info);
 		syscall_shiftQueue(&info);
 
-		if (buffer[0] == MBR_OP_READ) {
-			MBROpRead op = *reinterpret_cast<MBROpRead *>(buffer);
+		if (request[0] == MBR_OP_READ) {
+			MBROpRead *op = reinterpret_cast<MBROpRead *>(request);
 
-			if (op.length > MBR_MAX_WILL_ALLOC) syscall_panic("MBR: request asked for more than we'd like to alloc");
-			if (op.length > buffer_len) {
-				delete [] buffer;
-				buffer = new char[op.length];
-				buffer_len = op.length;
-			}
 
-			if (op.length == 0) {
-				syscall_puts("getting 0 bytes from sector ");
-				syscall_putl(op.sector, 16);
-				syscall_puts(", offset ");
-				syscall_putl(op.offset, 16);
-				syscall_puts("\n");
-				syscall_panic("MBR: asked to get 0 bytes");
-			}
-
-			partition_read_data(op.partition_id, op.sector, op.offset, op.length, buffer);
-
-			syscall_sendQueue(info.from, info.id, buffer, op.length);
+			u8 *buffer = new u8[op->length];
+			partition_read_data(op->partition_id, op->sector, op->offset, op->length, buffer);
+			syscall_sendQueue(info.from, info.id, buffer, op->length);
+			delete [] buffer;
 		} else {
 			syscall_panic("MBR: confused");
 		}
+
+		delete [] request;
 	}
 
 	syscall_panic("MBR: ran off its own loop!");
@@ -94,13 +67,13 @@ extern "C" int start() {
 }
 
 
-void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer) {
+void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer) {
 	u32 new_sector = hdd_mbr.partitions[partition_id].begin_disk_sector + sector;
 	ata_read_data(new_sector, offset, length, buffer);
 }
 
 // TODO: place this outside.
-void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer) {
+void ata_read_data(u32 new_sector, u16 offset, u32 length, u8 *buffer) {
 	// Request to ATA driver: u8 0x0 ('read'), u32 sector, u16 offset, u32 length
 	// Total: 11 bytes
 	
@@ -111,16 +84,12 @@ void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer) {
 		length
 	};
 
-	u32 msg_id = syscall_sendQueue(ata, 0, reinterpret_cast<char *>(&op), sizeof(ATAOpRead));
+	u32 msg_id = syscall_sendQueue(ata, 0, reinterpret_cast<u8 *>(&op), sizeof(ATAOpRead));
 
 	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
 
 	if (info->data_len != length) {
-		syscall_puts("asked for ");
-		syscall_putl(length, 16);
-		syscall_puts(", got ");
-		syscall_putl(info->data_len, 16);
-		syscall_puts("\n");
+		syscall_puts("asked for "); syscall_putl(length, 16); syscall_puts(", got "); syscall_putl(info->data_len, 16); syscall_puts("\n");
 		syscall_panic("MBR: ATA read not expected number of bytes back");
 	}
 

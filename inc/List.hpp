@@ -88,6 +88,26 @@ public:
 		return iterator(0);
 	}
 
+	u32 length() const {
+		u32 len = 0;
+		for (iterator it = begin(); it != end(); ++it, ++len);
+		return len;
+	}
+
+	const T &operator[](u32 index) const {
+		iterator t = begin();
+		while (index--)
+			++t;
+		return *t;
+	}
+
+	T &operator[](u32 index) {
+		iterator t = begin();
+		while (index--)
+			++t;
+		return *t;
+	}
+
 	T &push_back(const T &data) {
 		listNode **writeHead = &_begin;
 		while (*writeHead) {

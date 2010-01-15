@@ -17,7 +17,6 @@
 #ifndef MAIN_HPP
 #define MAIN_HPP
 
-#define ATA_MAX_WILL_ALLOC 0x80000 // 512kb
 #define ATA_BUS 0x1F7
 #define ATA_PRIMARY	0x1F0
 #define ATA_PRIMARY_DCR	0x3F6

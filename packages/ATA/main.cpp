@@ -51,47 +51,28 @@ extern "C" int start() {
 
 	syscall_puts("ATA: entering loop\n");
 
-	char *buffer = 0; u32 buffer_len = 0;
-
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
-
-		u32 len = info.data_len;
-		if (len > ATA_MAX_WILL_ALLOC) syscall_panic("ATA: given more data than would like to alloc");
-		if (len > buffer_len) {
-			if (buffer) delete [] buffer;
-			buffer = new char[len];
-			buffer_len = len;
-		}
-
-		syscall_readQueue(&info, buffer, 0, len);
+		u8 *request = syscall_grabQueue(&info);
 		syscall_shiftQueue(&info);
 
-		if (buffer[0] == ATA_OP_READ) {
-			ATAOpRead op = *reinterpret_cast<ATAOpRead *>(buffer);
+		if (request[0] == ATA_OP_READ) {
+			ATAOpRead *op = reinterpret_cast<ATAOpRead *>(request);
 
-			if (op.length > ATA_MAX_WILL_ALLOC) syscall_panic("ATA: request asked for more than we'd like to alloc");
-			if (op.length > buffer_len) {
-				delete [] buffer;
-				buffer = new char[op.length];
-				buffer_len = op.length;
-			}
+			u8 *buffer = new u8[op->length];
+			ata_read_data(op->sector, op->offset, op->length, buffer);
+			syscall_sendQueue(info.from, info.id, buffer, op->length);
+			delete [] buffer;
+		} else if (request[0] == ATA_OP_WRITE) {
+			ATAOpWrite *op = reinterpret_cast<ATAOpWrite *>(request);
 
-			ata_read_data(op.sector_offset, op.offset, op.length, reinterpret_cast<u8 *>(buffer));
-
-			syscall_sendQueue(info.from, info.id, buffer, op.length);
-		} else if (buffer[0] == ATA_OP_WRITE) {
-			ATAOpWrite op = *reinterpret_cast<ATAOpWrite *>(buffer);
-
-			if (len - 11 > op.length) syscall_panic("ATA: got more data in msg than msg asked to write");
-			if (len - 11 < op.length) syscall_panic("ATA: got LESS data in msg than msg asked to write!");
-
-			ata_write_data(op.sector_offset, op.offset, op.length, reinterpret_cast<u8 *>(op.data));
-
-			syscall_sendQueue(info.from, info.id, "\1", 1);
+			ata_write_data(op->sector, op->offset, op->length, op->data);
+			syscall_sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
 		} else {
 			syscall_panic("ATA: confused");
 		}
+
+		delete [] request;
 	}
 
 	syscall_panic("ATA: ran off the end of the infinite loop");
