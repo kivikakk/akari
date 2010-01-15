@@ -18,7 +18,7 @@
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
 
-#include "../MBR/MBRProto.hpp"
+#include "../VFS/VFSProto.hpp"
 
 pid_t keyboard_pid = 0;
 u32 stdin = -1;
@@ -98,34 +98,27 @@ extern "C" int start() {
 		syscall_puts("\n\n");
 		delete [] l;
 
-		// Okay, let's grab the first 512 bytes.
+		// Okay, let's grab the first 512 bytes of something.
 		l = new char[512];
 
-		MBROpRead op = {
-			MBR_OP_READ,
-			0,	// partition
-			0,	// sector
-			0,	// offset
-			0x200	// lenght
+		VFSOpReaddir op = {
+			VFS_OP_READDIR,
+			0,
+			0
 		};
 
-		u32 msg_id = syscall_sendQueue(syscall_processIdByName("system.io.mbr"), 0, reinterpret_cast<char *>(&op), sizeof(MBROpRead));
-		syscall_puts("sent request #"); syscall_putl(msg_id, 16); syscall_putc('\n');
+		u32 msg_id = syscall_sendQueue(syscall_processIdByName("system.io.vfs"), 0, reinterpret_cast<char *>(&op), sizeof(op));
 
 		struct queue_item_info *info = syscall_probeQueueFor(msg_id);
-		syscall_puts("received reply #"); syscall_putl(info->id, 16);
-		syscall_puts(" to #"); syscall_putl(info->reply_to, 16);
-		syscall_puts(", length "); syscall_putl(info->data_len, 16); syscall_putc('\n');
-
-		if (info->data_len != 512) syscall_panic("not 512 bytes back?");
-		syscall_readQueue(info, l, 0, info->data_len);
+		VFSDirent dirent;
+		syscall_readQueue(info, reinterpret_cast<char *>(&dirent), 0, info->data_len);
 		syscall_shiftQueue(info);
 
-		syscall_puts("data follows:\n");
-		for (int i = 0; i < 512; ++i)
-			syscall_putc(l[i]);
-		syscall_putc('\n');
-		delete [] l;
+		syscall_puts("dirent:\n\tname:  ");
+		syscall_puts(dirent.name);
+		syscall_puts("\n\tinode: ");
+		syscall_putl(dirent.inode, 16);
+		syscall_puts("\n\n");
 	}
 
 	syscall_panic("shell exited?");

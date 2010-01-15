@@ -23,7 +23,7 @@
 #include "main.hpp"
 
 u32 fat_read(u32 inode, u32 offset, u32 length, char *buffer);
-void fat_readdir(u32 inode, u32 index);
+VFSDirent *fat_readdir(u32 inode, u32 index);
 
 pid_t fat = 0;
 
@@ -80,7 +80,9 @@ extern "C" int start() {
 		} else if (buffer[0] == VFS_OP_READDIR) {
 			VFSOpReaddir op = *reinterpret_cast<VFSOpReaddir *>(buffer);
 
-			fat_readdir(op.inode, op.index);
+			VFSDirent *dirent = fat_readdir(op.inode, op.index);
+			syscall_sendQueue(info.from, info.id, reinterpret_cast<char *>(dirent), sizeof(VFSDirent));
+			delete dirent;
 		} else {
 			syscall_panic("VFS: confused");
 		}
@@ -110,7 +112,7 @@ u32 fat_read(u32 inode, u32 offset, u32 length, char *buffer) {
 	return len;
 }
 
-void fat_readdir(u32 inode, u32 index) {
+VFSDirent *fat_readdir(u32 inode, u32 index) {
 	VFSOpReaddir op = {
 		VFS_OP_READDIR,
 		inode,
@@ -120,8 +122,10 @@ void fat_readdir(u32 inode, u32 index) {
 	u32 msg_id = syscall_sendQueue(fat, 0, reinterpret_cast<char *>(&op), sizeof(VFSOpReaddir));
 
 	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
-	// if (info->data_len != length) syscall_panic("VFS: FAT read not expected number of bytes back?");
+	if (info->data_len != sizeof(VFSDirent)) syscall_panic("VFS: FAT read not expected number of bytes back?");
 
-	// syscall_readQueue(info, buffer, 0, info->data_len);
+	VFSDirent *dirent = new VFSDirent;
+	syscall_readQueue(info, reinterpret_cast<char *>(dirent), 0, info->data_len);
 	syscall_shiftQueue(info);
+	return dirent;
 }

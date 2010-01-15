@@ -87,7 +87,11 @@ extern "C" int start() {
 		} else if (buffer[0] == VFS_OP_READDIR) {
 			VFSOpReaddir op = *reinterpret_cast<VFSOpReaddir *>(buffer);
 
-			fat_readdir(op.inode, op.index);
+			VFSDirent *dirent = fat_readdir(op.inode, op.index);
+			if (!dirent) syscall_panic("no dirent!");
+
+			syscall_sendQueue(info.from, info.id, reinterpret_cast<char *>(dirent), sizeof(VFSDirent));
+			delete dirent;
 		} else {
 			syscall_panic("FAT: confused");
 		}
