@@ -18,7 +18,7 @@
 # This is from the perspective of a package.
 include ../../Makefile.inc
 
-COPYDEST = c:/$(TARGET)
+COPYDEST = a:/$(TARGET)
 
 ASMSRCS := $(wildcard *.s)
 CXXSRCS := $(wildcard *.cpp)

@@ -19,7 +19,7 @@ include Makefile.inc
 TARGET = Akari
 
 LDFILE = akari.lnk
-COPYDEST = c:/Akari
+COPYDEST = a:/Akari
 
 ASMSRCS := $(wildcard *.s)
 CXXSRCS := $(wildcard *.cpp)
@@ -33,7 +33,7 @@ all: clean $(TARGET)-copy
 
 $(TARGET)-copy: $(TARGET) menu.lst
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
-	$(MTOOLS_BIN)/mcopy -D o menu.lst c:/boot/grub/menu.lst
+	$(MTOOLS_BIN)/mcopy -D o menu.lst a:/boot/grub/menu.lst
 
 $(TARGET): $(OBJS) $(LDFILE) packages obj $(LINKAGE_TARGET)
 	$(LD) $(LDOPTS) -T$(LDFILE) $(OBJS) -o $(TARGET)
