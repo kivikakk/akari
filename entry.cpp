@@ -128,13 +128,11 @@ static void AkariEntryCont() {
 	kb->setIOMap(0x60, true);
 	kb->setIOMap(0x64, true);
 	idle->next = kb;
-	Akari->console->putString("kb load done\n");
 
 	// Shell
 	Tasks::Task *shell = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "shell");
 	Akari->elf->loadImageInto(shell, reinterpret_cast<u8 *>(module_by_name("/shell")->module));
 	kb->next = shell;
-	Akari->console->putString("shell load done\n");
 	
 	// ATA driver
 	Tasks::Task *ata = Tasks::Task::CreateTask(0 /* Entry point filled out by ELF loader */, 3, true, 0, Akari->memory->_kernelDirectory, "ata");
@@ -147,25 +145,21 @@ static void AkariEntryCont() {
 	ata->setIOMap(0x3F6, true);
 	ata->setIOMap(0x376, true);
 	shell->next = ata;
-	Akari->console->putString("ata load done\n");
 	
 	// MBR driver
 	Tasks::Task *mbr = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "mbr");
 	Akari->elf->loadImageInto(mbr, reinterpret_cast<u8 *>(module_by_name("/mbr")->module));
 	ata->next = mbr;
-	Akari->console->putString("mbr load done\n");
 	
 	// FAT driver
 	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "fat");
 	Akari->elf->loadImageInto(fat, reinterpret_cast<u8 *>(module_by_name("/fat")->module));
 	mbr->next = fat;
-	Akari->console->putString("fat load done\n");
 	
 	// VFS driver
 	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "vfs");
 	Akari->elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module_by_name("/vfs")->module));
 	fat->next = vfs;
-	Akari->console->putString("vfs load done\n");
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);

@@ -57,13 +57,11 @@ extern "C" int start() {
 		syscall_panic("FAT: could not register system.io.fs.fat");
 
 	// Find VFS
-	printf("FAT: waiting for vfs\n");
 	while (!vfs)
 		vfs = syscall_processIdByName("system.io.vfs");
 
 	// Register with VFS
 	{
-		printf("FAT: registering with vfs\n");
 		VFSOpRegisterDriver *register_driver_op = static_cast<VFSOpRegisterDriver *>(syscall_malloc(sizeof(VFSOpRegisterDriver) + 3));
 		register_driver_op->cmd = VFS_OP_REGISTER_DRIVER;
 		syscall_memcpy(&register_driver_op->name, "fat", 3);
@@ -84,12 +82,11 @@ extern "C" int start() {
 		}
 
 		vfs_driver_no = reply.driver;
-		printf("FAT: registered as 0x%x\n", vfs_driver_no);
+		// printf("FAT: registered as 0x%x\n", vfs_driver_no);
 	}
 	
 	// Mount ourselves as root
 	{
-		printf("FAT: mounting self as root\n");
 		VFSOpMountRoot mount_root_op = { VFS_OP_MOUNT_ROOT, vfs_driver_no, 0 };
 		
 		u32 msg_id = syscall_sendQueue(vfs, 0, reinterpret_cast<u8 *>(&mount_root_op), sizeof(mount_root_op));
@@ -99,11 +96,10 @@ extern "C" int start() {
 		if (syscall_strcmp(reinterpret_cast<char *>(reply), "\1") != 0) syscall_panic("FAT: couldn't mount self as root");
 		delete [] reply;
 
-		printf("FAT: mounted self as root\n");
 	}
 
 	// All done.
-	printf("FAT: entering loop\n");
+	printf("[FAT] ");
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();

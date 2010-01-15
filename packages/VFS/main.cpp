@@ -42,7 +42,7 @@ extern "C" int start() {
 	if (!syscall_registerName("system.io.vfs"))
 		syscall_panic("VFS: could not register system.io.vfs");
 
-	printf("VFS: entering loop\n");
+	printf("[VFS] ");
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();

@@ -38,7 +38,6 @@ u16 returndata[256];
 bool init_drives();
 
 extern "C" int start() {
-	printf("ATA: initting drives\n");
 	if (!init_drives()) {
 		printf("ATA: failed init\n");
 		syscall_exit();
@@ -49,7 +48,7 @@ extern "C" int start() {
 	if (!syscall_registerName("system.io.ata"))
 		syscall_panic("ATA: could not register system.io.ata");
 
-	printf("ATA: entering loop\n");
+	printf("[ATA] ");
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();

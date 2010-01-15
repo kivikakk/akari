@@ -215,10 +215,6 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE)) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 		regs = reinterpret_cast<struct modeswitch_registers *>(nt->ks);
 
-		Akari->console->putString("alloced nt->ks at 0x");
-		Akari->console->putInt(nt->ks, 16);
-		Akari->console->putString("\n");
-
 		regs->useresp = USER_TASK_BASE;
 		regs->ss = 0x10 + (cpl * 0x11);		// same as ds: ss is set by TSS, ds is manually set by irq_timer_multitask after
 	} else {

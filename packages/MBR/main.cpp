@@ -30,7 +30,6 @@ master_boot_record_t hdd_mbr;
 pid_t ata = 0;
 
 extern "C" int start() {
-	printf("MBR: waiting for ata\n");
 	while (!ata)
 		ata = syscall_processIdByName("system.io.ata");
 
@@ -40,7 +39,7 @@ extern "C" int start() {
 	ata_read_data(0, 0, 512, reinterpret_cast<u8 *>(&hdd_mbr));
 	if (hdd_mbr.signature != 0xAA55) syscall_panic("MBR: invalid MBR!\n");
 
-	printf("MBR: entering loop\n");
+	printf("[MBR] ");
 
 	while (true) {
 		struct queue_item_info info = *syscall_probeQueue();
