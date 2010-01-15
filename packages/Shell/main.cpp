@@ -47,38 +47,6 @@ static char *getline() {
 	return kbbuf;
 }
 
-int strlen(const char *s) {
-	int i = 0;
-	while (*s) ++i, ++s;
-	return i;
-}
-
-int strcmpn(const char *s1, const char *s2, int n) {
-	while (*s1 && *s2 && n > 0) {
-		if (*s1 < *s2) return -1;
-		if (*s1 > *s2) return 1;
-		++s1, ++s2;
-		--n;
-	}
-	if (n == 0) return 0;
-	if (*s1 < *s2) return -1;
-	if (*s1 > *s2) return 1;
-	return 0;
-}
-
-int strpos(const char *haystack, const char *needle) {
-	int i = 0;
-	int hl = strlen(haystack), nl = strlen(needle);
-	int d = hl - nl;
-	while (i <= d) {
-		if (strcmpn(haystack, needle, nl) == 0)
-			return i;
-		++i, ++haystack;
-	}
-	return -1;
-}
-
-
 extern "C" int start() {
 	while (!keyboard_pid)
 		keyboard_pid = processIdByName("system.io.keyboard");
@@ -95,6 +63,27 @@ extern "C" int start() {
 		// Okay, let's grab the first 512 bytes of something.
 		l = new char[512];
 
+		const char *want = "file.txt";
+		u32 cmd_len = sizeof(VFSOpFinddir) + strlen(want);
+		VFSOpFinddir *op = reinterpret_cast<VFSOpFinddir *>(malloc(cmd_len));
+		op->cmd = VFS_OP_FINDDIR;
+		op->inode = 0;
+		memcpy(op->name, want, strlen(want));	// DO NOT USE strcpy!! It'll copy a NUL into nowhere!
+
+		u32 msg_id = sendQueue(processIdByName("system.io.vfs"), 0, reinterpret_cast<u8 *>(op), cmd_len);
+		struct queue_item_info *info = probeQueueFor(msg_id);
+		if (info->data_len == 0) {
+			printf("appears to be no node!\n");
+		} else {
+			VFSNode node;
+			readQueue(info, reinterpret_cast<u8 *>(&node), 0, info->data_len);
+
+			printf("node:\n");
+		}
+
+		shiftQueue(info);
+
+		/*
 		int i = 0;
 		while (true) {
 			VFSOpReaddir op = {
@@ -122,6 +111,7 @@ extern "C" int start() {
 
 			i++;
 		}
+		*/
 	}
 
 	panic("shell exited?");

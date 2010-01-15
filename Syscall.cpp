@@ -38,6 +38,9 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(28, reinterpret_cast<void *>(&User::strcpy));
 	addSyscall(29, reinterpret_cast<void *>(&User::strcmp));
 	addSyscall(30, reinterpret_cast<void *>(&User::stricmp));
+	addSyscall(32, reinterpret_cast<void *>(&User::strlen));
+	addSyscall(33, reinterpret_cast<void *>(&User::strcmpn));
+	addSyscall(34, reinterpret_cast<void *>(&User::strpos));
 
 	addSyscall(24, reinterpret_cast<void *>(&User::IPC::processId));
 	addSyscall(25, reinterpret_cast<void *>(&User::IPC::processIdByName));

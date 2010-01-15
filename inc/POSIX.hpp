@@ -25,6 +25,8 @@ namespace POSIX {
 
 	extern "C" u32 strlen(const char *);
 	extern "C" s32 strcmp(const char *s1, const char *s2);
+	extern "C" s32 strcmpn(const char *s1, const char *s2, int n);
+	extern "C" s32 strpos(const char *haystack, const char *needle);
 	extern "C" char tolower(char c);
 	extern "C" char toupper(char c);
 	extern "C" s32 stricmp(const char *s1, const char *s2);

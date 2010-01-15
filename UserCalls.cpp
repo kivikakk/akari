@@ -120,5 +120,17 @@ namespace User {
 	s32 stricmp(const char *s1, const char *s2) {
 		return POSIX::stricmp(s1, s2);
 	}
+
+	u32 strlen(const char *s) {
+		return POSIX::strlen(s);
+	}
+	
+	s32 strcmpn(const char *s1, const char *s2, u32 n) {
+		return POSIX::strcmpn(s1, s2, n);
+	}
+
+	s32 strpos(const char *haystack, const char *needle) {
+		return POSIX::strpos(haystack, needle);
+	}
 }
 #endif

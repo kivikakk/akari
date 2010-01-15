@@ -38,6 +38,9 @@ namespace User {
 	char *strcpy(char *dest, const char *src);
 	s32 strcmp(const char *s1, const char *s2);
 	s32 stricmp(const char *s1, const char *s2);
+	u32 strlen(const char *s);
+	s32 strcmpn(const char *s1, const char *s2, u32 n);
+	s32 strpos(const char *haystack, const char *needle);
 }
 
 #elif defined(__AKARI_LINKAGE)
@@ -57,6 +60,9 @@ DEFN_SYSCALL3(memcpy, 11, void *, void *, const void *, u32);
 DEFN_SYSCALL2(strcpy, 28, char *, char *, const char *);
 DEFN_SYSCALL2(strcmp, 29, s32, const char *, const char *);
 DEFN_SYSCALL2(stricmp, 30, s32, const char *, const char *);
+DEFN_SYSCALL1(strlen, 32, u32, const char *);
+DEFN_SYSCALL3(strcmpn, 33, s32, const char *, const char *, u32);
+DEFN_SYSCALL2(strpos, 34, s32, const char *, const char *);
 
 typedef struct {
 	u32 *ptr;
@@ -149,6 +155,9 @@ DECL_SYSCALL3(memcpy, void *, void *, const void *, u32);
 DECL_SYSCALL2(strcpy, char *, char *, const char *);
 DECL_SYSCALL2(strcmp, s32, const char *, const char *);
 DECL_SYSCALL2(stricmp, s32, const char *, const char *);
+DECL_SYSCALL1(strlen, u32, const char *);
+DECL_SYSCALL3(strcmpn, s32, const char *, const char *, u32);
+DECL_SYSCALL2(strpos, s32, const char *, const char *);
 
 void printf(const char *format, ...);
 extern "C" void __cxa_pure_virtual();

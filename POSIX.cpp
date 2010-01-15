@@ -54,6 +54,33 @@ namespace POSIX {
 		return 0;
 	}
 
+	s32 strcmpn(const char *s1, const char *s2, int n) {
+		while (*s1 && *s2 && n > 0) {
+			if (*s1 < *s2) return -1;
+			if (*s1 > *s2) return 1;
+			++s1, ++s2;
+			--n;
+		}
+		if (n == 0) return 0;
+		// One or both may be NUL.
+		if (*s1 < *s2) return -1;
+		if (*s1 > *s2) return 1;
+		return 0;
+	}
+
+	s32 strpos(const char *haystack, const char *needle) {
+		s32 i = 0;
+		s32 hl = (s32)strlen(haystack),
+			nl = (s32)strlen(needle);
+		s32 d = hl - nl;
+		while (i <= d) {
+			if (strcmpn(haystack, needle, nl) == 0)
+				return i;
+			++i, ++haystack;
+		}
+		return -1;
+	}
+
 	char tolower(char c) {
 		if (c < 'A' || c > 'Z') return c;
 		return c + ('a' - 'A');
