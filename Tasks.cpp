@@ -234,13 +234,12 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 	regs->callback.cs = 0x08 + (cpl * 0x11);			// note the low 2 bits are the CPL
 	regs->callback.eflags = (interruptFlag ? 0x200 : 0x0) | (iopl << 12);
 	
-#define _PROCESS_HEAP_START	0x0500000
-#define _PROCESS_HEAP_SIZE	0x500000		// 5MiB
-	for (u32 i = _PROCESS_HEAP_START; i < (_PROCESS_HEAP_START + _PROCESS_HEAP_SIZE); i += 0x1000)
+	for (u32 i = PROCESS_HEAP_START; i < (PROCESS_HEAP_START + PROCESS_HEAP_SIZE); i += 0x1000) {
 		nt->pageDir->getPage(i, true)->allocAnyFrame(false, true);
+	}
 
-	nt->heapStart = _PROCESS_HEAP_START;
-	nt->heapEnd = nt->heapMax = _PROCESS_HEAP_START + _PROCESS_HEAP_SIZE;
+	nt->heapStart = PROCESS_HEAP_START;
+	nt->heapEnd = nt->heapMax = PROCESS_HEAP_START + PROCESS_HEAP_SIZE;
 	// Heap will be initialised first time we switch to the process.
 
 	return nt;

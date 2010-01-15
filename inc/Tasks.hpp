@@ -29,9 +29,13 @@
 
 // user task kernel stack is used for state when it's
 // pre-empted, and for system calls, etc.
-// XXX these are really big right now, to aid with debugging umode processes.
-#define USER_TASK_KERNEL_STACK_SIZE	0x10000
-#define USER_TASK_STACK_SIZE		0x20000
+#define USER_TASK_KERNEL_STACK_SIZE	0x2000
+#define USER_TASK_STACK_SIZE		0x4000
+
+// These can't be too low - otherwise the kernel may have
+// expanded into this area by the time a process is created.
+#define PROCESS_HEAP_START			0x20000000
+#define PROCESS_HEAP_SIZE			0x500000		// 5MiB
 
 #define USER_TASK_BASE				0x50000000
 
