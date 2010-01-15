@@ -42,45 +42,69 @@ static u8 fat_type, fat32esque;
 static u32 root_cluster;
 
 extern "C" int start() {
-	syscall_puts("FAT: waiting for mbr\n");
+	// Find MBR
 	while (!mbr)
 		mbr = syscall_processIdByName("system.io.mbr");
 
+	// Initialize our important stuff
 	if (!init()) {
 		syscall_puts("FAT: calling it quits in init");
 		syscall_exit();
 	}
 
+	// Register our name
 	if (!syscall_registerName("system.io.fs.fat"))
 		syscall_panic("FAT: could not register system.io.fs.fat");
 
+	// Find VFS
 	syscall_puts("FAT: waiting for vfs\n");
 	while (!vfs)
 		vfs = syscall_processIdByName("system.io.vfs");
 
-	syscall_puts("FAT: registering with vfs\n");
+	// Register with VFS
+	{
+		syscall_puts("FAT: registering with vfs\n");
+		VFSOpRegisterDriver *register_driver_op = static_cast<VFSOpRegisterDriver *>(syscall_malloc(sizeof(VFSOpRegisterDriver) + 3));
+		register_driver_op->cmd = VFS_OP_REGISTER_DRIVER;
+		syscall_memcpy(&register_driver_op->name, "fat", 3);
 
-	VFSOpRegisterDriver *register_driver_op = static_cast<VFSOpRegisterDriver *>(syscall_malloc(sizeof(VFSOpRegisterDriver) + 3));
-	register_driver_op->cmd = VFS_OP_REGISTER_DRIVER;
-	syscall_memcpy(&register_driver_op->name, "fat", 3);
+		u32 msg_id = syscall_sendQueue(vfs, 0, reinterpret_cast<u8 *>(register_driver_op), sizeof(VFSOpRegisterDriver) + 3);
+		syscall_free(register_driver_op);
 
-	u32 msg_id = syscall_sendQueue(vfs, 0, reinterpret_cast<u8 *>(register_driver_op), sizeof(sizeof(VFSOpRegisterDriver) + 3));
+		struct queue_item_info *info = syscall_probeQueueFor(msg_id);
+		if (info->data_len != sizeof(VFSReplyRegisterDriver)) syscall_panic("FAT: VFS gave weird reply to attempt to register");
 
-	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
-	if (info->data_len != sizeof(VFSReplyRegisterDriver)) syscall_panic("FAT: VFS gave weird reply to attempt to register");
+		VFSReplyRegisterDriver reply;
+		syscall_readQueue(info, reinterpret_cast<u8 *>(&reply), 0, info->data_len);
+		syscall_shiftQueue(info);
 
-	VFSReplyRegisterDriver reply;
-	syscall_readQueue(info, reinterpret_cast<u8 *>(&reply), 0, info->data_len);
-	syscall_shiftQueue(info);
+		if (!reply.success) {
+			syscall_puts("FAT: failed to register; VFS said "); syscall_putl(reply.driver, 16); syscall_puts("\n");
+			syscall_panic("FAT: failed to register with VFS");
+		}
 
-	if (!reply.success) {
-		syscall_puts("FAT: failed to register; VFS said "); syscall_putl(reply.driver, 16); syscall_puts("\n");
-		syscall_panic("FAT: failed to register with VFS");
+		vfs_driver_no = reply.driver;
+		syscall_puts("FAT: registered as #");
+		syscall_putl(vfs_driver_no, 16);
+		syscall_puts("\n");
+	}
+	
+	// Mount ourselves as root
+	{
+		syscall_puts("FAT: mounting self as root\n");
+		VFSOpMountRoot mount_root_op = { VFS_OP_MOUNT_ROOT, vfs_driver_no, 0 };
+		
+		u32 msg_id = syscall_sendQueue(vfs, 0, reinterpret_cast<u8 *>(&mount_root_op), sizeof(mount_root_op));
+		struct queue_item_info *info = syscall_probeQueueFor(msg_id);
+		u8 *reply = syscall_grabQueue(info);
+		syscall_shiftQueue(info);
+		if (syscall_strcmp(reinterpret_cast<char *>(reply), "\1") != 0) syscall_panic("FAT: couldn't mount self as root");
+		delete [] reply;
+
+		syscall_puts("FAT: mounted self as root\n");
 	}
 
-	vfs_driver_no = reply.driver;
-
-	syscall_puts("FAT: registered\n");
+	// All done.
 	syscall_puts("FAT: entering loop\n");
 
 	while (true) {
