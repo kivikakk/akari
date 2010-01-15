@@ -68,7 +68,7 @@ extern "C" int start() {
 		VFSOpFinddir *op = reinterpret_cast<VFSOpFinddir *>(malloc(cmd_len));
 		op->cmd = VFS_OP_FINDDIR;
 		op->inode = 0;
-		memcpy(op->name, want, strlen(want));	// DO NOT USE strcpy!! It'll copy a NUL into nowhere!
+		memcpy(op->name, want, strlen(want));	// DO NOT USE strcpy!! It'll copy a NUL into nowhere (rather, SOMEWHERE).
 
 		u32 msg_id = sendQueue(processIdByName("system.io.vfs"), 0, reinterpret_cast<u8 *>(op), cmd_len);
 		struct queue_item_info *info = probeQueueFor(msg_id);

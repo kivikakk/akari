@@ -62,11 +62,13 @@ extern "C" int start() {
 
 	// Register with VFS
 	{
-		VFSOpRegisterDriver *register_driver_op = static_cast<VFSOpRegisterDriver *>(malloc(sizeof(VFSOpRegisterDriver) + 3));
+		const char *driver_name = "fat";
+		u32 cmd_len = sizeof(VFSOpRegisterDriver) + strlen(driver_name) + 1;	// trailing NUL
+		VFSOpRegisterDriver *register_driver_op = static_cast<VFSOpRegisterDriver *>(malloc(cmd_len));
 		register_driver_op->cmd = VFS_OP_REGISTER_DRIVER;
-		memcpy(&register_driver_op->name, "fat", 3);
+		strcpy(register_driver_op->name, "fat");
 
-		u32 msg_id = sendQueue(vfs, 0, reinterpret_cast<u8 *>(register_driver_op), sizeof(VFSOpRegisterDriver) + 3);
+		u32 msg_id = sendQueue(vfs, 0, reinterpret_cast<u8 *>(register_driver_op), cmd_len);
 		free(register_driver_op);
 
 		struct queue_item_info *info = probeQueueFor(msg_id);
@@ -343,8 +345,10 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 				continue;
 
 			char *filename = get_filename(fd);
+			printf("FAT: comparing %s and %s\n", filename, name);
 			if (stricmp(filename, name) == 0) {
 				delete [] filename;
+				printf("FAT: sure\n");
 
 				VFSNode *node = new VFSNode;
 				strcpy(node->name, name);
