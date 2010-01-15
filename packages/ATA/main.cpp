@@ -19,6 +19,7 @@
 #include <UserIPCQueue.hpp>
 #include <debug.hpp>
 
+#include "ATAProto.hpp"
 #include "main.hpp"
 
 void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
@@ -66,34 +67,26 @@ extern "C" int start() {
 		syscall_readQueue(&info, buffer, 0, len);
 		syscall_shiftQueue(&info);
 
-		if (buffer[0] == 0) {
-			// Read
+		if (buffer[0] == ATA_OP_READ) {
+			ATAOpRead op = *reinterpret_cast<ATAOpRead *>(buffer);
 
-			u32 sector_offset = buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4];
-			u16 offset = buffer[5] << 8 | buffer[6];
-			u32 length = buffer[7] << 24 | buffer[8] << 16 | buffer[9] << 8 | buffer[10];
-
-			if (length > ATA_MAX_WILL_ALLOC) syscall_panic("ATA: request asked for more than we'd like to alloc");
-			if (length > buffer_len) {
+			if (op.length > ATA_MAX_WILL_ALLOC) syscall_panic("ATA: request asked for more than we'd like to alloc");
+			if (op.length > buffer_len) {
 				delete [] buffer;
-				buffer = new char[length];
-				buffer_len = length;
+				buffer = new char[op.length];
+				buffer_len = op.length;
 			}
 
-			ata_read_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer));
+			ata_read_data(op.sector_offset, op.offset, op.length, reinterpret_cast<u8 *>(buffer));
 
-			syscall_sendQueue(info.from, info.id, buffer, length);
-		} else if (buffer[0] == 1) {
-			// Write
+			syscall_sendQueue(info.from, info.id, buffer, op.length);
+		} else if (buffer[0] == ATA_OP_WRITE) {
+			ATAOpWrite op = *reinterpret_cast<ATAOpWrite *>(buffer);
 
-			u32 sector_offset = buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4];
-			u16 offset = buffer[5] << 8 | buffer[6];
-			u32 length = buffer[7] << 24 | buffer[8] << 16 | buffer[9] << 8 | buffer[10];
+			if (len - 11 > op.length) syscall_panic("ATA: got more data in msg than msg asked to write");
+			if (len - 11 < op.length) syscall_panic("ATA: got LESS data in msg than msg asked to write!");
 
-			if (len - 11 > length) syscall_panic("ATA: got more data in msg than msg asked to write");
-			if (len - 11 < length) syscall_panic("ATA: got LESS data in msg than msg asked to write!");
-
-			ata_write_data(sector_offset, offset, length, reinterpret_cast<u8 *>(buffer + 11));
+			ata_write_data(op.sector_offset, op.offset, op.length, reinterpret_cast<u8 *>(op.data));
 
 			syscall_sendQueue(info.from, info.id, "\1", 1);
 		} else {

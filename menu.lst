@@ -10,5 +10,6 @@ module /mbr
 module /fat
 module /shell
 module /kb
+module /vfs
 boot
 

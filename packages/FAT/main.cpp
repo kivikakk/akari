@@ -21,6 +21,7 @@
 
 #include "main.hpp"
 #include "../VFS/VFSProto.hpp"
+#include "../MBR/MBRProto.hpp"
 
 bool init();
 void fat_read_cluster(u32 cluster, char *buffer);
@@ -72,24 +73,21 @@ extern "C" int start() {
 		syscall_shiftQueue(&info);
 
 		if (buffer[0] == VFS_OP_READ) {
-			u32 inode = buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4],
-				offset = buffer[5] << 24 | buffer[6] << 16 | buffer[7] << 8 | buffer[8],
-				length = buffer[9] << 24 | buffer[10] << 16 | buffer[11] << 8 | buffer[12];
+			VFSOpRead op = *reinterpret_cast<VFSOpRead *>(buffer);
 
-			if (length > FAT_MAX_WILL_ALLOC) syscall_panic("FAT: request asked for more than we'd like to alloc");
-			if (length > buffer_len) {
+			if (op.length > FAT_MAX_WILL_ALLOC) syscall_panic("FAT: request asked for more than we'd like to alloc");
+			if (op.length > buffer_len) {
 				delete [] buffer;
-				buffer = new char[length];
-				buffer_len = length;
+				buffer = new char[op.length];
+				buffer_len = op.length;
 			}
 
-			u32 bytes_read = fat_read_data(inode, offset, length, buffer);
+			u32 bytes_read = fat_read_data(op.inode, op.offset, op.length, buffer);
 			syscall_sendQueue(info.from, info.id, buffer, bytes_read);
 		} else if (buffer[0] == VFS_OP_READDIR) {
-			u32 inode = buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4],
-				index = buffer[5] << 24 | buffer[6] << 16 | buffer[7] << 8 | buffer[8];
+			VFSOpReaddir op = *reinterpret_cast<VFSOpReaddir *>(buffer);
 
-			fat_readdir(inode, index);
+			fat_readdir(op.inode, op.index);
 		} else {
 			syscall_panic("FAT: confused");
 		}
@@ -173,15 +171,15 @@ void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, ch
 	// Request to MBR driver: u8 0x0 ('read'), u8 parition_id, u32 sector, u16 offset, u32 length
 	// Total: 12 bytes
 	
-	char req[] = {
-		0,
+	MBROpRead op = {
+		MBR_OP_READ,
 		partition_id,
-		(sector >> 24) & 0xFF, (sector >> 16) & 0xFF, (sector >> 8) & 0xFF, sector & 0xFF,
-		(offset >> 8) & 0xFF, offset & 0xFF,
-		(length >> 24) & 0xFF, (length >> 16) & 0xFF, (length >> 8) & 0xFF, length & 0xFF
+		sector,
+		offset,
+		length
 	};
 
-	u32 msg_id = syscall_sendQueue(mbr, 0, req, 12);
+	u32 msg_id = syscall_sendQueue(mbr, 0, reinterpret_cast<char *>(&op), sizeof(MBROpRead));
 
 	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
 	if (info->data_len != length) syscall_panic("FAT: MBR read not expected number of bytes back?");

@@ -161,6 +161,12 @@ static void AkariEntryCont() {
 	mbr->next = fat;
 	Akari->console->putString("fat load done\n");
 	
+	// VFS driver
+	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "vfs");
+	Akari->elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module_by_name("/vfs")->module));
+	fat->next = vfs;
+	Akari->console->putString("vfs load done\n");
+	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);
 

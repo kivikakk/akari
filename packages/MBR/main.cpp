@@ -19,6 +19,8 @@
 #include <UserIPCQueue.hpp>
 #include <debug.hpp>
 
+#include "MBRProto.hpp"
+#include "../ATA/ATAProto.hpp"
 #include "main.hpp"
 
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, char *buffer);
@@ -60,33 +62,28 @@ extern "C" int start() {
 		// to read from there ...
 		syscall_shiftQueue(&info);
 
-		if (buffer[0] == 0) {
-			// Read
+		if (buffer[0] == MBR_OP_READ) {
+			MBROpRead op = *reinterpret_cast<MBROpRead *>(buffer);
 
-			u8 partition_id = buffer[1];
-			u32 sector = buffer[2] << 24 | buffer[3] << 16 | buffer[4] << 8 | buffer[5];
-			u16 offset = buffer[6] << 8 | buffer[7];
-			u32 length = buffer[8] << 24 | buffer[9] << 16 | buffer[10] << 8 | buffer[11];
-
-			if (length > MBR_MAX_WILL_ALLOC) syscall_panic("MBR: request asked for more than we'd like to alloc");
-			if (length > buffer_len) {
+			if (op.length > MBR_MAX_WILL_ALLOC) syscall_panic("MBR: request asked for more than we'd like to alloc");
+			if (op.length > buffer_len) {
 				delete [] buffer;
-				buffer = new char[length];
-				buffer_len = length;
+				buffer = new char[op.length];
+				buffer_len = op.length;
 			}
 
-			if (length == 0) {
+			if (op.length == 0) {
 				syscall_puts("getting 0 bytes from sector ");
-				syscall_putl(sector, 16);
+				syscall_putl(op.sector, 16);
 				syscall_puts(", offset ");
-				syscall_putl(offset, 16);
+				syscall_putl(op.offset, 16);
 				syscall_puts("\n");
 				syscall_panic("MBR: asked to get 0 bytes");
 			}
 
-			partition_read_data(partition_id, sector, offset, length, buffer);
+			partition_read_data(op.partition_id, op.sector, op.offset, op.length, buffer);
 
-			syscall_sendQueue(info.from, info.id, buffer, length);
+			syscall_sendQueue(info.from, info.id, buffer, op.length);
 		} else {
 			syscall_panic("MBR: confused");
 		}
@@ -107,23 +104,23 @@ void ata_read_data(u32 new_sector, u16 offset, u32 length, char *buffer) {
 	// Request to ATA driver: u8 0x0 ('read'), u32 sector, u16 offset, u32 length
 	// Total: 11 bytes
 	
-	char req[] = {
-		0,
-		(new_sector >> 24) & 0xFF, (new_sector >> 16) & 0xFF, (new_sector >> 8) & 0xFF, new_sector & 0xFF,
-		(offset >> 8) & 0xFF, offset & 0xFF,
-		(length >> 24) & 0xFF, (length >> 16) & 0xFF, (length >> 8) & 0xFF, length & 0xFF
+	ATAOpRead op = {
+		ATA_OP_READ,
+		new_sector,
+		offset,
+		length
 	};
 
-	u32 msg_id = syscall_sendQueue(ata, 0, req, 11);
+	u32 msg_id = syscall_sendQueue(ata, 0, reinterpret_cast<char *>(&op), sizeof(ATAOpRead));
 
 	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
 
 	if (info->data_len != length) {
-		syscall_readQueue(info, buffer, 0, min(length, info->data_len));
-		for (u32 i = 0; i < min(length, info->data_len); ++i) {
-			syscall_putl((u8)buffer[i], 16);
-			syscall_putc(' ');
-		}
+		syscall_puts("asked for ");
+		syscall_putl(length, 16);
+		syscall_puts(", got ");
+		syscall_putl(info->data_len, 16);
+		syscall_puts("\n");
 		syscall_panic("MBR: ATA read not expected number of bytes back");
 	}
 

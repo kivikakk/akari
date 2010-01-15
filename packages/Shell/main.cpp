@@ -18,6 +18,8 @@
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
 
+#include "../MBR/MBRProto.hpp"
+
 pid_t keyboard_pid = 0;
 u32 stdin = -1;
 
@@ -98,8 +100,16 @@ extern "C" int start() {
 
 		// Okay, let's grab the first 512 bytes.
 		l = new char[512];
-		char req[] = { 0 /*read*/, 0 /*part 0*/, 0, 0, 0, 0 /*sec 0*/, 0, 0 /*offset 0*/, 0, 0, 2, 0 /*len 512*/ };
-		u32 msg_id = syscall_sendQueue(syscall_processIdByName("system.io.mbr"), 0, req, 11);
+
+		MBROpRead op = {
+			MBR_OP_READ,
+			0,	// partition
+			0,	// sector
+			0,	// offset
+			0x200	// lenght
+		};
+
+		u32 msg_id = syscall_sendQueue(syscall_processIdByName("system.io.mbr"), 0, reinterpret_cast<char *>(&op), sizeof(MBROpRead));
 		syscall_puts("sent request #"); syscall_putl(msg_id, 16); syscall_putc('\n');
 
 		struct queue_item_info *info = syscall_probeQueueFor(msg_id);
