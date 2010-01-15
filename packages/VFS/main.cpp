@@ -85,7 +85,7 @@ extern "C" int start() {
 			syscall_puts(driver.name);
 			syscall_puts("' driver\n");
 
-			VFSReplyRegisterDriver reply = { true, drivers.length() };
+			VFSReplyRegisterDriver reply = { true, drivers.length() - 1 };
 			syscall_sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&reply), sizeof(reply));
 		} else if (request[0] == VFS_OP_MOUNT_ROOT) {
 			VFSOpMountRoot *op = reinterpret_cast<VFSOpMountRoot *>(request);
