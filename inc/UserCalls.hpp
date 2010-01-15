@@ -58,6 +58,56 @@ DEFN_SYSCALL2(strcpy, 28, char *, char *, const char *);
 DEFN_SYSCALL2(strcmp, 29, s32, const char *, const char *);
 DEFN_SYSCALL2(stricmp, 30, s32, const char *, const char *);
 
+typedef struct {
+	u32 *ptr;
+} va_list;
+
+#define va_start(ap, place) \
+	ap.ptr = (u32 *)&place
+
+#define va_arg(ap, type) \
+	((type)*(++(ap).ptr))
+
+#define va_end(ap) \
+	ap.ptr = (u32 *)0
+
+// XXX This isn't really the place for it, but I can't help!
+void printf(const char *format, ...) {
+	va_list ap;
+	va_start(ap, format);
+
+	bool is_escape = false;
+	char c;
+	while ((c = *format++)) {
+		if (c == '%') {
+			if (!is_escape) {
+				is_escape = true;
+				continue;
+			} else {
+				syscall_putc(c);
+				is_escape = false;
+			}
+		} else if (is_escape) {
+			switch (c) {
+			case 's':
+				syscall_puts(va_arg(ap, const char *));
+				break;
+			case 'd':
+				syscall_putl(va_arg(ap, u32), 10);
+				break;
+			case 'x':
+				syscall_putl(va_arg(ap, u32), 16);
+				break;
+			}
+			is_escape = false;
+		} else {
+			syscall_putc(c);
+		}
+	}
+
+	va_end(ap);
+}
+
 extern "C" void __cxa_pure_virtual() {
 	syscall_panic("__cxa_pure_virtual called in usermode");
 }
@@ -100,6 +150,7 @@ DECL_SYSCALL2(strcpy, char *, char *, const char *);
 DECL_SYSCALL2(strcmp, s32, const char *, const char *);
 DECL_SYSCALL2(stricmp, s32, const char *, const char *);
 
+void printf(const char *format, ...);
 extern "C" void __cxa_pure_virtual();
 void *operator new(size_t);
 void *operator new[](size_t);
