@@ -123,6 +123,16 @@ extern "C" int start() {
 				sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
 				delete dirent;
 			}
+		} else if (request[0] == VFS_OP_FINDDIR) {
+			VFSOpFinddir *op = reinterpret_cast<VFSOpFinddir *>(request);
+
+			VFSNode *node = fat_finddir(op->inode, op->name);
+			if (!node) {
+				sendQueue(info.from, info.id, 0, 0);
+			} else {
+				sendQueue(info.from, info.id, reinterpret_cast<u8 *>(node), sizeof(VFSNode));
+				delete node;
+			}
 		} else {
 			panic("FAT: confused");
 		}
