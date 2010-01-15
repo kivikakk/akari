@@ -62,8 +62,12 @@ extern "C" int start() {
 			VFSOpReaddir *op = reinterpret_cast<VFSOpReaddir *>(request);
 
 			VFSDirent *dirent = fs_readdir(pidForDriver(vfs_root->driver), op->inode, op->index);
-			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
-			delete dirent;
+			if (!dirent) {
+				sendQueue(info.from, info.id, 0, 0);
+			} else {
+				sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
+				delete dirent;
+			}
 		} else if (request[0] == VFS_OP_REGISTER_DRIVER) {
 			VFSOpRegisterDriver *op = reinterpret_cast<VFSOpRegisterDriver *>(request);
 
@@ -137,6 +141,10 @@ VFSDirent *fs_readdir(pid_t pid, u32 inode, u32 index) {
 	u32 msg_id = sendQueue(pid, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpReaddir));
 
 	struct queue_item_info *info = probeQueueFor(msg_id);
+	if (info->data_len == 0) {
+		shiftQueue(info);
+		return 0;
+	}
 	if (info->data_len != sizeof(VFSDirent)) panic("VFS: fs read not expected number of bytes back?");
 
 	VFSDirent *dirent = new VFSDirent;

@@ -95,7 +95,8 @@ extern "C" int start() {
 		// Okay, let's grab the first 512 bytes of something.
 		l = new char[512];
 
-		for (int i = 0; i < 8; ++i) {
+		int i = 0;
+		while (true) {
 			VFSOpReaddir op = {
 				VFS_OP_READDIR,
 				0,
@@ -105,6 +106,12 @@ extern "C" int start() {
 			u32 msg_id = sendQueue(processIdByName("system.io.vfs"), 0, reinterpret_cast<u8 *>(&op), sizeof(op));
 
 			struct queue_item_info *info = probeQueueFor(msg_id);
+			if (info->data_len == 0) {
+				printf("end of dirents (at %d)\n", i);
+				shiftQueue(info);
+				break;
+			}
+
 			VFSDirent dirent;
 			readQueue(info, reinterpret_cast<u8 *>(&dirent), 0, info->data_len);
 			shiftQueue(info);
@@ -112,6 +119,8 @@ extern "C" int start() {
 			printf("dirent:\n");
 			printf("\tname:  %s\n", dirent.name);
 			printf("\tinode: %x\n\n", dirent.inode);
+
+			i++;
 		}
 	}
 

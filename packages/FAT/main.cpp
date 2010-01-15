@@ -117,9 +117,12 @@ extern "C" int start() {
 			VFSOpReaddir *op = reinterpret_cast<VFSOpReaddir *>(request);
 
 			VFSDirent *dirent = fat_readdir(op->inode, op->index);
-			if (!dirent) panic("no dirent!");
-			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
-			delete dirent;
+			if (!dirent) {
+				sendQueue(info.from, info.id, 0, 0);
+			} else {
+				sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
+				delete dirent;
+			}
 		} else {
 			panic("FAT: confused");
 		}
