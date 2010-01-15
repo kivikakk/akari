@@ -41,7 +41,7 @@
 
 #define ATA_SELECT_MASTER	0xA0
 #define ATA_SELECT_SLAVE	0xB0
-/* These _OP ones are used in read/write? */
+// These _OP ones are used in read/write
 #define ATA_SELECT_MASTER_OP	0xE0
 #define ATA_SELECT_SLAVE_OP	0xF0
 
