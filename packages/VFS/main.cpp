@@ -26,6 +26,7 @@
 pid_t pidForDriver(u32 driver);
 u32 fs_read(pid_t pid, u32 inode, u32 offset, u32 length, u8 *buffer);
 VFSDirent *fs_readdir(pid_t pid, u32 inode, u32 index);
+VFSNode *fs_finddir(pid_t pid, u32 inode, const char *name);
 
 LinkedList<VFSDriver> drivers;
 VFSNode *vfs_root = 0;
@@ -67,6 +68,16 @@ extern "C" int start() {
 			} else {
 				sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
 				delete dirent;
+			}
+		} else if (request[0] == VFS_OP_FINDDIR) {
+			VFSOpFinddir *op = reinterpret_cast<VFSOpFinddir *>(request);
+
+			VFSNode *node = fs_finddir(pidForDriver(vfs_root->driver), op->inode, op->name);
+			if (!node) {
+				sendQueue(info.from, info.id, 0, 0);
+			} else {
+				sendQueue(info.from, info.id, reinterpret_cast<u8 *>(node), sizeof(VFSNode));
+				delete node;
 			}
 		} else if (request[0] == VFS_OP_REGISTER_DRIVER) {
 			VFSOpRegisterDriver *op = reinterpret_cast<VFSOpRegisterDriver *>(request);
@@ -152,3 +163,27 @@ VFSDirent *fs_readdir(pid_t pid, u32 inode, u32 index) {
 	shiftQueue(info);
 	return dirent;
 }
+
+VFSNode *fs_finddir(pid_t pid, u32 inode, const char *name) {
+	u32 cmd_len = sizeof(VFSOpFinddir) + strlen(name);
+	VFSOpFinddir *op = reinterpret_cast<VFSOpFinddir *>(malloc(cmd_len));
+	op->cmd = VFS_OP_FINDDIR;
+	op->inode = inode;
+	strcpy(op->name, name);
+
+	u32 msg_id = sendQueue(pid, 0, reinterpret_cast<u8 *>(op), cmd_len);
+	delete op;
+
+	struct queue_item_info *info = probeQueueFor(msg_id);
+	if (info->data_len == 0) {
+		shiftQueue(info);
+		return 0;
+	}
+	if (info->data_len != sizeof(VFSNode)) panic("VFS: fs read not expected number of bytes back?");
+
+	VFSNode *node = new VFSNode;
+	readQueue(info, reinterpret_cast<u8 *>(node), 0, info->data_len);
+	shiftQueue(info);
+	return node;
+}
+
