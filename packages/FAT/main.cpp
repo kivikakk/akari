@@ -44,41 +44,41 @@ static u32 root_cluster;
 extern "C" int start() {
 	// Find MBR
 	while (!mbr)
-		mbr = syscall_processIdByName("system.io.mbr");
+		mbr = processIdByName("system.io.mbr");
 
 	// Initialize our important stuff
 	if (!init()) {
 		printf("FAT: calling it quits in init");
-		syscall_exit();
+		exit();
 	}
 
 	// Register our name
-	if (!syscall_registerName("system.io.fs.fat"))
-		syscall_panic("FAT: could not register system.io.fs.fat");
+	if (!registerName("system.io.fs.fat"))
+		panic("FAT: could not register system.io.fs.fat");
 
 	// Find VFS
 	while (!vfs)
-		vfs = syscall_processIdByName("system.io.vfs");
+		vfs = processIdByName("system.io.vfs");
 
 	// Register with VFS
 	{
-		VFSOpRegisterDriver *register_driver_op = static_cast<VFSOpRegisterDriver *>(syscall_malloc(sizeof(VFSOpRegisterDriver) + 3));
+		VFSOpRegisterDriver *register_driver_op = static_cast<VFSOpRegisterDriver *>(malloc(sizeof(VFSOpRegisterDriver) + 3));
 		register_driver_op->cmd = VFS_OP_REGISTER_DRIVER;
-		syscall_memcpy(&register_driver_op->name, "fat", 3);
+		memcpy(&register_driver_op->name, "fat", 3);
 
-		u32 msg_id = syscall_sendQueue(vfs, 0, reinterpret_cast<u8 *>(register_driver_op), sizeof(VFSOpRegisterDriver) + 3);
-		syscall_free(register_driver_op);
+		u32 msg_id = sendQueue(vfs, 0, reinterpret_cast<u8 *>(register_driver_op), sizeof(VFSOpRegisterDriver) + 3);
+		free(register_driver_op);
 
-		struct queue_item_info *info = syscall_probeQueueFor(msg_id);
-		if (info->data_len != sizeof(VFSReplyRegisterDriver)) syscall_panic("FAT: VFS gave weird reply to attempt to register");
+		struct queue_item_info *info = probeQueueFor(msg_id);
+		if (info->data_len != sizeof(VFSReplyRegisterDriver)) panic("FAT: VFS gave weird reply to attempt to register");
 
 		VFSReplyRegisterDriver reply;
-		syscall_readQueue(info, reinterpret_cast<u8 *>(&reply), 0, info->data_len);
-		syscall_shiftQueue(info);
+		readQueue(info, reinterpret_cast<u8 *>(&reply), 0, info->data_len);
+		shiftQueue(info);
 
 		if (!reply.success) {
 			printf("FAT: failed to register; VFS said 0x%x\n", reply.driver);
-			syscall_panic("FAT: failed to register with VFS");
+			panic("FAT: failed to register with VFS");
 		}
 
 		vfs_driver_no = reply.driver;
@@ -89,11 +89,11 @@ extern "C" int start() {
 	{
 		VFSOpMountRoot mount_root_op = { VFS_OP_MOUNT_ROOT, vfs_driver_no, 0 };
 		
-		u32 msg_id = syscall_sendQueue(vfs, 0, reinterpret_cast<u8 *>(&mount_root_op), sizeof(mount_root_op));
-		struct queue_item_info *info = syscall_probeQueueFor(msg_id);
-		u8 *reply = syscall_grabQueue(info);
-		syscall_shiftQueue(info);
-		if (syscall_strcmp(reinterpret_cast<char *>(reply), "\1") != 0) syscall_panic("FAT: couldn't mount self as root");
+		u32 msg_id = sendQueue(vfs, 0, reinterpret_cast<u8 *>(&mount_root_op), sizeof(mount_root_op));
+		struct queue_item_info *info = probeQueueFor(msg_id);
+		u8 *reply = grabQueue(info);
+		shiftQueue(info);
+		if (strcmp(reinterpret_cast<char *>(reply), "\1") != 0) panic("FAT: couldn't mount self as root");
 		delete [] reply;
 
 	}
@@ -102,32 +102,32 @@ extern "C" int start() {
 	printf("[FAT] ");
 
 	while (true) {
-		struct queue_item_info info = *syscall_probeQueue();
-		u8 *request = syscall_grabQueue(&info);
-		syscall_shiftQueue(&info);
+		struct queue_item_info info = *probeQueue();
+		u8 *request = grabQueue(&info);
+		shiftQueue(&info);
 
 		if (request[0] == VFS_OP_READ) {
 			VFSOpRead *op = reinterpret_cast<VFSOpRead *>(request);
 
 			u8 *buffer = new u8[op->length];
 			u32 bytes_read = fat_read_data(op->inode, op->offset, op->length, buffer);
-			syscall_sendQueue(info.from, info.id, buffer, bytes_read);
+			sendQueue(info.from, info.id, buffer, bytes_read);
 			delete [] buffer;
 		} else if (request[0] == VFS_OP_READDIR) {
 			VFSOpReaddir *op = reinterpret_cast<VFSOpReaddir *>(request);
 
 			VFSDirent *dirent = fat_readdir(op->inode, op->index);
-			if (!dirent) syscall_panic("no dirent!");
-			syscall_sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
+			if (!dirent) panic("no dirent!");
+			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
 			delete dirent;
 		} else {
-			syscall_panic("FAT: confused");
+			panic("FAT: confused");
 		}
 
 		delete [] request;
 	}
 
-	syscall_panic("FAT: went off the edge");
+	panic("FAT: went off the edge");
 	return 1;
 }
 
@@ -160,9 +160,9 @@ bool init() {
 		else if (total_clusters < 65525)
 			fat_type = 16;
 		else if (total_clusters == 0)
-			syscall_panic("FAT: we think it's not FAT32 yet the cluster count is 0.\n");
+			panic("FAT: we think it's not FAT32 yet the cluster count is 0.\n");
 		else
-			syscall_panic("FAT: we think it's not FAT32 yet the cluster count is 65525+.\n");
+			panic("FAT: we think it's not FAT32 yet the cluster count is 65525+.\n");
 	} else {
 		/* FAT32 */
 		fat_sectors = (boot_record.fat32_ebr.fat_size + (boot_record.bytes_per_sector - 1)) / boot_record.bytes_per_sector;
@@ -213,13 +213,13 @@ void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8
 		length
 	};
 
-	u32 msg_id = syscall_sendQueue(mbr, 0, reinterpret_cast<u8 *>(&op), sizeof(MBROpRead));
+	u32 msg_id = sendQueue(mbr, 0, reinterpret_cast<u8 *>(&op), sizeof(MBROpRead));
 
-	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
-	if (info->data_len != length) syscall_panic("FAT: MBR read not expected number of bytes back?");
+	struct queue_item_info *info = probeQueueFor(msg_id);
+	if (info->data_len != length) panic("FAT: MBR read not expected number of bytes back?");
 
-	syscall_readQueue(info, buffer, 0, info->data_len);
-	syscall_shiftQueue(info);
+	readQueue(info, buffer, 0, info->data_len);
+	shiftQueue(info);
 }
 
 
@@ -242,7 +242,7 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 	while (length > 0) {
 		fat_read_cluster(current_cluster, scratch);
 		u16 copy_len = min(length, 2048 - offset);
-		syscall_memcpy(buffer, scratch + offset, copy_len);
+		memcpy(buffer, scratch + offset, copy_len);
 
 		buffer += copy_len; length -= copy_len; copied += copy_len;
 
@@ -252,9 +252,9 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 				// u32 fat_entry = reinterpret_cast<u32 *>(fat_data)[current_cluster];
 			} else {
 				u32 fat_entry = reinterpret_cast<u32 *>(fat_data)[current_cluster];
-				if (fat_entry == 0) syscall_panic("FAT: lead to a free cluster!");
-				else if (fat_entry == 1) syscall_panic("FAT: lead to a reserved cluster!");
-				else if (fat_entry >= 0xFFF0 && fat_entry <= 0xFFF7) syscall_panic("FAT: lead to an end-reserved cluster!");
+				if (fat_entry == 0) panic("FAT: lead to a free cluster!");
+				else if (fat_entry == 1) panic("FAT: lead to a reserved cluster!");
+				else if (fat_entry >= 0xFFF0 && fat_entry <= 0xFFF7) panic("FAT: lead to an end-reserved cluster!");
 				else if (fat_entry >= 0xFFF8) {
 					// looks like end-of-file.
 					return copied;
@@ -294,7 +294,7 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 				VFSDirent *dirent = new VFSDirent;
 
 				char *filename = get_filename(fd);
-				syscall_strcpy(dirent->name, filename);
+				strcpy(dirent->name, filename);
 				delete [] filename;
 
 				dirent->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
@@ -308,7 +308,7 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 		return 0;
 	}
 
-	syscall_panic("FAT: oops. can't readdir not-0 now.");
+	panic("FAT: oops. can't readdir not-0 now.");
 	return 0;
 }
 
@@ -330,11 +330,11 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 				continue;
 
 			char *filename = get_filename(fd);
-			if (syscall_stricmp(filename, name) == 0) {
+			if (stricmp(filename, name) == 0) {
 				delete [] filename;
 
 				VFSNode *node = new VFSNode;
-				syscall_strcpy(node->name, name);
+				strcpy(node->name, name);
 				node->flags = (fd->attributes & FAT_DIRECTORY) ? VFS_DIRECTORY : VFS_FILE;
 				node->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
 				node->length = fd->size;
@@ -351,7 +351,7 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 		return 0;
 	}
 
-	syscall_panic("FAT: oops. can't finddir not-0");
+	panic("FAT: oops. can't finddir not-0");
 	return 0;
 }
 

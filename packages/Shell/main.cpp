@@ -28,15 +28,15 @@ static char *getline() {
 	char *kbbuf = new char[cs];
 
 	while (true) {
-		u32 incoming = syscall_readStream(keyboard_pid, "input", stdin, kbbuf + n, 1);
-		syscall_putc(kbbuf[n]);
+		u32 incoming = readStream(keyboard_pid, "input", stdin, kbbuf + n, 1);
+		putc(kbbuf[n]);
 		if (kbbuf[n] == '\n') break;
 
 		n += incoming;	// 1
 
 		if (n == cs) {
 			char *nkb = new char[cs * 2];
-			syscall_memcpy(nkb, kbbuf, n);
+			memcpy(nkb, kbbuf, n);
 			delete [] kbbuf;
 			kbbuf = nkb;
 			cs *= 2;
@@ -81,10 +81,10 @@ int strpos(const char *haystack, const char *needle) {
 
 extern "C" int start() {
 	while (!keyboard_pid)
-		keyboard_pid = syscall_processIdByName("system.io.keyboard");
+		keyboard_pid = processIdByName("system.io.keyboard");
 
 	while (stdin == (u32)-1)
-		stdin = syscall_obtainStreamListener(keyboard_pid, "input");
+		stdin = obtainStreamListener(keyboard_pid, "input");
 
 	while (true) {
 		char *l = getline();
@@ -95,25 +95,27 @@ extern "C" int start() {
 		// Okay, let's grab the first 512 bytes of something.
 		l = new char[512];
 
-		VFSOpReaddir op = {
-			VFS_OP_READDIR,
-			0,
-			0
-		};
+		for (int i = 0; i < 8; ++i) {
+			VFSOpReaddir op = {
+				VFS_OP_READDIR,
+				0,
+				i
+			};
 
-		u32 msg_id = syscall_sendQueue(syscall_processIdByName("system.io.vfs"), 0, reinterpret_cast<u8 *>(&op), sizeof(op));
+			u32 msg_id = sendQueue(processIdByName("system.io.vfs"), 0, reinterpret_cast<u8 *>(&op), sizeof(op));
 
-		struct queue_item_info *info = syscall_probeQueueFor(msg_id);
-		VFSDirent dirent;
-		syscall_readQueue(info, reinterpret_cast<u8 *>(&dirent), 0, info->data_len);
-		syscall_shiftQueue(info);
+			struct queue_item_info *info = probeQueueFor(msg_id);
+			VFSDirent dirent;
+			readQueue(info, reinterpret_cast<u8 *>(&dirent), 0, info->data_len);
+			shiftQueue(info);
 
-		printf("dirent:\n");
-		printf("\tname:  %s\n", dirent.name);
-		printf("\tinode: %x\n\n", dirent.inode);
+			printf("dirent:\n");
+			printf("\tname:  %s\n", dirent.name);
+			printf("\tinode: %x\n\n", dirent.inode);
+		}
 	}
 
-	syscall_panic("shell exited?");
+	panic("shell exited?");
 	return 1;
 }
 

@@ -34,20 +34,20 @@ extern "C" int start() {
 	{
 		// Requests to driver 0 will come back here.
 		VFSDriver null_driver;
-		syscall_strcpy(null_driver.name, "null driver");
-		null_driver.pid = syscall_processId();
+		strcpy(null_driver.name, "null driver");
+		null_driver.pid = processId();
 		drivers.push_back(null_driver);
 	}
 
-	if (!syscall_registerName("system.io.vfs"))
-		syscall_panic("VFS: could not register system.io.vfs");
+	if (!registerName("system.io.vfs"))
+		panic("VFS: could not register system.io.vfs");
 
 	printf("[VFS] ");
 
 	while (true) {
-		struct queue_item_info info = *syscall_probeQueue();
-		u8 *request = syscall_grabQueue(&info);
-		syscall_shiftQueue(&info);
+		struct queue_item_info info = *probeQueue();
+		u8 *request = grabQueue(&info);
+		shiftQueue(&info);
 
 		printf("VFS: got request 0x%x\n", request[0]);
 
@@ -56,13 +56,13 @@ extern "C" int start() {
 
 			u8 *buffer = new u8[op->length];
 			u32 bytes_read = fs_read(pidForDriver(vfs_root->driver), op->inode, op->offset, op->length, buffer);
-			syscall_sendQueue(info.from, info.id, buffer, bytes_read);
+			sendQueue(info.from, info.id, buffer, bytes_read);
 			delete [] buffer;
 		} else if (request[0] == VFS_OP_READDIR) {
 			VFSOpReaddir *op = reinterpret_cast<VFSOpReaddir *>(request);
 
 			VFSDirent *dirent = fs_readdir(pidForDriver(vfs_root->driver), op->inode, op->index);
-			syscall_sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
+			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(dirent), sizeof(VFSDirent));
 			delete dirent;
 		} else if (request[0] == VFS_OP_REGISTER_DRIVER) {
 			VFSOpRegisterDriver *op = reinterpret_cast<VFSOpRegisterDriver *>(request);
@@ -72,7 +72,7 @@ extern "C" int start() {
 
 			VFSDriver driver;
 
-			syscall_memcpy(&driver.name, op->name, name_len);
+			memcpy(&driver.name, op->name, name_len);
 			driver.name[name_len] = 0;
 
 			driver.pid = info.from;
@@ -82,24 +82,24 @@ extern "C" int start() {
 			printf("VFS: registered '%s' driver\n", driver.name);
 
 			VFSReplyRegisterDriver reply = { true, drivers.length() - 1 };
-			syscall_sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&reply), sizeof(reply));
+			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&reply), sizeof(reply));
 		} else if (request[0] == VFS_OP_MOUNT_ROOT) {
 			VFSOpMountRoot *op = reinterpret_cast<VFSOpMountRoot *>(request);
 
-			if (vfs_root) syscall_panic("VFS: already have a root!");
+			if (vfs_root) panic("VFS: already have a root!");
 
 			vfs_root = new VFSNode;
-			syscall_strcpy(vfs_root->name, "root (/)");
+			strcpy(vfs_root->name, "root (/)");
 			vfs_root->driver = op->driver;
 			vfs_root->inode = op->inode;
 			
-			syscall_sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
+			sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
 		} else {
-			syscall_panic("VFS: confused");
+			panic("VFS: confused");
 		}
 	}
 
-	syscall_panic("VFS: went off the edge");
+	panic("VFS: went off the edge");
 	return 1;
 }
 
@@ -115,14 +115,14 @@ u32 fs_read(pid_t pid, u32 inode, u32 offset, u32 length, u8 *buffer) {
 		length
 	};
 
-	u32 msg_id = syscall_sendQueue(pid, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpRead));
+	u32 msg_id = sendQueue(pid, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpRead));
 
-	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
-	if (info->data_len > length) syscall_panic("VFS: fs read not expected number of bytes back?");
+	struct queue_item_info *info = probeQueueFor(msg_id);
+	if (info->data_len > length) panic("VFS: fs read not expected number of bytes back?");
 
 	u32 len = info->data_len;
-	syscall_readQueue(info, buffer, 0, len);
-	syscall_shiftQueue(info);
+	readQueue(info, buffer, 0, len);
+	shiftQueue(info);
 
 	return len;
 }
@@ -134,13 +134,13 @@ VFSDirent *fs_readdir(pid_t pid, u32 inode, u32 index) {
 		index
 	};
 
-	u32 msg_id = syscall_sendQueue(pid, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpReaddir));
+	u32 msg_id = sendQueue(pid, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpReaddir));
 
-	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
-	if (info->data_len != sizeof(VFSDirent)) syscall_panic("VFS: fs read not expected number of bytes back?");
+	struct queue_item_info *info = probeQueueFor(msg_id);
+	if (info->data_len != sizeof(VFSDirent)) panic("VFS: fs read not expected number of bytes back?");
 
 	VFSDirent *dirent = new VFSDirent;
-	syscall_readQueue(info, reinterpret_cast<u8 *>(dirent), 0, info->data_len);
-	syscall_shiftQueue(info);
+	readQueue(info, reinterpret_cast<u8 *>(dirent), 0, info->data_len);
+	shiftQueue(info);
 	return dirent;
 }

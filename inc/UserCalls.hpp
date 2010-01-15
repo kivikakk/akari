@@ -84,24 +84,24 @@ void printf(const char *format, ...) {
 				is_escape = true;
 				continue;
 			} else {
-				syscall_putc(c);
+				putc(c);
 				is_escape = false;
 			}
 		} else if (is_escape) {
 			switch (c) {
 			case 's':
-				syscall_puts(va_arg(ap, const char *));
+				puts(va_arg(ap, const char *));
 				break;
 			case 'd':
-				syscall_putl(va_arg(ap, u32), 10);
+				putl(va_arg(ap, u32), 10);
 				break;
 			case 'x':
-				syscall_putl(va_arg(ap, u32), 16);
+				putl(va_arg(ap, u32), 16);
 				break;
 			}
 			is_escape = false;
 		} else {
-			syscall_putc(c);
+			putc(c);
 		}
 	}
 
@@ -109,15 +109,15 @@ void printf(const char *format, ...) {
 }
 
 extern "C" void __cxa_pure_virtual() {
-	syscall_panic("__cxa_pure_virtual called in usermode");
+	panic("__cxa_pure_virtual called in usermode");
 }
 
 void *operator new(size_t n) {
-	return syscall_malloc(n);
+	return malloc(n);
 }
 
 void *operator new[](size_t n) {
-	return syscall_malloc(n);
+	return malloc(n);
 }
 
 void *operator new(size_t, void *p) {
@@ -125,11 +125,11 @@ void *operator new(size_t, void *p) {
 }
 
 void operator delete(void *p) {
-	return syscall_free(p);
+	return free(p);
 }
 
 void operator delete[](void *p) {
-	return syscall_free(p);
+	return free(p);
 }
 
 #else

@@ -40,41 +40,41 @@ bool init_drives();
 extern "C" int start() {
 	if (!init_drives()) {
 		printf("ATA: failed init\n");
-		syscall_exit();
+		exit();
 		return 1;
 	}
 
 	// Now we need to wait and listen for commands!
-	if (!syscall_registerName("system.io.ata"))
-		syscall_panic("ATA: could not register system.io.ata");
+	if (!registerName("system.io.ata"))
+		panic("ATA: could not register system.io.ata");
 
 	printf("[ATA] ");
 
 	while (true) {
-		struct queue_item_info info = *syscall_probeQueue();
-		u8 *request = syscall_grabQueue(&info);
-		syscall_shiftQueue(&info);
+		struct queue_item_info info = *probeQueue();
+		u8 *request = grabQueue(&info);
+		shiftQueue(&info);
 
 		if (request[0] == ATA_OP_READ) {
 			ATAOpRead *op = reinterpret_cast<ATAOpRead *>(request);
 
 			u8 *buffer = new u8[op->length];
 			ata_read_data(op->sector, op->offset, op->length, buffer);
-			syscall_sendQueue(info.from, info.id, buffer, op->length);
+			sendQueue(info.from, info.id, buffer, op->length);
 			delete [] buffer;
 		} else if (request[0] == ATA_OP_WRITE) {
 			ATAOpWrite *op = reinterpret_cast<ATAOpWrite *>(request);
 
 			ata_write_data(op->sector, op->offset, op->length, op->data);
-			syscall_sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
+			sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
 		} else {
-			syscall_panic("ATA: confused");
+			panic("ATA: confused");
 		}
 
 		delete [] request;
 	}
 
-	syscall_panic("ATA: ran off the end of the infinite loop");
+	panic("ATA: ran off the end of the infinite loop");
 	return 1;
 }
 
@@ -102,9 +102,9 @@ bool init_drives() {
 		rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 	
 	if (rs & ATA_ERR)
-		syscall_panic("ATA: error on IDENTIFY.\n");
+		panic("ATA: error on IDENTIFY.\n");
 	else if (!(rs & ATA_DRQ))
-		syscall_panic("ATA: no error on IDENTIFY, but no DRQ?\n");
+		panic("ATA: no error on IDENTIFY, but no DRQ?\n");
 
 	for (u32 i = 0; i < 256; ++i)
 		returndata[i] = AkariInW(ATA_PRIMARY + ATA_DATA);
@@ -128,7 +128,7 @@ bool init_drives() {
 	hdd_model_number[40] = 0;
 
 	if (!(returndata[60] || returndata[61]))
-		syscall_panic("ATA: hard drive does not support LBA28?");
+		panic("ATA: hard drive does not support LBA28?");
 
 	hdd_lba28_addr = returndata[60] | (returndata[61] << 16);
 
@@ -171,8 +171,8 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 		while (!(!(rs & ATA_BSY) && (rs & ATA_DRQ)) && !(rs & ATA_ERR) && !(rs & ATA_DF))
 			rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 		
-		if (rs & ATA_ERR) 	syscall_panic("ATA: ATA_ERR in ata_read_sectors\n");
-		else if (rs & ATA_DF) 	syscall_panic("ATA: ATA_DF in ata_read_sectors\n");
+		if (rs & ATA_ERR) 	panic("ATA: ATA_ERR in ata_read_sectors\n");
+		else if (rs & ATA_DF) 	panic("ATA: ATA_DF in ata_read_sectors\n");
 
 		for (u32 i = 0; i < 256; ++i) {
 			u16 incoming = AkariInW(ATA_PRIMARY + ATA_DATA);
@@ -196,7 +196,7 @@ void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 
 	if (offset > 0) {
 		ata_read_sectors(sector_open, 1, static_cast<u8 *>(tempdata));
-		syscall_memcpy(buffer, tempdata + offset, min(static_cast<u32>(512 - offset), length));	// XXX: what was this comment about!?	/* the +1 is important, but i don't understand why */
+		memcpy(buffer, tempdata + offset, min(static_cast<u32>(512 - offset), length));	// XXX: what was this comment about!?	/* the +1 is important, but i don't understand why */
 		buffer += min(static_cast<u32>(512 - offset), length);										// XXX: and this??/* yet no +1 here */
 		++sectors_read;
 		length -= min(512, offset + length) - offset;
@@ -212,7 +212,7 @@ void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 
 	if (length > 0) {
 		ata_read_sectors(sector_open + sectors_read, 1, static_cast<u8 *>(tempdata));
-		syscall_memcpy(buffer, tempdata, length);
+		memcpy(buffer, tempdata, length);
 		// buffer, sectors_read, length stale
 	}
 }
@@ -230,7 +230,7 @@ void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 
 	if (offset > 0) {
 		ata_read_sectors(sector_open, 1, static_cast<u8 *>(tempdata));
-		syscall_memcpy(tempdata + offset, buffer, min(static_cast<u32>(512 - offset), length));
+		memcpy(tempdata + offset, buffer, min(static_cast<u32>(512 - offset), length));
 		ata_write_sectors(sector_open, 1, static_cast<u8 *>(tempdata));
 		buffer += min(static_cast<u32>(512 - offset), length);
 		++sectors_written;
@@ -247,7 +247,7 @@ void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer)
 
 	if (length > 0) {
 		ata_read_sectors(sector_open + sectors_written, 1, static_cast<u8 *>(tempdata));
-		syscall_memcpy(tempdata, buffer, length);
+		memcpy(tempdata, buffer, length);
 		ata_write_sectors(sector_open + sectors_written, 1, static_cast<u8 *>(tempdata));
 		/* buffer, sectors_written, length stale */
 	}
@@ -259,9 +259,9 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer)
 	u32 i, sectors_written = 0;
 
 	if (number > 256)
-		syscall_panic("ATA: we haven't implemented writing more than 256 sectors at once yet (> 128KiB)\n");
+		panic("ATA: we haven't implemented writing more than 256 sectors at once yet (> 128KiB)\n");
 	else if (number == 0)
-		syscall_panic("ATA: writing 0 sectors?\n");
+		panic("ATA: writing 0 sectors?\n");
 
 	AkariOutB(ATA_PRIMARY + ATA_DRIVE, ATA_SELECT_MASTER_OP | ((start >> 24) & 0x0F));
 	AkariInB(ATA_PRIMARY_DCR);
@@ -280,8 +280,8 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer)
 		while (!(!(rs & ATA_BSY) && (rs & ATA_DRQ)) && !(rs & ATA_ERR) && !(rs & ATA_DF))
 			rs = AkariInB(ATA_PRIMARY + ATA_CMD);
 		
-		if (rs & ATA_ERR) 	syscall_panic("ATA: ATA_ERR in ata_write_sectors\n");
-		else if (rs & ATA_DF) 	syscall_panic("ATA: ATA_DF in ata_write_sectors\n");
+		if (rs & ATA_ERR) 	panic("ATA: ATA_ERR in ata_write_sectors\n");
+		else if (rs & ATA_DF) 	panic("ATA: ATA_DF in ata_write_sectors\n");
 
 		for (i = 0; i < 256; ++i) {
 			AkariOutW(ATA_PRIMARY + ATA_DATA, buffer[0] | (buffer[1] << 8));

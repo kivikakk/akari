@@ -31,20 +31,20 @@ pid_t ata = 0;
 
 extern "C" int start() {
 	while (!ata)
-		ata = syscall_processIdByName("system.io.ata");
+		ata = processIdByName("system.io.ata");
 
-	if (!syscall_registerName("system.io.mbr"))
-		syscall_panic("MBR: could not register system.io.mbr");
+	if (!registerName("system.io.mbr"))
+		panic("MBR: could not register system.io.mbr");
 
 	ata_read_data(0, 0, 512, reinterpret_cast<u8 *>(&hdd_mbr));
-	if (hdd_mbr.signature != 0xAA55) syscall_panic("MBR: invalid MBR!\n");
+	if (hdd_mbr.signature != 0xAA55) panic("MBR: invalid MBR!\n");
 
 	printf("[MBR] ");
 
 	while (true) {
-		struct queue_item_info info = *syscall_probeQueue();
-		u8 *request = syscall_grabQueue(&info);
-		syscall_shiftQueue(&info);
+		struct queue_item_info info = *probeQueue();
+		u8 *request = grabQueue(&info);
+		shiftQueue(&info);
 
 		if (request[0] == MBR_OP_READ) {
 			MBROpRead *op = reinterpret_cast<MBROpRead *>(request);
@@ -52,16 +52,16 @@ extern "C" int start() {
 
 			u8 *buffer = new u8[op->length];
 			partition_read_data(op->partition_id, op->sector, op->offset, op->length, buffer);
-			syscall_sendQueue(info.from, info.id, buffer, op->length);
+			sendQueue(info.from, info.id, buffer, op->length);
 			delete [] buffer;
 		} else {
-			syscall_panic("MBR: confused");
+			panic("MBR: confused");
 		}
 
 		delete [] request;
 	}
 
-	syscall_panic("MBR: ran off its own loop!");
+	panic("MBR: ran off its own loop!");
 	return 1;
 }
 
@@ -83,15 +83,15 @@ void ata_read_data(u32 new_sector, u16 offset, u32 length, u8 *buffer) {
 		length
 	};
 
-	u32 msg_id = syscall_sendQueue(ata, 0, reinterpret_cast<u8 *>(&op), sizeof(ATAOpRead));
+	u32 msg_id = sendQueue(ata, 0, reinterpret_cast<u8 *>(&op), sizeof(ATAOpRead));
 
-	struct queue_item_info *info = syscall_probeQueueFor(msg_id);
+	struct queue_item_info *info = probeQueueFor(msg_id);
 
 	if (info->data_len != length) {
 		printf("asked for 0x%x, got 0x%x\n", length, info->data_len);
-		syscall_panic("MBR: ATA read not expected number of bytes back");
+		panic("MBR: ATA read not expected number of bytes back");
 	}
 
-	syscall_readQueue(info, buffer, 0, info->data_len);
-	syscall_shiftQueue(info);
+	readQueue(info, buffer, 0, info->data_len);
+	shiftQueue(info);
 }

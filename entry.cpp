@@ -135,7 +135,7 @@ static void AkariEntryCont() {
 	kb->next = shell;
 	
 	// ATA driver
-	Tasks::Task *ata = Tasks::Task::CreateTask(0 /* Entry point filled out by ELF loader */, 3, true, 0, Akari->memory->_kernelDirectory, "ata");
+	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "ata");
 	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
 	ata->setIOMap(0x1F7, true);
 	for (u16 j = 0; j < 8; ++j) {

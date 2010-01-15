@@ -86,20 +86,20 @@ extern "C" int start() {
 
 	for (int i = 0; i < 1000000; ++i);
 
-	if (!syscall_registerName("system.io.keyboard"))
-		syscall_panic("could not register system.io.keyboard");
+	if (!registerName("system.io.keyboard"))
+		panic("could not register system.io.keyboard");
 
-	if (!syscall_registerStream("input"))
-		syscall_panic("could not register system.io.keyboard:input");
+	if (!registerStream("input"))
+		panic("could not register system.io.keyboard:input");
 
-	u32 myPid = syscall_processId();
-	u32 writer = syscall_obtainStreamWriter(myPid, "input", true);
+	u32 myPid = processId();
+	u32 writer = obtainStreamWriter(myPid, "input", true);
 	if (writer == static_cast<u32>(-1)) {
 		// This shouldn't be possible if we just initialised the damn thing.
-		syscall_panic("could not obtain writer on system.io.keyboard:input");
+		panic("could not obtain writer on system.io.keyboard:input");
 	}
 
-	syscall_irqListen(1);
+	irqListen(1);
 
 	u8 scancode = AkariInB(0x60);
 	bool mustUpdateLEDs = false;
@@ -139,10 +139,10 @@ extern "C" int start() {
 				if (capslock_down)
 					scancode = capslockInvert(scancode);
 				if (echo_mode)
-					syscall_putc(scancode);
+					putc(scancode);
 
 				// Now actually dispatch this.. reinterpret_cast for u8*<->char*. Unfortunate but true.
-				syscall_writeStream(myPid, "input", writer, reinterpret_cast<const char *>(&scancode), 1);
+				writeStream(myPid, "input", writer, reinterpret_cast<const char *>(&scancode), 1);
 			}
 
 			if (mustUpdateLEDs) {
@@ -156,11 +156,11 @@ extern "C" int start() {
 			}
 		}
 
-		syscall_irqWait();
+		irqWait();
 		scancode = AkariInB(0x60);
 	}
 
-	syscall_panic("kb driver exited?");
+	panic("kb driver exited?");
 	return 1;
 }
 
