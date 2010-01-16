@@ -65,9 +65,31 @@ extern "C" int start() {
 		// Okay, let's grab the first 512 bytes of something.
 		l = new char[512];
 
-		DIR *dir = opendir("/");
+		DIR *dirp = opendir("/");
+		printf("Shell: dirp is %x, dirp->dir is %x\n", dirp, dirp->dir);
+		VFSDirent *dirent;
+		while ((dirent = readdir(dirp))) {
+			printf("Shell: name is %s, ino is %x - going to give it a go\n", dirent->name, dirent->inode);
 
-		closedir(dir);
+			char *name = new char[strlen(dirent->name) + 2];
+			*name = '/';
+			strcpy(name + 1, dirent->name);
+
+			FILE *file = fopen(name, "r");
+			printf("Shell:\tgot file handle for %s: %x\n", name, file);
+			printf("Shell:\tlen is %x\n", flen(file));
+
+			u8 *buf = new u8[flen(file) + 1];
+			fread(buf, flen(file), 1, file);
+			buf[flen(file)] = 0;
+
+			printf("%s\n", buf);
+
+			fclose(file);
+
+			delete [] getline();
+		}
+		closedir(dirp);
 	}
 
 	panic("shell exited?");
