@@ -51,8 +51,6 @@ extern "C" int start() {
 		u8 *request = grabQueue(&info);
 		shiftQueue(&info);
 
-		printf("VFS: got request 0x%x\n", request[0]);
-
 		if (request[0] == VFS_OP_READ) {
 			VFSOpRead *op = reinterpret_cast<VFSOpRead *>(request);
 
@@ -97,7 +95,7 @@ extern "C" int start() {
 
 			drivers.push_back(driver);
 
-			printf("VFS: registered '%s' driver\n", driver.name);
+			// printf("VFS: registered '%s' driver\n", driver.name);
 
 			VFSReplyRegisterDriver reply = { true, drivers.length() - 1 };
 			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&reply), sizeof(reply));
@@ -115,8 +113,6 @@ extern "C" int start() {
 		} else {
 			panic("VFS: confused");
 		}
-
-		printf("VFS: replied\n");
 	}
 
 	panic("VFS: went off the edge");
