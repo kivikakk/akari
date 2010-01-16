@@ -43,6 +43,14 @@ extern "C" int start() {
 	fread(kb_image, kb_len, 1, kb);
 	fclose(kb);
 
+	printf("Kb len is %x\n", kb_len);
+
+	u32 crude_checksum = 0;
+	for (u32 i = 0; i < kb_len; ++i)
+		crude_checksum += kb_image[i];
+
+	printf("Crude checksum: 0x%x\n", crude_checksum);
+
 	pid_t fr = spawn("kb", kb_image, kb_len);
 	printf("Booter: just spawned something, I got %x\n", fr);
 
