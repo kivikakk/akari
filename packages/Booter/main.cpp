@@ -39,6 +39,7 @@ extern "C" int start() {
 
 	printf("Booter: vfs is ok - going for it\n");
 
+	exit();
 	return 0;
 }
 
