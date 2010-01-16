@@ -25,8 +25,6 @@
 pid_t vfs = 0;
 
 extern "C" int start() {
-	printf("Booter: started\n");
-
 	while (!vfs)
 		vfs = processIdByName("system.io.vfs");
 
@@ -36,8 +34,6 @@ extern "C" int start() {
 		struct queue_item_info *info = probeQueueFor(msg_id);
 		shiftQueue(info);
 	}
-
-	printf("Booter: vfs is ok - going for it\n");
 
 	exit();
 	return 0;
