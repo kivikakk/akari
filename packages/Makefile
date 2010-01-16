@@ -16,7 +16,7 @@
 
 include ../Makefile.inc
 
-PACKAGES = ATA MBR FAT VFS Kb Shell
+PACKAGES = ATA MBR FAT VFS Booter Kb Shell
 
 all: $(PACKAGES)
 

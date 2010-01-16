@@ -15,6 +15,7 @@
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 TARGET = FAT
+COPYDEST = A:/FAT
 
 include ../PackageMakefile.inc
 

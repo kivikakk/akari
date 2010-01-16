@@ -18,8 +18,6 @@
 # This is from the perspective of a package.
 include ../../Makefile.inc
 
-COPYDEST = a:/$(TARGET)
-
 ASMSRCS := $(wildcard *.s)
 CXXSRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.s,obj/%.s.o,$(ASMSRCS)) $(patsubst %.cpp,obj/%.cpp.o,$(CXXSRCS))

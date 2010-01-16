@@ -15,6 +15,7 @@
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 TARGET = Shell
+COPYDEST = C:/Shell
 
 include ../PackageMakefile.inc
 

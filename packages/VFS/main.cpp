@@ -79,7 +79,7 @@ extern "C" int start() {
 				delete node;
 			}
 		} else if (request[0] == VFS_OP_ROOT) {
-			VFSOpRoot *op = reinterpret_cast<VFSOpRoot *>(request);
+			// VFSOpRoot *op = reinterpret_cast<VFSOpRoot *>(request);
 
 			if (!vfs_root) {
 				sendQueue(info.from, info.id, 0, 0);
