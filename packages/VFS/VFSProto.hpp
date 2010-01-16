@@ -29,6 +29,7 @@
 
 #define VFS_OP_REGISTER_DRIVER	0xE0
 #define VFS_OP_MOUNT_ROOT		0xE1
+#define VFS_OP_AWAIT_ROOT		0xE2
 
 typedef struct {
 	u8 cmd;
@@ -81,6 +82,10 @@ typedef struct {
 	u8 cmd;
 	u32 driver, inode;
 } VFSOpMountRoot;
+
+typedef struct {
+	u8 cmd;
+} VFSOpAwaitRoot;
 
 #define VFS_FILE     		0x01
 #define VFS_DIRECTORY    	0x02

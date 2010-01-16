@@ -122,18 +122,6 @@ static void AkariEntryCont() {
 	Tasks::Task *idle = Tasks::Task::CreateTask(reinterpret_cast<u32>(&IdleProcess), 0, true, 0, Akari->memory->_kernelDirectory, "idle");
 	Akari->tasks->current->next = idle;
 
-	// Keyboard driver task
-	Tasks::Task *kb = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "kb");
-	Akari->elf->loadImageInto(kb, reinterpret_cast<u8 *>(module_by_name("/kb")->module));
-	kb->setIOMap(0x60, true);
-	kb->setIOMap(0x64, true);
-	idle->next = kb;
-
-	// Shell
-	Tasks::Task *shell = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "shell");
-	Akari->elf->loadImageInto(shell, reinterpret_cast<u8 *>(module_by_name("/shell")->module));
-	kb->next = shell;
-	
 	// ATA driver
 	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "ata");
 	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
@@ -144,7 +132,7 @@ static void AkariEntryCont() {
 	}
 	ata->setIOMap(0x3F6, true);
 	ata->setIOMap(0x376, true);
-	shell->next = ata;
+	idle->next = ata;
 	
 	// MBR driver
 	Tasks::Task *mbr = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "mbr");
@@ -160,6 +148,11 @@ static void AkariEntryCont() {
 	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "vfs");
 	Akari->elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module_by_name("/vfs")->module));
 	fat->next = vfs;
+	
+	// Booter
+	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "booter");
+	Akari->elf->loadImageInto(booter, reinterpret_cast<u8 *>(module_by_name("/booter")->module));
+	vfs->next = booter;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);

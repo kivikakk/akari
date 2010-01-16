@@ -147,6 +147,17 @@ public:
 		}
 	}
 
+	void truncate() {
+		listNode *traverse = _begin;
+		while (traverse) {
+			listNode *next = traverse->next;
+			delete traverse->item;
+			delete traverse;
+			traverse = next;
+		}
+		_begin = 0;
+	}
+
 	bool empty() const {
 		return !_begin;
 	}

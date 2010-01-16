@@ -32,6 +32,13 @@ VFSNode *fs_finddir(pid_t pid, u32 inode, const char *name);
 LinkedList<VFSDriver> drivers;
 VFSNode *vfs_root = 0;
 
+typedef struct {
+	pid_t pid;
+	u32 msg_id;
+} AwaitingRoot;
+
+LinkedList<AwaitingRoot> awaiting_root;
+
 extern "C" int start() {
 	{
 		// Requests to driver 0 will come back here.
@@ -110,6 +117,18 @@ extern "C" int start() {
 			vfs_root->inode = op->inode;
 			
 			sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
+
+			for (LinkedList<AwaitingRoot>::iterator it = awaiting_root.begin(); it != awaiting_root.end(); ++it)
+				sendQueue(it->pid, it->msg_id, 0, 0);
+
+			awaiting_root.truncate();
+		} else if (request[0] == VFS_OP_AWAIT_ROOT) {
+			if (vfs_root) {
+				sendQueue(info.from, info.id, 0, 0);
+			} else {
+				AwaitingRoot ar = { info.from, info.id };
+				awaiting_root.push_back(ar);
+			}
 		} else {
 			panic("VFS: confused");
 		}

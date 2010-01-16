@@ -14,12 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <stdio.hpp>
 #include <UserCalls.hpp>
 #include <arch.hpp>
 #include <UserIPC.hpp>
+#include <UserIPCQueue.hpp>
+
+#include "../VFS/VFSProto.hpp"
+
+pid_t vfs = 0;
 
 extern "C" int start() {
-	
+	printf("Booter: started\n");
+
+	while (!vfs)
+		vfs = processIdByName("system.io.vfs");
+
+	{
+		VFSOpAwaitRoot op = { VFS_OP_AWAIT_ROOT };
+		u32 msg_id = sendQueue(vfs, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpAwaitRoot));
+		struct queue_item_info *info = probeQueueFor(msg_id);
+		shiftQueue(info);
+	}
+
+	printf("Booter: vfs is ok - going for it\n");
+
 	return 0;
 }
 
