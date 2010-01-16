@@ -20,7 +20,18 @@
 #include "../packages/VFS/VFSProto.hpp"
 
 typedef struct {
+	VFSNode *file;
+	u32 offset;
+} FILE;
+
+FILE *fopen(const char *filename, const char *mode);
+u32 fread(void *buf, u32 size, u32 n, FILE *stream);
+u32 flen(FILE *stream);
+int fclose(FILE *stream);
+
+typedef struct {
 	VFSNode *dir;
+	u32 index;
 } DIR;
 
 DIR *opendir(const char *dirname);
