@@ -15,9 +15,12 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <UserProcess.hpp>
-#include <debug.hpp>
 
 #if defined(__AKARI_KERNEL)
+
+#include <debug.hpp>
+#include <Tasks.hpp>
+#include <ELF.hpp>
 
 namespace User {
 namespace Process {
@@ -28,8 +31,19 @@ namespace Process {
 	}
 
 	pid_t spawn(const char *name, const u8 *elf, u32 elf_len) {
+		Tasks::Task *new_task = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, name);
 
-		return 0;
+		Akari->elf->loadImageInto(new_task, elf);
+		
+		// Oh, this is terrible. XXX
+		new_task->next = Akari->tasks->start;
+		Akari->tasks->start = new_task;
+
+		// HACK for KB to work here.
+		new_task->setIOMap(0x60, true);
+		new_task->setIOMap(0x64, true);
+
+		return new_task->id;
 	}
 }
 }

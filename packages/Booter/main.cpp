@@ -15,6 +15,7 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.hpp>
+#include <fs.hpp>
 #include <UserCalls.hpp>
 #include <arch.hpp>
 #include <UserIPC.hpp>
@@ -36,7 +37,13 @@ extern "C" int start() {
 		shiftQueue(info);
 	}
 
-	pid_t fr = spawn("non-canonical name", 0, 0);
+	FILE *kb = fopen("/Kb", "r");
+	u32 kb_len = flen(kb);
+	u8 *kb_image = new u8[kb_len];
+	fread(kb_image, kb_len, 1, kb);
+	fclose(kb);
+
+	pid_t fr = spawn("kb", kb_image, kb_len);
 	printf("Booter: just spawned something, I got %x\n", fr);
 
 	exit();

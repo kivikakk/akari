@@ -66,7 +66,6 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	
 	// XXX unforunately, as a side effect, we're reloading the page directory every time we move
 	// the 'wand', which is slow.  We need a better way to do this.
-	ASSERT(Akari->memory->_kernelDirectory == Akari->memory->_activeDirectory);
 
 	u8 *magic_wand = static_cast<u8 *>(Akari->memory->allocAligned(0x1000));
 	Memory::Page *wand_page = Akari->memory->_activeDirectory->getPage(reinterpret_cast<u32>(magic_wand), false);
