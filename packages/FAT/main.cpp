@@ -356,6 +356,7 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 				node->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
 				node->length = fd->size;
 				node->impl = 0;
+				node->driver = vfs_driver_no;
 
 				// TODO: set node fs to FAT
 				delete [] cluster;

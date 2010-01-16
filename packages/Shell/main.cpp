@@ -79,6 +79,12 @@ extern "C" int start() {
 			readQueue(info, reinterpret_cast<u8 *>(&node), 0, info->data_len);
 
 			printf("node:\n");
+			printf("\tname:   %s\n", node.name);
+			printf("\tflags:  %x\n", node.flags);
+			printf("\tinode:  %x\n", node.inode);
+			printf("\tlen:    %x\n", node.length);
+			printf("\timpl:   %x\n", node.impl);
+			printf("\tdriver: %x\n\n", node.driver);
 		}
 
 		shiftQueue(info);
