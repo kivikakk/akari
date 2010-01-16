@@ -18,6 +18,8 @@
 #include <Akari.hpp>
 #include <UserCalls.hpp>
 #include <UserIPC.hpp>
+#include <UserIPCQueue.hpp>
+#include <UserProcess.hpp>
 #include <Descriptor.hpp>
 
 Syscall::Syscall(): _syscalls_assigned(0) {
@@ -61,6 +63,8 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(31, reinterpret_cast<void *>(&User::IPC::grabQueue));
 	addSyscall(22, reinterpret_cast<void *>(&User::IPC::shiftQueue));
 	addSyscall(23, reinterpret_cast<void *>(&User::IPC::sendQueue));
+
+	addSyscall(35, reinterpret_cast<void *>(&User::Process::fork));
 }
 
 u8 Syscall::versionMajor() const { return 0; }
