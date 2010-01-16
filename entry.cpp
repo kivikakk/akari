@@ -47,7 +47,7 @@ typedef struct {
 LinkedList<loaded_module_t> modules;
 static loaded_module_t *module_by_name(const char *name) {
 	for (LinkedList<loaded_module_t>::iterator it = modules.begin(); it != modules.end(); ++it) {
-		if (POSIX::strcmp(name, it->name) == 0)
+		if (POSIX::stricmp(name, it->name) == 0)
 			return &*it;
 	}
 	return 0;
