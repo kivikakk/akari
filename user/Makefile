@@ -14,50 +14,36 @@
 # You should have received a copy of the GNU General Public License
 # along with Akari.  If not, see <http://www.gnu.org/licenses/
 
-include Makefile.inc
+include ../Makefile.inc
 
-TARGET = Akari
-
-LDFILE = akari.lnk
-COPYDEST = a:/Akari
+TARGET = ../$(LINKAGE_TARGET)
 
 ASMSRCS := $(wildcard *.s)
 CXXSRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.s,obj/%.s.o,$(ASMSRCS)) $(patsubst %.cpp,obj/%.cpp.o,$(CXXSRCS))
+LINKAGE_CXXSRCS := $(wildcard ../User*.cpp)
+LINKAGE_OBJS := $(patsubst ../User%.cpp,obj/User%.cpp.o,$(LINKAGE_CXXSRCS))
 
-# Linkage target set in Makefile.inc, since packages need to know that too.
-LINKAGE_CXXSRCS := $(wildcard User*.cpp)
-LINKAGE_OBJS := $(patsubst %.cpp,obj/linkage/%.cpp.o,$(LINKAGE_CXXSRCS))
+COPTS += -I../inc
+CXXOPTS += -I../inc
 
-all: clean $(TARGET)-copy
+all: clean $(TARGET)
 
-$(TARGET)-copy: $(TARGET) menu.lst
-	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
-	$(MTOOLS_BIN)/mcopy -D o menu.lst a:/boot/grub/menu.lst
 
-$(TARGET): $(OBJS) $(LDFILE) user packages obj
-	$(LD) $(LDOPTS) -T$(LDFILE) $(OBJS) -o $(TARGET)
+$(TARGET): $(OBJS) $(LINKAGE_OBJS) obj
+	$(AR) rcs $@ $(OBJS) $(LINKAGE_OBJS)
 
-packages: force_subdir user
-	cd packages; $(MAKE) $(MFLAGS) all
-
-user: force_subdir
-	cd user; $(MAKE) $(MFLAGS) all
+obj/User%.cpp.o: ../User%.cpp obj
+	$(CXX) $(CXXOPTS) -D__AKARI_LINKAGE -D__CPLUSPLUS -c -o $@ $<
 
 obj/%.s.o: %.s obj
 	$(AS) $(ASOPTS) -o $@ $<
+
 obj/%.cpp.o: %.cpp obj
-	$(CXX) $(CXXOPTS) -D__AKARI_KERNEL -D__CPLUSPLUS -c -o $@ $<
+	$(CXX) $(CXXOPTS) -D__CPLUSPLUS -c -o $@ $<
 
 obj:
 	if [ ! -e obj ]; then mkdir obj; fi
 
-obj/linkage: obj
-	if [ ! -e obj/linkage ]; then mkdir obj/linkage; fi
-
 clean:
-	@-rm $(TARGET) $(OBJS)
-	cd user; make clean
-
-force_subdir:
-	@true
+	@-rm $(TARGET) $(OBJS) $(LINKAGE_OBJS)
