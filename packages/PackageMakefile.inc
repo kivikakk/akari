@@ -24,8 +24,8 @@ ASMSRCS := $(wildcard *.s)
 CXXSRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.s,obj/%.s.o,$(ASMSRCS)) $(patsubst %.cpp,obj/%.cpp.o,$(CXXSRCS))
 
-COPTS += -I../../inc
-CXXOPTS += -I../../inc
+COPTS += -I../../inc -I../../user/inc
+CXXOPTS += -I../../inc -I../../user/inc
 
 all: clean $(TARGET)-copy
 

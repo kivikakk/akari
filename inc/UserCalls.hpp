@@ -64,80 +64,6 @@ DEFN_SYSCALL1(strlen, 32, u32, const char *);
 DEFN_SYSCALL3(strcmpn, 33, s32, const char *, const char *, u32);
 DEFN_SYSCALL2(strpos, 34, s32, const char *, const char *);
 
-typedef struct {
-	u32 *ptr;
-} va_list;
-
-#define va_start(ap, place) \
-	ap.ptr = (u32 *)&place
-
-#define va_arg(ap, type) \
-	((type)*(++(ap).ptr))
-
-#define va_end(ap) \
-	ap.ptr = (u32 *)0
-
-// XXX This isn't really the place for it, but I can't help!
-void printf(const char *format, ...) {
-	va_list ap;
-	va_start(ap, format);
-
-	bool is_escape = false;
-	char c;
-	while ((c = *format++)) {
-		if (c == '%') {
-			if (!is_escape) {
-				is_escape = true;
-				continue;
-			} else {
-				putc(c);
-				is_escape = false;
-			}
-		} else if (is_escape) {
-			switch (c) {
-			case 's':
-				puts(va_arg(ap, const char *));
-				break;
-			case 'd':
-				putl(va_arg(ap, u32), 10);
-				break;
-			case 'x':
-				putl(va_arg(ap, u32), 16);
-				break;
-			}
-			is_escape = false;
-		} else {
-			putc(c);
-		}
-	}
-
-	va_end(ap);
-}
-
-extern "C" void __cxa_pure_virtual() {
-	panic("__cxa_pure_virtual called in usermode");
-}
-
-void *operator new(size_t n) {
-	return malloc(n);
-}
-
-void *operator new[](size_t n) {
-	return malloc(n);
-}
-
-void *operator new(size_t, void *p) {
-	return p;
-}
-
-void operator delete(void *p) {
-	return free(p);
-}
-
-void operator delete[](void *p) {
-	return free(p);
-}
-
 #else
 
 DECL_SYSCALL1(putc, void, char);
@@ -158,15 +84,6 @@ DECL_SYSCALL2(stricmp, s32, const char *, const char *);
 DECL_SYSCALL1(strlen, u32, const char *);
 DECL_SYSCALL3(strcmpn, s32, const char *, const char *, u32);
 DECL_SYSCALL2(strpos, s32, const char *, const char *);
-
-void printf(const char *format, ...);
-extern "C" void __cxa_pure_virtual();
-void *operator new(size_t);
-void *operator new[](size_t);
-void *operator new(size_t, void *);
-void operator delete(void *);
-void operator delete[](void *);
-
 
 #endif
 
