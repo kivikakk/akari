@@ -17,12 +17,15 @@
 #ifndef VFS_PROTO_HPP
 #define VFS_PROTO_HPP
 
+#include <arch.hpp>
+
 #define VFS_OP_READ 	0x1
 #define VFS_OP_WRITE	0x2
 #define VFS_OP_OPEN		0x3
 #define VFS_OP_CLOSE	0x4
 #define VFS_OP_READDIR	0x5
 #define VFS_OP_FINDDIR	0x6
+#define VFS_OP_ROOT		0x7
 
 #define VFS_OP_REGISTER_DRIVER	0xE0
 #define VFS_OP_MOUNT_ROOT		0xE1
@@ -59,6 +62,10 @@ typedef struct {
 	u32 inode;
 	char name[];
 } VFSOpFinddir;
+
+typedef struct {
+	u8 cmd;
+} VFSOpRoot;
 
 typedef struct {
 	u8 cmd;

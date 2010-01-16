@@ -80,6 +80,14 @@ extern "C" int start() {
 				sendQueue(info.from, info.id, reinterpret_cast<u8 *>(node), sizeof(VFSNode));
 				delete node;
 			}
+		} else if (request[0] == VFS_OP_ROOT) {
+			VFSOpRoot *op = reinterpret_cast<VFSOpRoot *>(request);
+
+			if (!vfs_root) {
+				sendQueue(info.from, info.id, 0, 0);
+			} else {
+				sendQueue(info.from, info.id, reinterpret_cast<u8 *>(vfs_root), sizeof(VFSNode));
+			}
 		} else if (request[0] == VFS_OP_REGISTER_DRIVER) {
 			VFSOpRegisterDriver *op = reinterpret_cast<VFSOpRegisterDriver *>(request);
 
@@ -107,6 +115,8 @@ extern "C" int start() {
 		} else {
 			panic("VFS: confused");
 		}
+
+		printf("VFS: replied\n");
 	}
 
 	panic("VFS: went off the edge");

@@ -15,6 +15,7 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.hpp>
+#include <fs.hpp>
 #include <UserCalls.hpp>
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
@@ -57,68 +58,16 @@ extern "C" int start() {
 
 	while (true) {
 		char *l = getline();
-		int s = strpos(l, " ");
-		printf("space at %d\n\n", s);
+		// int s = strpos(l, " ");
+		// printf("space at %d\n\n", s);
 		delete [] l;
 
 		// Okay, let's grab the first 512 bytes of something.
 		l = new char[512];
 
-		const char *want = "file.txt";
-		u32 cmd_len = sizeof(VFSOpFinddir) + strlen(want);
-		VFSOpFinddir *op = reinterpret_cast<VFSOpFinddir *>(malloc(cmd_len));
-		op->cmd = VFS_OP_FINDDIR;
-		op->inode = 0;
-		memcpy(op->name, want, strlen(want));	// DO NOT USE strcpy!! It'll copy a NUL into nowhere (rather, SOMEWHERE).
+		DIR *dir = opendir("/");
 
-		u32 msg_id = sendQueue(processIdByName("system.io.vfs"), 0, reinterpret_cast<u8 *>(op), cmd_len);
-		struct queue_item_info *info = probeQueueFor(msg_id);
-		if (info->data_len == 0) {
-			printf("appears to be no node!\n");
-		} else {
-			VFSNode node;
-			readQueue(info, reinterpret_cast<u8 *>(&node), 0, info->data_len);
-
-			printf("node:\n");
-			printf("\tname:   %s\n", node.name);
-			printf("\tflags:  %x\n", node.flags);
-			printf("\tinode:  %x\n", node.inode);
-			printf("\tlen:    %x\n", node.length);
-			printf("\timpl:   %x\n", node.impl);
-			printf("\tdriver: %x\n\n", node.driver);
-		}
-
-		shiftQueue(info);
-
-		/*
-		int i = 0;
-		while (true) {
-			VFSOpReaddir op = {
-				VFS_OP_READDIR,
-				0,
-				i
-			};
-
-			u32 msg_id = sendQueue(processIdByName("system.io.vfs"), 0, reinterpret_cast<u8 *>(&op), sizeof(op));
-
-			struct queue_item_info *info = probeQueueFor(msg_id);
-			if (info->data_len == 0) {
-				printf("end of dirents (at %d)\n", i);
-				shiftQueue(info);
-				break;
-			}
-
-			VFSDirent dirent;
-			readQueue(info, reinterpret_cast<u8 *>(&dirent), 0, info->data_len);
-			shiftQueue(info);
-
-			printf("dirent:\n");
-			printf("\tname:  %s\n", dirent.name);
-			printf("\tinode: %x\n\n", dirent.inode);
-
-			i++;
-		}
-		*/
+		closedir(dir);
 	}
 
 	panic("shell exited?");
