@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef __USER_CALLS_HPP__
-#define __USER_CALLS_HPP__
+#ifndef __USER_PROCESS_HPP__
+#define __USER_PROCESS_HPP__
 
 #include <arch.hpp>
 #include <UserGates.hpp>
@@ -25,16 +25,19 @@
 namespace User {
 namespace Process {
 	pid_t fork();
+	pid_t spawn(const char *name, const u8 *elf, u32 elf_len);
 }
 }
 
 #elif defined(__AKARI_LINKAGE)
 
 DEFN_SYSCALL0(fork, 35, pid_t);
+DEFN_SYSCALL3(spawn, 36, pid_t, const char *, const u8 *, u32);
 
 #else
 
 DECL_SYSCALL0(fork, pid_t);
+DECL_SYSCALL3(spawn, pid_t, const char *, const u8 *, u32);
 
 #endif
 

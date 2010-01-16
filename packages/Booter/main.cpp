@@ -19,6 +19,7 @@
 #include <arch.hpp>
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
+#include <UserProcess.hpp>
 
 #include "../VFS/VFSProto.hpp"
 
@@ -34,6 +35,9 @@ extern "C" int start() {
 		struct queue_item_info *info = probeQueueFor(msg_id);
 		shiftQueue(info);
 	}
+
+	pid_t fr = spawn("non-canonical name", 0, 0);
+	printf("Booter: just spawned something, I got %x\n", fr);
 
 	exit();
 	return 0;

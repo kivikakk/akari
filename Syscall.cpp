@@ -65,6 +65,7 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(23, reinterpret_cast<void *>(&User::IPC::sendQueue));
 
 	addSyscall(35, reinterpret_cast<void *>(&User::Process::fork));
+	addSyscall(36, reinterpret_cast<void *>(&User::Process::spawn));
 }
 
 u8 Syscall::versionMajor() const { return 0; }

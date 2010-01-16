@@ -15,12 +15,20 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <UserProcess.hpp>
+#include <debug.hpp>
 
 #if defined(__AKARI_KERNEL)
 
 namespace User {
 namespace Process {
 	pid_t fork() {
+		// Copy ourselves and set us running!
+		AkariPanic("The more I reflect on it, the more I realise fork is really challenging. TODO.");
+		return 0;
+	}
+
+	pid_t spawn(const char *name, const u8 *elf, u32 elf_len) {
+
 		return 0;
 	}
 }
