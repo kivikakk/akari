@@ -21,10 +21,10 @@
 
 typedef struct fat_extended_boot_record
 {
-	unsigned char drive_number;
-	unsigned char nt_flags;
-	unsigned char signature;	/* 0x28 or 0x29? */
-	unsigned long serial_number;
+	u8 drive_number;
+	u8 nt_flags;
+	u8 signature;	/* 0x28 or 0x29? */
+	u32 serial_number;
 	char volume_label[11];	/* space padded */
 	char system_id[8];	/* space padded */
 
@@ -32,38 +32,38 @@ typedef struct fat_extended_boot_record
 
 typedef struct fat32_extended_boot_record
 {
-	unsigned long fat_size;
-	unsigned short flags;
+	u32 fat_size;
+	u16 flags;
 	union {
-		unsigned short fat_version;
+		u16 fat_version;
 		struct {
-			unsigned char minor;
-			unsigned char major;
+			u8 minor;
+			u8 major;
 		} fat_version_comp;
 	};
-	unsigned long root_directory_cluster;
-	unsigned short fsinfo_cluster;
-	unsigned short backup_boot_cluster;
-	unsigned char reserved[12];	/* set to NUL on format */
+	u32 root_directory_cluster;
+	u16 fsinfo_cluster;
+	u16 backup_boot_cluster;
+	u8 reserved[12];	/* set to NUL on format */
 	fat_extended_boot_record_t fat_record;
 } __attribute__((__packed__)) fat32_extended_boot_record_t;
 
 typedef struct fat_boot_record
 {
-	unsigned char code_jump[3];
+	u8 code_jump[3];
 	char oem_identifier[8];	/* NUL padded */
-	unsigned short bytes_per_sector;
-	unsigned char sectors_per_cluster;
-	unsigned short reserved_sectors;
-	unsigned char fats;
-	unsigned short directory_entries;
-	unsigned short total_sectors_small;
-	unsigned char media_descriptor;
-	unsigned short sectors_per_fat;
-	unsigned short sectors_per_track;
-	unsigned short media_sides;
-	unsigned long hidden_sectors;
-	unsigned long total_sectors_large;
+	u16 bytes_per_sector;
+	u8 sectors_per_cluster;
+	u16 reserved_sectors;
+	u8 fats;
+	u16 directory_entries;
+	u16 total_sectors_small;
+	u8 media_descriptor;
+	u16 sectors_per_fat;
+	u16 sectors_per_track;
+	u16 media_sides;
+	u32 hidden_sectors;
+	u32 total_sectors_large;
 
 	union {
 		fat_extended_boot_record_t ebr;
@@ -80,10 +80,10 @@ typedef struct fat_boot_record
 
 typedef struct fat_dirent
 {
-	char filename[11];
-	unsigned char attributes;
-	unsigned char nt_reserved;
-	unsigned char ctime;	/* 10ths of second */
+	u8 filename[11];
+	u8 attributes;
+	u8 nt_reserved;
+	u8 ctime;	/* 10ths of second */
 	unsigned ctime_hours : 5;
 	unsigned ctime_minutes : 6;
 	unsigned ctime_seconds : 5;
@@ -93,15 +93,15 @@ typedef struct fat_dirent
 	unsigned adate_year : 7;
 	unsigned adate_month : 4;
 	unsigned adate_day : 5;
-	unsigned short first_cluster_high;
+	u16 first_cluster_high;
 	unsigned mtime_hours : 5;
 	unsigned mtime_minutes : 6;
 	unsigned mtime_seconds : 5;
 	unsigned mdate_year : 7;
 	unsigned mdate_month : 4;
 	unsigned mdate_day : 5;
-	unsigned short first_cluster_low;
-	unsigned long size;
+	u16 first_cluster_low;
+	u32 size;
 } __attribute__((__packed__)) fat_dirent_t;
 
 #endif

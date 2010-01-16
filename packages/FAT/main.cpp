@@ -30,7 +30,7 @@ void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8
 u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer);
 VFSDirent *fat_readdir(u32 inode, u32 index);
 VFSNode *fat_finddir(u32 inode, const char *name);
-static char *get_filename(const fat_dirent_t *fd);
+static u8 *get_filename(const fat_dirent_t *fd);
 
 pid_t mbr = 0, vfs = 0;
 u32 vfs_driver_no = 0;
@@ -309,8 +309,8 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 				// bingo!
 				VFSDirent *dirent = new VFSDirent;
 
-				char *filename = get_filename(fd);
-				strcpy(dirent->name, filename);
+				u8 *filename = get_filename(fd);
+				strcpy(dirent->name, reinterpret_cast<char *>(filename));
 				delete [] filename;
 
 				dirent->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
@@ -345,9 +345,9 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 			else if (fd->attributes & FAT_VOLUME_ID)
 				continue;
 
-			char *filename = get_filename(fd);
+			u8 *filename = get_filename(fd);
 			printf("FAT: comparing %s and %s\n", filename, name);
-			if (stricmp(filename, name) == 0) {
+			if (stricmp(reinterpret_cast<char *>(filename), name) == 0) {
 				delete [] filename;
 				printf("FAT: sure\n");
 
@@ -374,11 +374,11 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 	return 0;
 }
 
-static char *get_filename(const fat_dirent_t *fd) {
-	char *filename_return = new char[13];
+static u8 *get_filename(const fat_dirent_t *fd) {
+	u8 *filename_return = new u8[13];
 
-	char *write = filename_return;
-	const char *read = fd->filename;
+	u8 *write = filename_return;
+	const u8 *read = fd->filename;
 	u8 read_past_tense = 0;
 	while (read_past_tense < 8 && *read > 0x20) {
 		read_past_tense++;
