@@ -254,11 +254,14 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 	}
 	*/
 
+	printf("FAT asked for inode %x, offset %x, length %x\n", inode, offset, length);
 	u32 copied = 0;
 	while (length > 0) {
 		fat_read_cluster(current_cluster, scratch);
 		u16 copy_len = min(length, 2048 - offset);
 		memcpy(buffer, scratch + offset, copy_len);
+
+		printf("FAT doing one cluster of %xh / %dd bytes\n", copy_len, copy_len);
 
 		buffer += copy_len; length -= copy_len; copied += copy_len;
 
@@ -267,12 +270,14 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 			if (fat32esque) {
 				// u32 fat_entry = reinterpret_cast<u32 *>(fat_data)[current_cluster];
 			} else {
-				u32 fat_entry = reinterpret_cast<u32 *>(fat_data)[current_cluster];
+				// FAT-16, so it's 16.
+				u16 fat_entry = reinterpret_cast<u16 *>(fat_data)[current_cluster];
 				if (fat_entry == 0) panic("FAT: lead to a free cluster!");
 				else if (fat_entry == 1) panic("FAT: lead to a reserved cluster!");
 				else if (fat_entry >= 0xFFF0 && fat_entry <= 0xFFF7) panic("FAT: lead to an end-reserved cluster!");
 				else if (fat_entry >= 0xFFF8) {
 					// looks like end-of-file.
+					printf("following fat_entry is %x\n", fat_entry);
 					return copied;
 				} else {
 					current_cluster = fat_entry;
