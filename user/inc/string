@@ -14,13 +14,37 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef __STDIO_HPP
-#define __STDIO_HPP
+#ifndef __STRING
+#define __STRING
 
-#include <string>
+#include <arch.hpp>
+#include <vector>
 
-std::string getline();
-void printf(const char *format, ...);
+bool isspace(char c);
+
+namespace std {
+	class string {
+	public:
+		explicit string();
+		string(const char *s, u32 n);
+		~string();
+
+		const char &operator[](u32 pos) const;
+		char &operator[](u32 pos);
+
+		u32 length() const;
+		const char *c_str() const;
+
+		string substr(u32 pos, u32 n=(u32)-1) const;
+		string trim() const;
+		vector<string> split() const;
+
+	private:
+		char *_str;
+		u32 _length;
+	};
+}
 
 #endif
 
+// vim: filetype=cpp:

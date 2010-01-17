@@ -1,0 +1,76 @@
+// This file is part of Akari.
+// Copyright 2010 Arlen Cuss
+//
+// Akari is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Akari is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Akari.  If not, see <http://www.gnu.org/licenses/>.
+
+#ifndef __VECTOR
+#define __VECTOR
+
+#include <UserCalls.hpp>
+
+namespace std {
+	template <typename T> class vector {
+	public:
+		explicit vector(): _capacity(0), _size(0), _array(0)
+		{ }
+
+		~vector() {
+			if (_array) {
+				for (u32 i = 0; i < _size; ++i)
+					_array[i].~T();
+
+				free(_array);
+			}
+		}
+
+		void push_back(const T &x) {
+			if (_capacity == _size) {
+				_resize();
+			}
+		}
+
+		u32 capacity() const {
+			return _capacity;
+		}
+
+		u32 size() const {
+			return _size;
+		}
+
+	private:
+		void _resize() {
+			if (_capacity == 0)
+				_capacity = 1;
+			else
+				_capacity <<= 1;
+
+			T *_newarray = reinterpret_cast<T *>(malloc(sizeof(T) * _capacity));
+
+			for (u32 i = 0; i < _size; ++i) {
+				new(&_newarray[i]) T(_array[i]);
+				_array[i].~T();
+			}
+
+			free(_array);
+			_array = _newarray;
+		}
+
+		u32 _capacity, _size;
+		T *_array;
+	};
+}
+
+#endif
+
+// vim: filetype=cpp:
