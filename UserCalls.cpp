@@ -75,12 +75,6 @@ namespace User {
 			scanner = &(*scanner)->next;
 		}
 
-		Akari->console->putString("exit(): 0x");
-		Akari->console->putInt(reinterpret_cast<u32>(*scanner), 16);
-		Akari->console->putString(" -> 0x");
-		Akari->console->putInt(reinterpret_cast<u32>((*scanner)->next), 16);
-		Akari->console->putString("\n");
-
 		*scanner = (*scanner)->next;
 		// Gone! XXX what happens when the last task exists!? Everything probably goes to hell ...
 		// This should never happen because of the idle task; right?

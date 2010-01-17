@@ -86,8 +86,6 @@ std::string std::string::substr(u32 pos, u32 n) const {
 }
 
 std::string std::string::trim() const {
-	printf("trim starting with %x '%s'\n", _str, _str);
-
 	u32 start_index = 0;
 	while (start_index < _length && isspace(_str[start_index]))
 		++start_index;

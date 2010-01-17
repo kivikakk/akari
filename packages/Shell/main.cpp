@@ -24,6 +24,8 @@
 
 extern "C" int start() {
 	const char *cwd = "/";
+	
+	printf("\n");
 
 	while (true) {
 		printf("(Akari) %s$ ", cwd);
