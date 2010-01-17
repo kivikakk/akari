@@ -20,11 +20,11 @@
 
 ASCIIString::ASCIIString(): _data(0), _dataLength(0) { }
 
-ASCIIString::ASCIIString(const ASCIIString &src) {
+ASCIIString::ASCIIString(const ASCIIString &src): _data(0), _dataLength(0) {
 	operator =(src);
 }
 
-ASCIIString::ASCIIString(const char *src) {
+ASCIIString::ASCIIString(const char *src): _data(0), _dataLength(0) {
 	operator =(src);
 }
 
