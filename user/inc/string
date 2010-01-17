@@ -26,8 +26,12 @@ namespace std {
 	class string {
 	public:
 		explicit string();
+		string(const string &r);
+		string(const char *s);
 		string(const char *s, u32 n);
 		~string();
+
+		bool operator ==(const char *c) const;
 
 		const char &operator[](u32 pos) const;
 		char &operator[](u32 pos);
@@ -41,7 +45,7 @@ namespace std {
 
 	private:
 		char *_str;
-		u32 _length;
+		u32 _length;	// Excluding trailing NUL.
 	};
 }
 

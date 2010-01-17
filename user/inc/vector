@@ -25,6 +25,12 @@ namespace std {
 		explicit vector(): _capacity(0), _size(0), _array(0)
 		{ }
 
+		vector(const vector &r): _capacity(r._capacity), _size(r._size) {
+			_array = reinterpret_cast<T *>(malloc(sizeof(T) * _capacity));
+			for (u32 i = 0; i < _size; ++i)
+				new(&_array[i]) T(r._array[i]);
+		}
+
 		~vector() {
 			if (_array) {
 				for (u32 i = 0; i < _size; ++i)
@@ -34,10 +40,30 @@ namespace std {
 			}
 		}
 
+		vector &operator =(const vector &r) {
+			_capacity = r._capacity;
+			_size = r._size;
+			_array = reinterpret_cast<T *>(malloc(sizeof(T) * _capacity));
+			for (u32 i = 0; i < _size; ++i)
+				new(&_array[i]) T(r._array[i]);
+			return *this;
+		}
+
+		const T &operator[](u32 n) const {
+			return _array[n];
+		}
+
+		T &operator[](u32 n) {
+			return _array[n];
+		}
+
 		void push_back(const T &x) {
 			if (_capacity == _size) {
 				_resize();
 			}
+
+			new(&_array[_size]) T(x);
+			_size++;
 		}
 
 		u32 capacity() const {

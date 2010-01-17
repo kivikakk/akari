@@ -22,55 +22,42 @@
 
 #include "../VFS/VFSProto.hpp"
 
-pid_t keyboard_pid = 0;
-u32 stdin = -1;
-
-static char *getline() {
-	u32 cs = 8, n = 0;
-	char *kbbuf = new char[cs];
-
-	while (true) {
-		u32 incoming = readStream(keyboard_pid, "input", stdin, kbbuf + n, 1);
-		putc(kbbuf[n]);
-		if (kbbuf[n] == '\n') break;
-
-		n += incoming;	// 1
-
-		if (n == cs) {
-			char *nkb = new char[cs * 2];
-			memcpy(nkb, kbbuf, n);
-			delete [] kbbuf;
-			kbbuf = nkb;
-			cs *= 2;
-		}
-	}
-
-	kbbuf[n] = 0;
-	return kbbuf;
-}
-
 extern "C" int start() {
-	while (!keyboard_pid)
-		keyboard_pid = processIdByName("system.io.keyboard");
-
-	while (stdin == (u32)-1)
-		stdin = obtainStreamListener(keyboard_pid, "input");
+	const char *cwd = "/";
 
 	while (true) {
-		char *l = getline();
-		// int s = strpos(l, " ");
-		// printf("space at %d\n\n", s);
-		delete [] l;
+		printf("(Akari) %s$ ", cwd);
 
-		// Okay, let's grab the first 512 bytes of something.
-		l = new char[512];
+		std::vector<std::string> line = getline().split();
 
-		DIR *dirp = opendir("/");
-		printf("Shell: dirp is %x, dirp->dir is %x\n", dirp, dirp->dir);
-		VFSDirent *dirent;
-		while ((dirent = readdir(dirp))) {
-			printf("Shell: name is %s, ino is %x - going to give it a go\n", dirent->name, dirent->inode);
+		if (line.size() == 0) continue;
 
+		if (line[0] == "ls") {
+
+			DIR *dirp = opendir(cwd);
+			VFSDirent *dirent;
+			u32 i = 0; bool started = false;
+			while ((dirent = readdir(dirp))) {
+				if (i == 0) {
+					if (!started)
+						started = true;
+					else
+						printf("\n");
+				}
+				printf("%s", dirent->name);
+				i = (i + 1) % 6;
+				if (i != 0) printf("\t");
+			}
+
+			printf("\n");
+
+			closedir(dirp);
+
+		} else {
+			printf("%s: command not found\n", line[0].c_str());
+		}
+
+				/*
 			char *name = new char[strlen(dirent->name) + 2];
 			*name = '/';
 			strcpy(name + 1, dirent->name);
@@ -90,6 +77,8 @@ extern "C" int start() {
 			delete [] getline();
 		}
 		closedir(dirp);
+
+		*/
 	}
 
 	panic("shell exited?");

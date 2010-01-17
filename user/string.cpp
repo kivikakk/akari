@@ -25,17 +25,41 @@ bool isspace(char c) {
 std::string::string(): _str(0), _length(0)
 { }
 
-std::string::string(const char *s, u32 n): _length(0) {
-	_str = new char[n + 1];
-	memcpy(_str, s, n);
-	_str[n] = 0;
+std::string::string(const std::string &r): _length(r._length) {
+	_str = new char[_length + 1];
+	memcpy(_str, r._str, _length);
+	_str[_length] = 0;
+}
+
+std::string::string(const char *s) {
+	_length = strlen(s);
+	_str = new char[_length + 1];
+	strcpy(_str, s);
+}
+
+std::string::string(const char *s, u32 n): _length(n) {
+	_str = new char[_length + 1];
+	memcpy(_str, s, _length);
+	_str[_length] = 0;
 }
 
 std::string::~string() {
 	if (_str) {
-		delete _str;
+		delete [] _str;
 	}
-	printf("std::string::~string()\n");
+}
+
+bool std::string::operator ==(const char *c) const {
+	if (!_length) {
+		if (!c || *c == 0) return true;
+		// c has content, our length is 0
+		return false;
+	}
+
+	// _length > 0
+	if (!c || *c == 0) return false;
+
+	return (strcmp(_str, c) == 0);
 }
 
 const char &std::string::operator[](u32 pos) const {
@@ -62,6 +86,8 @@ std::string std::string::substr(u32 pos, u32 n) const {
 }
 
 std::string std::string::trim() const {
+	printf("trim starting with %x '%s'\n", _str, _str);
+
 	u32 start_index = 0;
 	while (start_index < _length && isspace(_str[start_index]))
 		++start_index;
