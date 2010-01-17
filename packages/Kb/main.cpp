@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <stdio.hpp>
 #include <UserCalls.hpp>
 #include <arch.hpp>
 #include <UserIPC.hpp>
@@ -100,6 +101,8 @@ extern "C" int start() {
 	}
 
 	irqListen(1);
+
+	printf("[Kb] ");
 
 	u8 scancode = AkariInB(0x60);
 	bool mustUpdateLEDs = false;
