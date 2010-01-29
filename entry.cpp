@@ -132,15 +132,15 @@ static void AkariEntryCont() {
 	Akari->tasks->current->next = idle;
 
 	// ATA driver
-	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "ata");
+	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 3, Akari->memory->_kernelDirectory, "ata");
 	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
-	ata->setIOMap(0x1F7, true);
+	/* ata->setIOMap(0x1F7, true);
 	for (u16 j = 0; j < 8; ++j) {
 		ata->setIOMap(0x1F0 + j, true);
 		ata->setIOMap(0x170 + j, true);
 	}
 	ata->setIOMap(0x3F6, true);
-	ata->setIOMap(0x376, true);
+	ata->setIOMap(0x376, true); */
 	idle->next = ata;
 	
 	// MBR driver
