@@ -29,17 +29,6 @@
 
 #include <UserCalls.hpp>
 
-int SYSTEM_WAIT_INTR_OR_TIMEOUT() {
-	static bool irq_listened = false;
-	if (!irq_listened) {
-		irq_listened = true;
-		irqListen(14);
-	}
-
-	irqWaitTimeout(TMR_TIME_OUT * 1000);
-	return 0;
-}
-
 u8 int_ata_status;    // ATA status read by interrupt handler
 u8 int_bmide_status;  // BMIDE status read by interrupt handler
 u8 int_use_intr_flag = INT_DEFAULT_INTERRUPT_MODE;
@@ -99,6 +88,14 @@ static long tmr_cmd_start_time;     // command start time
 static void tmr_set_timeout();
 static int tmr_chk_timeout();
 
+int SYSTEM_WAIT_INTR_OR_TIMEOUT() {
+	int ret = irqWaitTimeout(TMR_TIME_OUT * 1000) ? 0 : 1;
+	// Do we just do it here? Or is this meant for someone else to be doing?
+	// Oh well ...
+	int_ata_status = pio_inbyte(CB_STAT);
+	return ret;
+}
+
 // This macro provides a small delay that is used in several
 // places in the ATA command protocols:
 
@@ -118,6 +115,12 @@ static int tmr_chk_timeout();
 //*************************************************************
 
 int reg_config() {
+   static bool irq_listened = false;
+   if (!irq_listened) {
+      irq_listened = true;
+      irqListen(14);
+   }
+
    int numDev = 0;
 
    // setup register values
