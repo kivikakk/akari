@@ -88,10 +88,6 @@ void *isr_handler(struct modeswitch_registers *r) {
 
 		Akari->tasks->current = nextTask;
 		return Akari->tasks->assignInternalTask(Akari->tasks->current);
-
-
-		// while (1)
-			// __asm__ __volatile__("hlt");
 	}
 
 	return resume;
