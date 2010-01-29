@@ -42,14 +42,9 @@
 
 extern int SYSTEM_WAIT_INTR_OR_TIMEOUT();
 
-// You must supply a function that returns a system timer value. This
-// should be a value that increments at some constant rate.
-
-extern long SYSTEM_READ_TIMER();
-
 // This defines the number of system timer ticks per second.
 
-#define SYSTEM_TIMER_TICKS_PER_SECOND  1000000L
+#define SYSTEM_TIMER_TICKS_PER_SECOND  100L
 
 //********************************************************************
 //

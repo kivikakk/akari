@@ -31,6 +31,7 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(3, reinterpret_cast<void *>(&User::getProcessId));
 	addSyscall(4, reinterpret_cast<void *>(&User::irqWait));
 	addSyscall(5, reinterpret_cast<void *>(&User::irqListen));
+	addSyscall(37, reinterpret_cast<void *>(&User::ticks));
 	addSyscall(6, reinterpret_cast<void *>(&User::panic));
 	addSyscall(7, reinterpret_cast<void *>(&User::exit));
 	addSyscall(8, reinterpret_cast<void *>(&User::defer));

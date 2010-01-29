@@ -27,6 +27,19 @@
 
 #include "mindrvr.hpp"
 
+#include <UserCalls.hpp>
+
+int SYSTEM_WAIT_INTR_OR_TIMEOUT() {
+	static bool irq_listened = false;
+	if (!irq_listened) {
+		irq_listened = true;
+		irqListen(14);
+	}
+
+	irqWaitTimeout(TMR_TIME_OUT * 1000);
+	return 0;
+}
+
 u8 int_ata_status;    // ATA status read by interrupt handler
 u8 int_bmide_status;  // BMIDE status read by interrupt handler
 u8 int_use_intr_flag = INT_DEFAULT_INTERRUPT_MODE;
@@ -2198,7 +2211,7 @@ static void pio_rep_outdword(u8 addrDataReg, u8 *bufAddr, s32 dwordCnt) {
 
 static void tmr_set_timeout() {
    // get the command start time
-   tmr_cmd_start_time = SYSTEM_READ_TIMER();
+   tmr_cmd_start_time = ticks();
 }
 
 //*************************************************************
@@ -2213,7 +2226,7 @@ static int tmr_chk_timeout() {
    long curTime;
 
    // get current time
-   curTime = SYSTEM_READ_TIMER();
+   curTime = ticks();
 
    // timed out yet ?
    if (curTime >= (tmr_cmd_start_time + (TMR_TIME_OUT * SYSTEM_TIMER_TICKS_PER_SECOND)))

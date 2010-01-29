@@ -25,6 +25,7 @@
 #include <Tasks.hpp>
 #include <Syscall.hpp>
 #include <BlockingCall.hpp>
+#include <entry.hpp>
 
 namespace User {
 	void putc(char c) {
@@ -45,6 +46,7 @@ namespace User {
 	void irqWait() {
 		if (Akari->tasks->current->irqListenHits == 0) {
 			Akari->tasks->current->irqWaiting = true;
+			Akari->tasks->current->irqWaitStart = 0;
 
 			Akari->syscall->returnToNextTask();
 			return;
@@ -53,11 +55,27 @@ namespace User {
 		Akari->tasks->current->irqListenHits--;
 	}
 
+	bool irqWaitTimeout(u32 ms) {
+		if (Akari->tasks->current->irqListenHits == 0) {
+			Akari->tasks->current->irqWaiting = true;
+			Akari->tasks->current->irqWaitStart = AkariMicrokernelSwitches;
+
+			Akari->syscall->returnToNextTask();
+			return;
+		}
+
+		Akari->tasks->current->irqListenHits--;
+		return true;
+	}
+
 	void irqListen(u32 irq) {
 		Akari->tasks->current->irqListen = irq;
 		Akari->tasks->current->irqListenHits = 0;
 	}
 
+	u32 ticks() {
+		return AkariMicrokernelSwitches;
+	}
 
 	void panic(const char *s) {
 		// TODO: check permission. should be ring 1 or 0, but at least definitely not 3.

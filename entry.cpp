@@ -174,6 +174,7 @@ u32 AkariMicrokernelSwitches = 0;
 
 // Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
+	// 100 times a second.
 	++AkariMicrokernelSwitches;
 	Akari->tasks->saveRegisterToTask(Akari->tasks->current, r);
 	Akari->tasks->cycleTask();
