@@ -664,7 +664,7 @@ static int exec_pio_data_in_cmd(u8 dev, u8 *bufAddr, s32 numSect, int multiCnt) 
 
 int reg_pio_data_in_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, u8 *bufAddr, s32 numSect, int multiCnt) {
    reg_cmd_info.cmd = cmd;
-   reg_cmd_info.fr = fr;
+   eg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
    reg_cmd_info.dh = (u8)(CB_DH_LBA | (dev ? CB_DH_DEV1 : CB_DH_DEV0));
    reg_cmd_info.dc = (u8)(int_use_intr_flag ? 0 : CB_DC_NIEN);
@@ -686,10 +686,10 @@ int reg_pio_data_in_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, u8 *bufAddr, 
          multiCnt = 1;
    }
 
-   reg_cmd_info.ns  = numSect;
-   reg_cmd_info.mc  = multiCnt;
+   reg_cmd_info.ns = numSect;
+   reg_cmd_info.mc = multiCnt;
 
-   return exec_pio_data_in_cmd( dev, bufAddr, numSect, multiCnt );
+   return exec_pio_data_in_cmd(dev, bufAddr, numSect, multiCnt);
 }
 
 //*************************************************************
@@ -699,40 +699,30 @@ int reg_pio_data_in_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, u8 *bufAddr, 
 //
 //*************************************************************
 
-int reg_pio_data_in_lba48( unsigned char dev, unsigned char cmd,
-                           unsigned int fr, unsigned int sc,
-                           unsigned long lbahi, unsigned long lbalo,
-                           unsigned char * bufAddr,
-                           long numSect, int multiCnt )
-
-{
-
+int reg_pio_data_in_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo, u8 *bufAddr, s32 numSect, int multiCnt) {
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.dh = (u8)(CB_DH_LBA | (dev ? CB_DH_DEV1 : CB_DH_DEV0));
+   reg_cmd_info.dc = (u8)(int_use_intr_flag ? 0 : CB_DC_NIEN);
    reg_cmd_info.lbaSize = LBA48;
    reg_cmd_info.lbaHigh = lbahi;
    reg_cmd_info.lbaLow = lbalo;
 
    // adjust multiple count
-   if ( multiCnt & 0x0800 )
-   {
+   if (multiCnt & 0x0800) {
       // assume caller knows what they are doing
       multiCnt &= 0x00ff;
-   }
-   else
-   {
+   } else {
       // only Read Multiple Ext uses multiCnt
-      if ( cmd != CMD_READ_MULTIPLE_EXT )
+      if (cmd != CMD_READ_MULTIPLE_EXT)
          multiCnt = 1;
    }
 
-   reg_cmd_info.ns  = numSect;
-   reg_cmd_info.mc  = multiCnt;
+   reg_cmd_info.ns = numSect;
+   reg_cmd_info.mc = multiCnt;
 
-   return exec_pio_data_in_cmd( dev, bufAddr, numSect, multiCnt );
+   return exec_pio_data_in_cmd(dev, bufAddr, numSect, multiCnt);
 }
 
 //*************************************************************
@@ -744,43 +734,30 @@ int reg_pio_data_in_lba48( unsigned char dev, unsigned char cmd,
 //
 //*************************************************************
 
-static int exec_pio_data_out_cmd( unsigned char dev,
-                             unsigned char * bufAddr,
-                             long numSect, int multiCnt );
+static int exec_pio_data_out_cmd(u8 dev, u8 *bufAddr, s32 numSect, int multiCnt);
 
-static int exec_pio_data_out_cmd( unsigned char dev,
-                             unsigned char * bufAddr,
-                             long numSect, int multiCnt )
-
-{
-   unsigned char status;
-   int loopFlag = 1;
-   long wordCnt;
+static int exec_pio_data_out_cmd(u8 dev, u8 *bufAddr, s32 numSect, int multiCnt) {
+   bool loopFlag = true;
+   s32 wordCnt;
 
    // reset Bus Master Error bit
-
-   pio_writeBusMstrStatus( BM_SR_MASK_ERR );
+   pio_writeBusMstrStatus(BM_SR_MASK_ERR);
 
    // Set command time out.
-
    tmr_set_timeout();
 
    // Select the drive - call the sub_select function.
    // Quit now if this fails.
-
-   if ( sub_select( dev ) )
-   {
+   if (sub_select(dev)) {
       return 1;
    }
 
    // Set up all the registers except the command register.
-
    sub_setup_command();
 
    // Start the command by setting the Command register.  The drive
    // should immediately set BUSY status.
-
-   pio_outbyte( CB_CMD, reg_cmd_info.cmd );
+   pio_outbyte(CB_CMD, reg_cmd_info.cmd);
 
    // Waste some time by reading the alternate status a few times.
    // This gives the drive time to set BUSY in the status register on
@@ -788,31 +765,25 @@ static int exec_pio_data_out_cmd( unsigned char dev,
    // system may not set BUSY fast enough and we would think it had
    // completed the command when it really had not even started the
    // command yet.
-
    DELAY400NS;
 
    // Wait for not BUSY or time out.
    // Note: No interrupt is generated for the
    // first sector of a write command.
-
-   while ( 1 )
-   {
-      status = pio_inbyte( CB_ASTAT );
-      if ( ( status & CB_STAT_BSY ) == 0 )
+   while (true) {
+      u8 status = pio_inbyte(CB_ASTAT);
+      if ((status & CB_STAT_BSY) == 0)
          break;
-      if ( tmr_chk_timeout() )
-      {
+      if (tmr_chk_timeout()) {
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = 47;
-         loopFlag = 0;
+         loopFlag = false;
          break;
       }
    }
 
    // This loop writes each sector.
-
-   while ( loopFlag )
-   {
+   while (loopFlag) {
       // WRITE_LOOP:
       //
       // NOTE NOTE NOTE ...  The primary status register (1f7) MUST NOT be
@@ -831,25 +802,19 @@ static int exec_pio_data_out_cmd( unsigned char dev,
 
       // If BSY=0 and DRQ=1, transfer the data,
       // even if we find out there is an error later.
-
-      if ( ( status & ( CB_STAT_BSY | CB_STAT_DRQ ) ) == CB_STAT_DRQ )
-      {
-
+      if ((status & (CB_STAT_BSY | CB_STAT_DRQ)) == CB_STAT_DRQ) {
          // increment number of DRQ packets
-
          reg_cmd_info.drqPackets ++ ;
 
          // determine the number of sectors to transfer
-
          wordCnt = multiCnt ? multiCnt : 1;
-         if ( wordCnt > numSect )
+         if (wordCnt > numSect)
             wordCnt = numSect;
          wordCnt = wordCnt * 256;
 
          // Do the REP OUTSW to write the data for one DRQ block.
-
-         reg_cmd_info.totalBytesXfer += ( wordCnt << 1 );
-         pio_drq_block_out( CB_DATA, bufAddr, wordCnt );
+         reg_cmd_info.totalBytesXfer += (wordCnt << 1);
+         pio_drq_block_out(CB_DATA, bufAddr, wordCnt);
 
          DELAY400NS;    // delay so device can get the status updated
 
@@ -858,75 +823,60 @@ static int exec_pio_data_out_cmd( unsigned char dev,
 
          // Decrement the count of sectors to be transferred
          // and increment buffer address.
-
-         numSect = numSect - ( multiCnt ? multiCnt : 1 );
-         bufAddr = bufAddr + ( 512 * ( multiCnt ? multiCnt : 1 ) );
+         numSect = numSect - (multiCnt ? multiCnt : 1);
+         bufAddr = bufAddr + (512 * (multiCnt ? multiCnt : 1));
       }
 
       // So was there any error condition?
-
-      if ( status & ( CB_STAT_BSY | CB_STAT_DF | CB_STAT_ERR ) )
-      {
+      if (status & (CB_STAT_BSY | CB_STAT_DF | CB_STAT_ERR)) {
          reg_cmd_info.ec = 41;
          break;   // go to WRITE_DONE
       }
 
       // DRQ should have been set -- was it?
-
-      if ( ( status & CB_STAT_DRQ ) == 0 )
-      {
+      if ((status & CB_STAT_DRQ) == 0) {
          reg_cmd_info.ec = 42;
          break;   // go to WRITE_DONE
       }
 
       // Wait for interrupt -or- wait for not BUSY -or- wait for time out.
-
-      sub_wait_poll( 44, 45 );
+      sub_wait_poll(44, 45);
 
       // If polling or error read the status, otherwise
       // get the status that was read by the interrupt handler.
-
-      if ( ( ! int_use_intr_flag ) || ( reg_cmd_info.ec ) )
-         status = pio_inbyte( CB_STAT );
+      if ((!int_use_intr_flag) || (reg_cmd_info.ec))
+         status = pio_inbyte(CB_STAT);
       else
          status = int_ata_status;
 
       // If there was a time out error, go to WRITE_DONE.
-
-      if ( reg_cmd_info.ec )
+      if (reg_cmd_info.ec)
          break;   // go to WRITE_DONE
 
       // If all of the requested sectors have been transferred, make a
       // few more checks before we exit.
 
-      if ( numSect < 1 )
-      {
+      if (numSect < 1) {
          // Since the drive has transferred all of the sectors without
          // error, the drive MUST not have BUSY, DEVICE FAULT, DATA REQUEST
          // or ERROR status at this time.
-
-         if ( status & ( CB_STAT_BSY | CB_STAT_DF | CB_STAT_DRQ | CB_STAT_ERR ) )
-         {
+         if (status & (CB_STAT_BSY | CB_STAT_DF | CB_STAT_DRQ | CB_STAT_ERR)) {
             reg_cmd_info.ec = 43;
             break;   // go to WRITE_DONE
          }
 
          // All sectors have been written without error, go to WRITE_DONE.
-
          break;   // go to WRITE_DONE
-
       }
 
       //
       // This is the end of the write loop.  If we get here, the loop
       // is repeated to write the next sector.  Go back to WRITE_LOOP.
-
    }
 
    // BMIDE Error=1?
 
-   if ( pio_readBusMstrStatus() & BM_SR_MASK_ERR )
-   {
+   if (pio_readBusMstrStatus() & BM_SR_MASK_ERR) {
       reg_cmd_info.ec = 78;                  // yes
    }
 
@@ -934,10 +884,7 @@ static int exec_pio_data_out_cmd( unsigned char dev,
 
    // All done.  The return values of this function are described in
    // MINDRVR.H.
-
-   if ( reg_cmd_info.ec )
-      return 1;
-   return 0;
+   return reg_cmd_info.ec ? 1 : 0;
 }
 
 //*************************************************************
@@ -947,42 +894,30 @@ static int exec_pio_data_out_cmd( unsigned char dev,
 //
 //*************************************************************
 
-int reg_pio_data_out_lba28( unsigned char dev, unsigned char cmd,
-                            unsigned int fr, unsigned int sc,
-                            unsigned long lba,
-                            unsigned char * bufAddr,
-                            long numSect, int multiCnt )
-
-{
-
+int reg_pio_data_out_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, u8 *bufAddr, s32 numSect, int multiCnt) {
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.dh = (u8)(CB_DH_LBA | (dev ? CB_DH_DEV1 : CB_DH_DEV0));
+   reg_cmd_info.dc = (u8)(int_use_intr_flag ? 0 : CB_DC_NIEN);
    reg_cmd_info.lbaSize = LBA28;
    reg_cmd_info.lbaHigh = 0;
    reg_cmd_info.lbaLow = lba;
 
    // adjust multiple count
-   if ( multiCnt & 0x0800 )
-   {
+   if (multiCnt & 0x0800) {
       // assume caller knows what they are doing
       multiCnt &= 0x00ff;
-   }
-   else
-   {
+   } else {
       // only Write Multiple and CFA Write Multiple W/O Erase uses multiCnt
-      if (    ( cmd != CMD_WRITE_MULTIPLE )
-           && ( cmd != CMD_CFA_WRITE_MULTIPLE_WO_ERASE )
-         )
+      if ((cmd != CMD_WRITE_MULTIPLE) && (cmd != CMD_CFA_WRITE_MULTIPLE_WO_ERASE))
          multiCnt = 1;
    }
 
-   reg_cmd_info.ns  = numSect;
-   reg_cmd_info.mc  = multiCnt;
+   reg_cmd_info.ns = numSect;
+   reg_cmd_info.mc = multiCnt;
 
-   return exec_pio_data_out_cmd( dev, bufAddr, numSect, multiCnt );
+   return exec_pio_data_out_cmd(dev, bufAddr, numSect, multiCnt);
 }
 
 //*************************************************************
@@ -992,40 +927,30 @@ int reg_pio_data_out_lba28( unsigned char dev, unsigned char cmd,
 //
 //*************************************************************
 
-int reg_pio_data_out_lba48( unsigned char dev, unsigned char cmd,
-                            unsigned int fr, unsigned int sc,
-                            unsigned long lbahi, unsigned long lbalo,
-                            unsigned char * bufAddr,
-                            long numSect, int multiCnt )
-
-{
-
+int reg_pio_data_out_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo, u8 * bufAddr, s32 numSect, int multiCnt) {
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.dh = (u8)(CB_DH_LBA | (dev ? CB_DH_DEV1 : CB_DH_DEV0));
+   reg_cmd_info.dc = (u8)(int_use_intr_flag ? 0 : CB_DC_NIEN);
    reg_cmd_info.lbaSize = LBA48;
    reg_cmd_info.lbaHigh = lbahi;
    reg_cmd_info.lbaLow = lbalo;
 
    // adjust multiple count
-   if ( multiCnt & 0x0800 )
-   {
+   if (multiCnt & 0x0800) {
       // assume caller knows what they are doing
       multiCnt &= 0x00ff;
-   }
-   else
-   {
+   } else {
       // only Write Multiple Ext uses multiCnt
-      if ( cmd != CMD_WRITE_MULTIPLE_EXT )
+      if (cmd != CMD_WRITE_MULTIPLE_EXT)
          multiCnt = 1;
    }
 
-   reg_cmd_info.ns  = numSect;
-   reg_cmd_info.mc  = multiCnt;
+   reg_cmd_info.ns = numSect;
+   reg_cmd_info.mc = multiCnt;
 
-   return exec_pio_data_out_cmd( dev, bufAddr, numSect, multiCnt );
+   return exec_pio_data_out_cmd(dev, bufAddr, numSect, multiCnt);
 }
 
 #if INCLUDE_ATAPI_PIO
@@ -1038,59 +963,44 @@ int reg_pio_data_out_lba48( unsigned char dev, unsigned char cmd,
 //
 //*************************************************************
 
-int reg_packet( unsigned char dev,
-                unsigned int cpbc,
-                unsigned char * cdbBufAddr,
-                int dir,
-                long dpbc,
-                unsigned char * dataBufAddr )
-
-{
-   unsigned char status;
-   unsigned int byteCnt;
+int reg_packet(u8 dev, u32 cpbc, u8 *cdbBufAddr, int dir, s32 dpbc, u8 *dataBufAddr) {
+   // unsigned char status;
+   // unsigned int byteCnt;
    long wordCnt;
 
    // reset Bus Master Error bit
-
-   pio_writeBusMstrStatus( BM_SR_MASK_ERR );
+   pio_writeBusMstrStatus(BM_SR_MASK_ERR);
 
    // Make sure the command packet size is either 12 or 16
    // and save the command packet size and data.
-
    cpbc = cpbc < 12 ? 12 : cpbc;
    cpbc = cpbc > 12 ? 16 : cpbc;
 
    // Setup current command information.
-
    reg_cmd_info.cmd = CMD_PACKET;
    reg_cmd_info.fr = 0;
    reg_cmd_info.sc = 0;
    reg_cmd_info.sn = 0;
-   reg_cmd_info.cl = (unsigned char) ( dpbc & 0x00ff );
-   reg_cmd_info.ch = ( unsigned char) ( ( dpbc & 0xff00 ) >> 8 );
-   reg_cmd_info.dh = (unsigned char) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.cl = (u8)(dpbc & 0x00ff);
+   reg_cmd_info.ch = (u8)((dpbc & 0xff00) >> 8);
+   reg_cmd_info.dh = (u8)(dev ? CB_DH_DEV1 : CB_DH_DEV0);
+   reg_cmd_info.dc = (u8)(int_use_intr_flag ? 0 : CB_DC_NIEN);
 
    // Set command time out.
-
    tmr_set_timeout();
 
    // Select the drive - call the sub_select function.
    // Quit now if this fails.
-
-   if ( sub_select( dev ) )
-   {
+   if (sub_select(dev)) {
       return 1;
    }
 
    // Set up all the registers except the command register.
-
    sub_setup_command();
 
    // Start the command by setting the Command register.  The drive
    // should immediately set BUSY status.
-
-   pio_outbyte( CB_CMD, CMD_PACKET );
+   pio_outbyte(CB_CMD, CMD_PACKET);
 
    // Waste some time by reading the alternate status a few times.
    // This gives the drive time to set BUSY in the status register on
@@ -1098,19 +1008,15 @@ int reg_packet( unsigned char dev,
    // system may not set BUSY fast enough and we would think it had
    // completed the command when it really had not even started the
    // command yet.
-
    DELAY400NS;
 
    // Command packet transfer...
    // Poll Alternate Status for BSY=0.
-
-   while ( 1 )
-   {
-      status = pio_inbyte( CB_ASTAT );       // poll for not busy
-      if ( ( status & CB_STAT_BSY ) == 0 )
+   while (true) {
+      status = pio_inbyte(CB_ASTAT);       // poll for not busy
+      if ((status & CB_STAT_BSY) == 0)
          break;
-      if ( tmr_chk_timeout() )               // time out yet ?
-      {
+      if (tmr_chk_timeout()) {               // time out yet ?
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = 51;
          dir = -1;   // command done
@@ -1123,51 +1029,34 @@ int reg_packet( unsigned char dev,
 
    // Command packet transfer...
    // If no error, transfer the command packet.
-
-   if ( reg_cmd_info.ec == 0 )
-   {
-
+   if (reg_cmd_info.ec == 0) {
       // Command packet transfer...
       // Read the primary status register and the other ATAPI registers.
-
-      status = pio_inbyte( CB_STAT );
+      status = pio_inbyte(CB_STAT);
 
       // Command packet transfer...
       // check status: must have BSY=0, DRQ=1 now
-
-      if (    ( status & ( CB_STAT_BSY | CB_STAT_DRQ | CB_STAT_ERR ) )
-           != CB_STAT_DRQ
-         )
-      {
+      if ((status & (CB_STAT_BSY | CB_STAT_DRQ | CB_STAT_ERR)) != CB_STAT_DRQ) {
          reg_cmd_info.ec = 52;
          dir = -1;   // command done
-      }
-      else
-      {
+      } else {
          // Command packet transfer...
          // xfer the command packet (the cdb)
-
-         pio_drq_block_out( CB_DATA, cdbBufAddr, cpbc >> 1 );
-
+         pio_drq_block_out(CB_DATA, cdbBufAddr, cpbc >> 1);
          DELAY400NS;    // delay so device can get the status updated
       }
    }
 
    // Data transfer loop...
    // If there is no error, enter the data transfer loop.
-
-   while ( reg_cmd_info.ec == 0 )
-   {
+   while (reg_cmd_info.ec == 0) {
       // Data transfer loop...
       // Wait for interrupt -or- wait for not BUSY -or- wait for time out.
-
-      sub_wait_poll( 53, 54 );
+      sub_wait_poll(53, 54);
 
       // Data transfer loop...
       // If there was a time out error, exit the data transfer loop.
-
-      if ( reg_cmd_info.ec )
-      {
+      if (reg_cmd_info.ec) {
          dir = -1;   // command done
          break;
       }
@@ -1175,18 +1064,15 @@ int reg_packet( unsigned char dev,
       // Data transfer loop...
       // If using interrupts get the status read by the interrupt
       // handler, otherwise read the status register.
-
-      if ( int_use_intr_flag )
+      if (int_use_intr_flag)
          status = int_ata_status;
       else
-         status = pio_inbyte( CB_STAT );
+         status = pio_inbyte(CB_STAT);
 
       // Data transfer loop...
       // Exit the read data loop if the device indicates this
       // is the end of the command.
-
-      if ( ( status & ( CB_STAT_BSY | CB_STAT_DRQ ) ) == 0 )
-      {
+      if ((status & (CB_STAT_BSY | CB_STAT_DRQ)) == 0) {
          dir = -1;   // command done
          break;
       }
@@ -1194,9 +1080,7 @@ int reg_packet( unsigned char dev,
       // Data transfer loop...
       // The device must want to transfer data...
       // check status: must have BSY=0, DRQ=1 now.
-
-      if ( ( status & ( CB_STAT_BSY | CB_STAT_DRQ ) ) != CB_STAT_DRQ )
-      {
+      if ((status & (CB_STAT_BSY | CB_STAT_DRQ)) != CB_STAT_DRQ) {
          reg_cmd_info.ec = 55;
          dir = -1;   // command done
          break;
@@ -1204,10 +1088,8 @@ int reg_packet( unsigned char dev,
 
       // Data transfer loop...
       // get the byte count, check for zero...
-
-      byteCnt = ( pio_inbyte( CB_CH ) << 8 ) | pio_inbyte( CB_CL );
-      if ( byteCnt < 1 )
-      {
+      byteCnt = (pio_inbyte(CB_CH) << 8) | pio_inbyte(CB_CL);
+      if (byteCnt < 1) {
          reg_cmd_info.ec = 59;
          dir = -1;   // command done
          break;
@@ -1215,19 +1097,17 @@ int reg_packet( unsigned char dev,
 
       // Data transfer loop...
       // increment number of DRQ packets
-
-      reg_cmd_info.drqPackets ++ ;
+      ++reg_cmd_info.drqPackets;
 
       // Data transfer loop...
       // transfer the data and update the i/o buffer address
       // and the number of bytes transfered.
-
-      wordCnt = ( byteCnt >> 1 ) + ( byteCnt & 0x0001 );
-      reg_cmd_info.totalBytesXfer += ( wordCnt << 1 );
-      if ( dir )
-         pio_drq_block_out( CB_DATA, dataBufAddr, wordCnt );
+      wordCnt = (byteCnt >> 1) + (byteCnt & 0x0001);
+      reg_cmd_info.totalBytesXfer += (wordCnt << 1);
+      if (dir)
+         pio_drq_block_out(CB_DATA, dataBufAddr, wordCnt);
       else
-         pio_drq_block_in( CB_DATA, dataBufAddr, wordCnt );
+         pio_drq_block_in(CB_DATA, dataBufAddr, wordCnt);
       dataBufAddr = dataBufAddr + byteCnt;
 
       DELAY400NS;    // delay so device can get the status updated
@@ -1237,30 +1117,23 @@ int reg_packet( unsigned char dev,
    // Wait for interrupt or poll for BSY=0,
    // but don't do this if there was any error or if this
    // was a commmand that did not transfer data.
-
-   if ( ( reg_cmd_info.ec == 0 ) && ( dir >= 0 ) )
-   {
-      sub_wait_poll( 56, 57 );
+   if ((reg_cmd_info.ec == 0) && (dir >= 0)) {
+      sub_wait_poll(56, 57);
    }
 
    // Final status check, only if no previous error.
-
-   if ( reg_cmd_info.ec == 0 )
-   {
+   if (reg_cmd_info.ec == 0) {
       // Final status check...
       // If using interrupts get the status read by the interrupt
       // handler, otherwise read the status register.
-
-      if ( int_use_intr_flag )
+      if (int_use_intr_flag)
          status = int_ata_status;
       else
-         status = pio_inbyte( CB_STAT );
+         status = pio_inbyte(CB_STAT);
 
       // Final status check...
       // check for any error.
-
-      if ( status & ( CB_STAT_BSY | CB_STAT_DRQ | CB_STAT_ERR ) )
-      {
+      if (status & (CB_STAT_BSY | CB_STAT_DRQ | CB_STAT_ERR)) {
          reg_cmd_info.ec = 58;
       }
    }
@@ -1269,18 +1142,14 @@ int reg_packet( unsigned char dev,
 
    // Final status check
    // BMIDE Error=1?
-
-   if ( pio_readBusMstrStatus() & BM_SR_MASK_ERR )
+   if (pio_readBusMstrStatus() & BM_SR_MASK_ERR)
    {
       reg_cmd_info.ec = 78;                  // yes
    }
 
    // All done.  The return values of this function are described in
    // MINDRVR.H.
-
-   if ( reg_cmd_info.ec )
-      return 1;
-   return 0;
+	return reg_cmd_info.ec ? 1 : 0;
 }
 
 #endif   // INCLUDE_ATAPI
@@ -1328,11 +1197,11 @@ int reg_packet( unsigned char dev,
 //
 //***********************************************************
 
-static unsigned long * dma_pci_prd_ptr;   // current PRD buffer address
+static u32 *dma_pci_prd_ptr;   // current PRD buffer address
 static int dma_pci_num_prd;               // current number of PRD entries
 
-static unsigned char statReg;             // save BM status reg bits
-static unsigned char rwControl;           // read/write control bit setting
+static u8 statReg;             // save BM status reg bits
+static u8 rwControl;           // read/write control bit setting
 
 #define MAX_TRANSFER_SIZE  262144L        // max transfer size (in bytes,
                                           // should be multiple of 65536)
@@ -1342,8 +1211,8 @@ static unsigned char rwControl;           // read/write control bit setting
 
 #define PRD_BUF_SIZE (48+(2*MAX_PRD*8))         // size of PRD list buffer
 
-static unsigned char prdBuf[PRD_BUF_SIZE];      // PRD buffer
-static unsigned long * prdBufPtr;               // first PRD addr
+static u8 prdBuf[PRD_BUF_SIZE];      // PRD buffer
+static u32 *prdBufPtr;               // first PRD addr
 
 //***********************************************************
 //
@@ -1364,34 +1233,27 @@ static unsigned long * prdBufPtr;               // first PRD addr
 //
 //***********************************************************
 
-int dma_pci_config( void )
-
-{
-   unsigned long lw;
-
+int dma_pci_config() {
    // Set up the PRD entry list buffer address - the PRD entry list
    // may not span a 64KB boundary in physical memory. Space is
    // allocated (above) for this buffer such that it will be
    // aligned on a seqment boundary
    // and such that the PRD list will not span a 64KB boundary...
-   lw = (unsigned long) prdBuf;
+   u32 lw = (u32) prdBuf;
    // ...move up to an 8 byte boundary.
    lw = lw + 15;
    lw = lw & 0xfffffff8L;
    // ...check for 64KB boundary in the first part of the PRD buffer,
    // ...if so just move the buffer to that boundary.
-   if ( ( lw & 0xffff0000L )
-        !=
-        ( ( lw + ( MAX_PRD * 8L ) - 1L ) & 0xffff0000L )
-      )
-      lw = ( lw + ( MAX_PRD * 8L ) ) & 0xffff0000L;
+   if ((lw & 0xffff0000L) != ((lw + (MAX_PRD * 8L) - 1L) & 0xffff0000L))
+      lw = (lw + (MAX_PRD * 8L)) & 0xffff0000L;
    // ... return the address of the first PRD
-   dma_pci_prd_ptr = prdBufPtr = (unsigned long *) lw;
+   dma_pci_prd_ptr = prdBufPtr = (u32 *)lw;
    // ... return the current number of PRD entries
    dma_pci_num_prd = 0;
 
    // read the BM status reg and save the upper 3 bits.
-   statReg = (unsigned char) ( pio_readBusMstrStatus() & 0x60 );
+   statReg = (u8)(pio_readBusMstrStatus() & 0x60);
 
    return 0;
 }
@@ -1410,29 +1272,27 @@ int dma_pci_config( void )
 //
 //***********************************************************
 
-static int set_up_xfer( int dir, long bc, unsigned char * bufAddr );
+static int set_up_xfer(int dir, s32 bc, u8 *bufAddr);
 
-static int set_up_xfer( int dir, long bc, unsigned char * bufAddr )
-
-{
+static int set_up_xfer(int dir, s32 bc, u8 *bufAddr) {
    int numPrd;                      // number of PRD required
    int maxPrd;                      // max number of PRD allowed
-   unsigned long temp;
-   unsigned long phyAddr;           // physical memory address
-   unsigned long * prdPtr;      // pointer to PRD entry list
+   u32 temp;
+   u32 phyAddr;           // physical memory address
+   u32 *prdPtr;      // pointer to PRD entry list
 
    // disable/stop the dma channel, clear interrupt and error bits
-   pio_writeBusMstrCmd( BM_CR_MASK_STOP );
-   pio_writeBusMstrStatus( (unsigned char) ( statReg | BM_SR_MASK_INT | BM_SR_MASK_ERR ) );
+   pio_writeBusMstrCmd(BM_CR_MASK_STOP);
+   pio_writeBusMstrStatus((u8)(statReg | BM_SR_MASK_INT | BM_SR_MASK_ERR));
 
    // setup to build the PRD list...
    // ...max PRDs allowed
-   maxPrd = (int) MAX_PRD;
+   maxPrd = (int)MAX_PRD;
    // ...PRD buffer address
    prdPtr = prdBufPtr;
    dma_pci_prd_ptr = prdPtr;
    // ... convert I/O buffer address to an physical memory address
-   phyAddr = (unsigned long) bufAddr;
+   phyAddr = (u32)bufAddr;
 
    // build the PRD list...
    // ...PRD entry format:
@@ -1442,20 +1302,18 @@ static int set_up_xfer( int dir, long bc, unsigned char * bufAddr )
    // ...zero number of PRDs
    numPrd = 0;
    // ...loop to build each PRD
-   while ( bc > 0 )
-   {
-      if ( numPrd >= maxPrd )
+   while (bc > 0) {
+      if (numPrd >= maxPrd)
          return 1;
       // set this PRD's address
       prdPtr[0] = phyAddr;
       // set count for this PRD
       temp = 65536L;          // max PRD length
-      if ( temp > bc )        // count to large?
+      if (temp > bc)        // count to large?
          temp = bc;           //    yes - use actual count
       // check if count will fit
       phyAddr = phyAddr + temp;
-      if ( ( phyAddr & 0xffff0000L ) != ( prdPtr[0] & 0xffff0000L ) )
-      {
+      if ((phyAddr & 0xffff0000L) != (prdPtr[0] & 0xffff0000L)) {
          phyAddr = phyAddr & 0xffff0000L;
          temp = phyAddr - prdPtr[0];
       }
@@ -1464,29 +1322,29 @@ static int set_up_xfer( int dir, long bc, unsigned char * bufAddr )
       // update byte count
       bc = bc - temp;
       // set the end bit in the prd list
-      if ( bc < 1 )
+      if (bc < 1)
          prdPtr[1] = prdPtr[1] | 0x80000000L;
-      prdPtr ++ ;
-      prdPtr ++ ;
-      numPrd ++ ;
+      ++prdPtr;
+      ++prdPtr;
+      ++numPrd;
    }
 
    // return the current PRD list size and
    // write into BMIDE PRD address registers.
 
    dma_pci_num_prd = numPrd;
-   * (unsigned long *) (pio_bmide_base_addr + BM_PRD_ADDR_LOW )
-      = (unsigned long) prdBufPtr;
+   *(u32 *)(pio_bmide_base_addr + BM_PRD_ADDR_LOW)
+      = (u32) prdBufPtr;
 
    // set the read/write control:
    // PCI reads for ATA Write DMA commands,
    // PCI writes for ATA Read DMA commands.
 
-   if ( dir )
+   if (dir)
       rwControl = BM_CR_MASK_READ;     // ATA Write DMA
    else
       rwControl = BM_CR_MASK_WRITE;    // ATA Read DMA
-   pio_writeBusMstrCmd( rwControl );
+   pio_writeBusMstrCmd(rwControl);
    return 0;
 }
 
@@ -1496,59 +1354,41 @@ static int set_up_xfer( int dir, long bc, unsigned char * bufAddr )
 //
 //***********************************************************
 
-static int exec_pci_ata_cmd( unsigned char dev,
-                             unsigned char * bufAddr,
-                             long numSect );
+static int exec_pci_ata_cmd(u8 dev, u8 *bufAddr, long numSect); 
 
-static int exec_pci_ata_cmd( unsigned char dev,
-                             unsigned char * bufAddr,
-                             long numSect )
-
-{
-   unsigned char status;
-
+static int exec_pci_ata_cmd(u8 dev, u8 *bufAddr, long numSect) {
    // Quit now if the command is incorrect.
 
-   if (    ( reg_cmd_info.cmd != CMD_READ_DMA )
-        && ( reg_cmd_info.cmd != CMD_READ_DMA_EXT )
-        && ( reg_cmd_info.cmd != CMD_WRITE_DMA )
-        && ( reg_cmd_info.cmd != CMD_WRITE_DMA_EXT ) )
-   {
+   if ((reg_cmd_info.cmd != CMD_READ_DMA)
+        && (reg_cmd_info.cmd != CMD_READ_DMA_EXT)
+        && (reg_cmd_info.cmd != CMD_WRITE_DMA)
+        && (reg_cmd_info.cmd != CMD_WRITE_DMA_EXT)) {
       reg_cmd_info.ec = 77;
       return 1;
    }
 
    // Set up the dma transfer
-
-   if ( set_up_xfer( ( reg_cmd_info.cmd == CMD_WRITE_DMA )
-                     ||
-                     ( reg_cmd_info.cmd == CMD_WRITE_DMA_EXT ),
-                     numSect * 512L, bufAddr ) )
-   {
+   if (set_up_xfer((reg_cmd_info.cmd == CMD_WRITE_DMA) ||
+		 (reg_cmd_info.cmd == CMD_WRITE_DMA_EXT), numSect * 512L, bufAddr)) {
       reg_cmd_info.ec = 61;
       return 1;
    }
 
    // Set command time out.
-
    tmr_set_timeout();
 
    // Select the drive - call the sub_select function.
    // Quit now if this fails.
-
-   if ( sub_select( dev ) )
-   {
+   if (sub_select(dev)) {
       return 1;
    }
 
    // Set up all the registers except the command register.
-
    sub_setup_command();
 
    // Start the command by setting the Command register.  The drive
    // should immediately set BUSY status.
-
-   pio_outbyte( CB_CMD, reg_cmd_info.cmd );
+   pio_outbyte(CB_CMD, reg_cmd_info.cmd);
 
    // The drive should start executing the command including any
    // data transfer.
@@ -1557,10 +1397,9 @@ static int exec_pci_ata_cmd( unsigned char dev,
    // read the BMIDE regs
    // enable/start the dma channel.
    // read the BMIDE regs again
-
    pio_readBusMstrCmd();
    pio_readBusMstrStatus();
-   pio_writeBusMstrCmd( (unsigned char) ( rwControl | BM_CR_MASK_START ) );
+   pio_writeBusMstrCmd((u8)(rwControl | BM_CR_MASK_START));
    pio_readBusMstrCmd();
    pio_readBusMstrStatus();
 
@@ -1568,33 +1407,27 @@ static int exec_pci_ata_cmd( unsigned char dev,
    // the device and dma channel transfer the data here while we start
    // checking for command completion...
    // wait for the PCI BM Interrupt=1 (see ATAIOINT.C)...
-
-   if ( SYSTEM_WAIT_INTR_OR_TIMEOUT() )       // time out ?
-   {
+   if (SYSTEM_WAIT_INTR_OR_TIMEOUT()) {       // time out ?
       reg_cmd_info.to = 1;
       reg_cmd_info.ec = 73;
    }
 
    // End of command...
    // disable/stop the dma channel
-
-   status = int_bmide_status;                // read BM status
-   status &= ~ BM_SR_MASK_ACT;            // ignore Active bit
-   pio_writeBusMstrCmd( BM_CR_MASK_STOP );    // shutdown DMA
+   u8 status = int_bmide_status;                // read BM status
+   status &= ~BM_SR_MASK_ACT;            // ignore Active bit
+   pio_writeBusMstrCmd(BM_CR_MASK_STOP);    // shutdown DMA
    pio_readBusMstrCmd();                      // read BM cmd (just for trace)
    status |= pio_readBusMstrStatus();         // read BM status again
 
-   if ( reg_cmd_info.ec == 0 )
-   {
-      if ( status & BM_SR_MASK_ERR )            // bus master error?
-      {
+   if (reg_cmd_info.ec == 0) {
+      if (status & BM_SR_MASK_ERR) {            // bus master error?
          reg_cmd_info.ec = 78;                  // yes
       }
    }
-   if ( reg_cmd_info.ec == 0 )
-   {
-      if ( status & BM_SR_MASK_ACT )            // end of PRD list?
-      {
+
+   if (reg_cmd_info.ec == 0) {
+      if (status & BM_SR_MASK_ACT) {            // end of PRD list?
          reg_cmd_info.ec = 71;                  // no
       }
    }
@@ -1604,20 +1437,16 @@ static int exec_pci_ata_cmd( unsigned char dev,
    // by the interrupt handler. If there was an error
    // read the Status register because it may not have been
    // read by the interrupt handler.
-
-   if ( reg_cmd_info.ec )
-      status = pio_inbyte( CB_STAT );
+   if (reg_cmd_info.ec)
+      status = pio_inbyte(CB_STAT);
    else
       status = int_ata_status;
 
    // Final status check...
    // if no error, check final status...
    // Error if BUSY, DEVICE FAULT, DRQ or ERROR status now.
-
-   if ( reg_cmd_info.ec == 0 )
-   {
-      if ( status & ( CB_STAT_BSY | CB_STAT_DF | CB_STAT_DRQ | CB_STAT_ERR ) )
-      {
+   if (reg_cmd_info.ec == 0) {
+      if (status & (CB_STAT_BSY | CB_STAT_DF | CB_STAT_DRQ | CB_STAT_ERR)) {
          reg_cmd_info.ec = 74;
       }
    }
@@ -1625,17 +1454,14 @@ static int exec_pci_ata_cmd( unsigned char dev,
    // Final status check...
    // if any error, update total bytes transferred.
 
-   if ( reg_cmd_info.ec == 0 )
+   if (reg_cmd_info.ec == 0)
       reg_cmd_info.totalBytesXfer = numSect * 512L;
    else
       reg_cmd_info.totalBytesXfer = 0L;
 
    // All done.  The return values of this function are described in
    // MINDRVR.H.
-
-   if ( reg_cmd_info.ec )
-      return 1;
-   return 0;
+   return reg_cmd_info.ec ? 1 : 0;
 }
 
 //***********************************************************
@@ -1644,20 +1470,12 @@ static int exec_pci_ata_cmd( unsigned char dev,
 //
 //***********************************************************
 
-int dma_pci_lba28( unsigned char dev, unsigned char cmd,
-                   unsigned int fr, unsigned int sc,
-                   unsigned long lba,
-                   unsigned char * bufAddr,
-                   long numSect )
-
-{
-
+int dma_pci_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, u8 *bufAddr, long numSect) {
    // Setup current command information.
-
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   reg_cmd_info.dh = (u8)(CB_DH_LBA | (dev ? CB_DH_DEV1 : CB_DH_DEV0));
    reg_cmd_info.dc = 0x00;      // nIEN=0 required on PCI !
    reg_cmd_info.ns  = numSect;
    reg_cmd_info.lbaSize = LBA28;
@@ -1665,8 +1483,7 @@ int dma_pci_lba28( unsigned char dev, unsigned char cmd,
    reg_cmd_info.lbaLow = lba;
 
    // Execute the command.
-
-   return exec_pci_ata_cmd( dev, bufAddr, numSect );
+   return exec_pci_ata_cmd(dev, bufAddr, numSect);
 }
 
 //***********************************************************
@@ -1674,21 +1491,12 @@ int dma_pci_lba28( unsigned char dev, unsigned char cmd,
 // dma_pci_lba48() - DMA in PCI Multiword for ATA R/W DMA
 //
 //***********************************************************
-
-int dma_pci_lba48( unsigned char dev, unsigned char cmd,
-                   unsigned int fr, unsigned int sc,
-                   unsigned long lbahi, unsigned long lbalo,
-                   unsigned char * bufAddr,
-                   long numSect )
-
-{
-
+int dma_pci_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo, u8 *bufAddr, long numSect) {
    // Setup current command information.
-
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   reg_cmd_info.dh = (u8)(CB_DH_LBA | (dev ? CB_DH_DEV1 : CB_DH_DEV0));
    reg_cmd_info.dc = 0x00;      // nIEN=0 required on PCI !
    reg_cmd_info.ns  = numSect;
    reg_cmd_info.lbaSize = LBA48;
@@ -1696,8 +1504,7 @@ int dma_pci_lba48( unsigned char dev, unsigned char cmd,
    reg_cmd_info.lbaLow = lbalo;
 
    // Execute the command.
-
-   return exec_pci_ata_cmd( dev, bufAddr, numSect );
+   return exec_pci_ata_cmd(dev, bufAddr, numSect);
 }
 
 #endif   // INCLUDE_ATA_DMA
@@ -1710,16 +1517,7 @@ int dma_pci_lba48( unsigned char dev, unsigned char cmd,
 //
 //***********************************************************
 
-int dma_pci_packet( unsigned char dev,
-                    unsigned int cpbc,
-                    unsigned char * cdbBufAddr,
-                    int dir,
-                    long dpbc,
-                    unsigned char * dataBufAddr )
-
-{
-   unsigned char status;
-
+int dma_pci_packet(u8 dev, u32 cpbc, u8 *cdbBufAddr, int dir, s32 dpbc, u8 *dataBufAddr) {
    // Make sure the command packet size is either 12 or 16
    // and save the command packet size and data.
 
@@ -1734,45 +1532,37 @@ int dma_pci_packet( unsigned char dev,
    reg_cmd_info.sn = 0;
    reg_cmd_info.cl = 0;         // no Byte Count Limit in DMA !
    reg_cmd_info.ch = 0;         // no Byte Count Limit in DMA !
-   reg_cmd_info.dh = (unsigned char) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 );
+   reg_cmd_info.dh = (u8) (dev ? CB_DH_DEV1 : CB_DH_DEV0);
    reg_cmd_info.dc = 0x00;      // nIEN=0 required on PCI !
 
    // the data packet byte count must be even
    // and must not be zero
-
-   if ( dpbc & 1L )
-      dpbc ++ ;
-   if ( dpbc < 2L )
+   if (dpbc & 1L)
+      ++dpbc;
+   if (dpbc < 2L)
       dpbc = 2L;
 
    // Set up the dma transfer
-
-   if ( set_up_xfer( dir, dpbc, dataBufAddr ) )
-   {
+   if (set_up_xfer(dir, dpbc, dataBufAddr)) {
       reg_cmd_info.ec = 61;
       return 1;
    }
 
    // Set command time out.
-
    tmr_set_timeout();
 
    // Select the drive - call the reg_select function.
    // Quit now if this fails.
-
-   if ( sub_select( dev ) )
-   {
+   if (sub_select(dev)) {
       return 1;
    }
 
    // Set up all the registers except the command register.
-
    sub_setup_command();
 
    // Start the command by setting the Command register.  The drive
    // should immediately set BUSY status.
-
-   pio_outbyte( CB_CMD, CMD_PACKET );
+   pio_outbyte(CB_CMD, CMD_PACKET);
 
    // Waste some time by reading the alternate status a few times.
    // This gives the drive time to set BUSY in the status register on
@@ -1780,19 +1570,16 @@ int dma_pci_packet( unsigned char dev,
    // system may not set BUSY fast enough and we would think it had
    // completed the command when it really had not started the
    // command yet.
-
    DELAY400NS;
 
    // Command packet transfer...
    // Poll Alternate Status for BSY=0.
-
-   while ( 1 )
-   {
-      status = pio_inbyte( CB_ASTAT );       // poll for not busy
-      if ( ( status & CB_STAT_BSY ) == 0 )
+   u8 status;
+   while (true) {
+      status = pio_inbyte(CB_ASTAT);       // poll for not busy
+      if ((status & CB_STAT_BSY) == 0)
          break;
-      if ( tmr_chk_timeout() )               // time out yet ?
-      {
+      if (tmr_chk_timeout()) {               // time out yet ?
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = 75;
          break;
@@ -1804,31 +1591,19 @@ int dma_pci_packet( unsigned char dev,
 
    // Command packet transfer...
    // If no error, transfer the command packet.
-
-   if ( reg_cmd_info.ec == 0 )
-   {
-
+   if (reg_cmd_info.ec == 0) {
       // Command packet transfer...
       // Read the primary status register and the other ATAPI registers.
-
-      status = pio_inbyte( CB_STAT );
+      status = pio_inbyte(CB_STAT);
 
       // Command packet transfer...
       // check status: must have BSY=0, DRQ=1 now
-
-      if (    ( status & ( CB_STAT_BSY | CB_STAT_DRQ | CB_STAT_ERR ) )
-           != CB_STAT_DRQ
-         )
-      {
+      if ((status & (CB_STAT_BSY | CB_STAT_DRQ | CB_STAT_ERR)) != CB_STAT_DRQ) {
          reg_cmd_info.ec = 76;
-      }
-      else
-      {
-
+      } else {
          // Command packet transfer...
          // xfer the command packet (the cdb)
-
-         pio_drq_block_out( CB_DATA, cdbBufAddr, cpbc >> 1 );
+         pio_drq_block_out(CB_DATA, cdbBufAddr, cpbc >> 1);
       }
    }
 
@@ -1837,18 +1612,14 @@ int dma_pci_packet( unsigned char dev,
    // including any data transfer.
    // If no error, set up and start the DMA,
    // and wait for the DMA to complete.
-
-   if ( reg_cmd_info.ec == 0 )
-   {
-
+   if (reg_cmd_info.ec == 0) { 
       // Data transfer...
       // read the BMIDE regs
       // enable/start the dma channel.
       // read the BMIDE regs again
-
       pio_readBusMstrCmd();
       pio_readBusMstrStatus();
-      pio_writeBusMstrCmd( (unsigned char) ( rwControl | BM_CR_MASK_START ) );
+      pio_writeBusMstrCmd((u8)(rwControl | BM_CR_MASK_START));
       pio_readBusMstrCmd();
       pio_readBusMstrStatus();
 
@@ -1856,31 +1627,26 @@ int dma_pci_packet( unsigned char dev,
       // the device and dma channel transfer the data here while we start
       // checking for command completion...
       // wait for the PCI BM Active=0 and Interrupt=1 or PCI BM Error=1...
-
-      if ( SYSTEM_WAIT_INTR_OR_TIMEOUT() )    // time out ?
-      {
+      if (SYSTEM_WAIT_INTR_OR_TIMEOUT()) {    // time out ?
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = 73;
       }
 
       // End of command...
       // disable/stop the dma channel
-
       status = int_bmide_status;                // read BM status
-      status &= ~ BM_SR_MASK_ACT;            // ignore Active bit
-      pio_writeBusMstrCmd( BM_CR_MASK_STOP );    // shutdown DMA
+      status &= ~BM_SR_MASK_ACT;            // ignore Active bit
+      pio_writeBusMstrCmd(BM_CR_MASK_STOP);    // shutdown DMA
       pio_readBusMstrCmd();                      // read BM cmd (just for trace)
       status |= pio_readBusMstrStatus();         // read BM statu again
    }
 
-   if ( reg_cmd_info.ec == 0 )
-   {
-      if ( status & ( BM_SR_MASK_ERR ) )        // bus master error?
-      {
+   if (reg_cmd_info.ec == 0) {
+      if (status & (BM_SR_MASK_ERR)) {        // bus master error?
          reg_cmd_info.ec = 78;                  // yes
       }
-      if ( ( status & BM_SR_MASK_ACT ) )        // end of PRD list?
-      {
+
+      if ((status & BM_SR_MASK_ACT)) {        // end of PRD list?
          reg_cmd_info.ec = 71;                  // no
       }
    }
@@ -1890,39 +1656,30 @@ int dma_pci_packet( unsigned char dev,
    // by the interrupt handler. If there was an error
    // read the Status register because it may not have been
    // read by the interrupt handler.
-
-   if ( reg_cmd_info.ec )
-      status = pio_inbyte( CB_STAT );
+   if (reg_cmd_info.ec)
+      status = pio_inbyte(CB_STAT);
    else
       status = int_ata_status;
 
    // Final status check...
    // if no error, check final status...
    // Error if BUSY, DRQ or ERROR status now.
-
-   if ( reg_cmd_info.ec == 0 )
-   {
-      if ( status & ( CB_STAT_BSY | CB_STAT_DRQ | CB_STAT_ERR ) )
-      {
+   if (reg_cmd_info.ec == 0) {
+      if (status & (CB_STAT_BSY | CB_STAT_DRQ | CB_STAT_ERR)) {
          reg_cmd_info.ec = 74;
       }
    }
 
-
    // Final status check...
    // if any error, update total bytes transferred.
-
-   if ( reg_cmd_info.ec == 0 )
+   if (reg_cmd_info.ec == 0)
       reg_cmd_info.totalBytesXfer = dpbc;
    else
       reg_cmd_info.totalBytesXfer = 0L;
 
    // All done.  The return values of this function are described in
    // MINDRVR.H.
-
-   if ( reg_cmd_info.ec )
-      return 1;
-   return 0;
+   return reg_cmd_info.ec ? 1 : 0;
 }
 
 #endif   // INCLUDE_ATAPI_DMA
@@ -1934,50 +1691,40 @@ int dma_pci_packet( unsigned char dev,
 //
 //*************************************************************
 
-static void sub_setup_command( void )
-
-{
-
+static void sub_setup_command() {
    // output DevCtrl - same for all devices and commands
-   pio_outbyte( CB_DC, reg_cmd_info.dc );
+   pio_outbyte(CB_DC, reg_cmd_info.dc);
 
    // output command parameters
-   if ( reg_cmd_info.lbaSize == LBA28 )
-   {
+   if (reg_cmd_info.lbaSize == LBA28) {
       // in ATA LBA28 mode
-      pio_outbyte( CB_FR, (unsigned char) reg_cmd_info.fr );
-      pio_outbyte( CB_SC, (unsigned char) reg_cmd_info.sc );
-      pio_outbyte( CB_SN, (unsigned char) reg_cmd_info.lbaLow );
-      pio_outbyte( CB_CL, (unsigned char) ( reg_cmd_info.lbaLow >> 8 ) );
-      pio_outbyte( CB_CH, (unsigned char) ( reg_cmd_info.lbaLow >> 16 ) );
-      pio_outbyte( CB_DH, (unsigned char) ( ( reg_cmd_info.dh & 0xf0 )
-                                            | ( ( reg_cmd_info.lbaLow >> 24 ) & 0x0f ) ) );
-   }
-   else
-   if ( reg_cmd_info.lbaSize == LBA48 )
-   {
+      pio_outbyte(CB_FR, (u8)reg_cmd_info.fr);
+      pio_outbyte(CB_SC, (u8)reg_cmd_info.sc);
+      pio_outbyte(CB_SN, (u8)reg_cmd_info.lbaLow);
+      pio_outbyte(CB_CL, (u8)(reg_cmd_info.lbaLow >> 8));
+      pio_outbyte(CB_CH, (u8)(reg_cmd_info.lbaLow >> 16));
+      pio_outbyte(CB_DH, (u8)((reg_cmd_info.dh & 0xf0) | ((reg_cmd_info.lbaLow >> 24) & 0x0f)));
+   } else if (reg_cmd_info.lbaSize == LBA48) {
       // in ATA LBA48 mode
-      pio_outbyte( CB_FR, (unsigned char) ( reg_cmd_info.fr >> 8 ) );
-      pio_outbyte( CB_SC, (unsigned char) ( reg_cmd_info.sc >> 8 ) );
-      pio_outbyte( CB_SN, (unsigned char) ( reg_cmd_info.lbaLow >> 24 ) );
-      pio_outbyte( CB_CL, (unsigned char) reg_cmd_info.lbaHigh );
-      pio_outbyte( CB_CH, (unsigned char) ( reg_cmd_info.lbaHigh >> 8 ) );
-      pio_outbyte( CB_FR, (unsigned char) reg_cmd_info.fr );
-      pio_outbyte( CB_SC, (unsigned char) reg_cmd_info.sc );
-      pio_outbyte( CB_SN, (unsigned char) reg_cmd_info.lbaLow );
-      pio_outbyte( CB_CL, (unsigned char) ( reg_cmd_info.lbaLow >> 8 ) );
-      pio_outbyte( CB_CH, (unsigned char) ( reg_cmd_info.lbaLow >> 16 ) );
-      pio_outbyte( CB_DH, reg_cmd_info.dh  );
-   }
-   else
-   {
+      pio_outbyte(CB_FR, (u8)(reg_cmd_info.fr >> 8));
+      pio_outbyte(CB_SC, (u8)(reg_cmd_info.sc >> 8));
+      pio_outbyte(CB_SN, (u8)(reg_cmd_info.lbaLow >> 24));
+      pio_outbyte(CB_CL, (u8)reg_cmd_info.lbaHigh);
+      pio_outbyte(CB_CH, (u8)(reg_cmd_info.lbaHigh >> 8));
+      pio_outbyte(CB_FR, (u8)reg_cmd_info.fr);
+      pio_outbyte(CB_SC, (u8)reg_cmd_info.sc);
+      pio_outbyte(CB_SN, (u8)reg_cmd_info.lbaLow);
+      pio_outbyte(CB_CL, (u8)(reg_cmd_info.lbaLow >> 8));
+      pio_outbyte(CB_CH, (u8)(reg_cmd_info.lbaLow >> 16));
+      pio_outbyte(CB_DH, reg_cmd_info.dh);
+   } else {
       // for ATAPI PACKET command
-      pio_outbyte( CB_FR, (unsigned char) reg_cmd_info.fr  );
-      pio_outbyte( CB_SC, (unsigned char) reg_cmd_info.sc  );
-      pio_outbyte( CB_SN, (unsigned char) reg_cmd_info.sn  );
-      pio_outbyte( CB_CL, (unsigned char) reg_cmd_info.cl  );
-      pio_outbyte( CB_CH, (unsigned char) reg_cmd_info.ch  );
-      pio_outbyte( CB_DH, reg_cmd_info.dh  );
+      pio_outbyte(CB_FR, (u8)reg_cmd_info.fr);
+      pio_outbyte(CB_SC, (u8)reg_cmd_info.sc);
+      pio_outbyte(CB_SN, (u8)reg_cmd_info.sn);
+      pio_outbyte(CB_CL, (u8)reg_cmd_info.cl);
+      pio_outbyte(CB_CH, (u8)reg_cmd_info.ch);
+      pio_outbyte(CB_DH, reg_cmd_info.dh);
    }
 }
 
@@ -1987,13 +1734,10 @@ static void sub_setup_command( void )
 //
 //*************************************************************
 
-static void sub_trace_command( void )
-
-{
-
-   reg_cmd_info.st = pio_inbyte( CB_STAT );
-   reg_cmd_info.as = pio_inbyte( CB_ASTAT );
-   reg_cmd_info.er = pio_inbyte( CB_ERR );
+static void sub_trace_command() {
+   reg_cmd_info.st = pio_inbyte(CB_STAT);
+   reg_cmd_info.as = pio_inbyte(CB_ASTAT);
+   reg_cmd_info.er = pio_inbyte(CB_ERR);
 
 // !!! if you want to read back the other device registers
 // !!! at the end of a command then this is the place to do
@@ -2057,22 +1801,17 @@ static void sub_trace_command( void )
 //
 //**************************************************************
 
-static int sub_select( unsigned char dev )
-
-{
-   unsigned char status;
+static int sub_select(u8 dev) {
+   u8 status;
 
    // PAY ATTENTION HERE
    // The caller may want to issue a command to a device that doesn't
    // exist (for example, Exec Dev Diag), so if we see this,
    // just select that device, skip all status checking and return.
    // We assume the caller knows what they are doing!
-
-   if ( reg_config_info[dev] < REG_CONFIG_TYPE_ATA )
-   {
+   if (reg_config_info[dev] < REG_CONFIG_TYPE_ATA) {
       // select the device and return
-
-      pio_outbyte( CB_DH, (unsigned char) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+      pio_outbyte(CB_DH, (u8)(dev ? CB_DH_DEV1 : CB_DH_DEV0));
       DELAY400NS;
       return 0;
    }
@@ -2083,27 +1822,23 @@ static int sub_select( unsigned char dev )
    // We don't know which drive is currently selected but we should
    // wait BSY=0 and DRQ=0. Normally both BSY=0 and DRQ=0
    // unless something is very wrong!
-
-   while ( 1 )
-   {
-      status = pio_inbyte( CB_STAT );
-      if ( ( status & ( CB_STAT_BSY | CB_STAT_DRQ ) ) == 0 )
+   while (true) {
+      status = pio_inbyte(CB_STAT);
+      if ((status & (CB_STAT_BSY | CB_STAT_DRQ)) == 0)
          break;
-      if ( tmr_chk_timeout() )
-      {
+      if (tmr_chk_timeout()) {
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = 11;
          reg_cmd_info.st = status;
-         reg_cmd_info.as = pio_inbyte( CB_ASTAT );
-         reg_cmd_info.er = pio_inbyte( CB_ERR );
+         reg_cmd_info.as = pio_inbyte(CB_ASTAT);
+         reg_cmd_info.er = pio_inbyte(CB_ERR);
          return 1;
       }
    }
 
    // Here we select the drive we really want to work with by
    // setting the DEV bit in the Drive/Head register.
-
-   pio_outbyte( CB_DH, (unsigned char) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   pio_outbyte(CB_DH, (u8)(dev ? CB_DH_DEV1 : CB_DH_DEV0));
    DELAY400NS;
 
    // Wait for the selected device to have BSY=0 and DRQ=0.
@@ -2111,28 +1846,23 @@ static int sub_select( unsigned char dev )
    // something is very wrong (or initial power up is still in
    // progress).
 
-   while ( 1 )
-   {
-      status = pio_inbyte( CB_STAT );
-      if ( ( status & ( CB_STAT_BSY | CB_STAT_DRQ ) ) == 0 )
+   while (true) {
+      status = pio_inbyte(CB_STAT);
+      if ((status & (CB_STAT_BSY | CB_STAT_DRQ)) == 0)
          break;
-      if ( tmr_chk_timeout() )
-      {
+      if (tmr_chk_timeout()) {
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = 12;
          reg_cmd_info.st = status;
-         reg_cmd_info.as = pio_inbyte( CB_ASTAT );
-         reg_cmd_info.er = pio_inbyte( CB_ERR );
+         reg_cmd_info.as = pio_inbyte(CB_ASTAT);
+         reg_cmd_info.er = pio_inbyte(CB_ERR);
          return 1;
       }
    }
 
    // All done.  The return values of this function are described in
    // ATAIO.H.
-
-   if ( reg_cmd_info.ec )
-      return 1;
-   return 0;
+   return reg_cmd_info.ec ? 1 : 0;
 }
 
 //*************************************************************
@@ -2141,30 +1871,21 @@ static int sub_select( unsigned char dev )
 //
 //*************************************************************
 
-static void sub_wait_poll( unsigned char we, unsigned char pe )
-
-{
-   unsigned char status;
+static void sub_wait_poll(u8 we, u8 pe) {
+   u8 status;
 
    // Wait for interrupt -or- wait for not BUSY -or- wait for time out.
-
-   if ( we && int_use_intr_flag )
-   {
-      if ( SYSTEM_WAIT_INTR_OR_TIMEOUT() )    // time out ?
-      {
+   if (we && int_use_intr_flag) {
+      if (SYSTEM_WAIT_INTR_OR_TIMEOUT()) {    // time out ?
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = we;
       }
-   }
-   else
-   {
-      while ( 1 )
-      {
-         status = pio_inbyte( CB_ASTAT );       // poll for not busy
-         if ( ( status & CB_STAT_BSY ) == 0 )
+   } else {
+      while (true) {
+         status = pio_inbyte(CB_ASTAT);       // poll for not busy
+         if ((status & CB_STAT_BSY) == 0)
             break;
-         if ( tmr_chk_timeout() )               // time out yet ?
-         {
+         if (tmr_chk_timeout()) {               // time out yet ?
             reg_cmd_info.to = 1;
             reg_cmd_info.ec = pe;
             break;
@@ -2179,47 +1900,32 @@ static void sub_wait_poll( unsigned char we, unsigned char pe )
 //
 //***********************************************************
 
-static unsigned char pio_readBusMstrCmd( void )
-
-{
-   unsigned char x;
-
-   if ( ! pio_bmide_base_addr )
+static u8 pio_readBusMstrCmd() {
+   u8 x;
+   if (!pio_bmide_base_addr)
       return 0;
-   x = * (pio_bmide_base_addr + BM_COMMAND_REG );
+   x = *(pio_bmide_base_addr + BM_COMMAND_REG);
    return x;
 }
 
-
-static unsigned char pio_readBusMstrStatus( void )
-
-{
-   unsigned char x;
-
-   if ( ! pio_bmide_base_addr )
+static u8 pio_readBusMstrStatus() {
+   u8 x;
+   if (!pio_bmide_base_addr)
       return 0;
-   x = * ( pio_bmide_base_addr + BM_STATUS_REG );
+   x = *(pio_bmide_base_addr + BM_STATUS_REG);
    return x;
 }
 
-
-static void pio_writeBusMstrCmd( unsigned char x )
-
-{
-
-   if ( ! pio_bmide_base_addr )
+static void pio_writeBusMstrCmd(u8 x) { 
+   if (!pio_bmide_base_addr)
       return;
-   * ( pio_bmide_base_addr + BM_COMMAND_REG ) = x;
+   *(pio_bmide_base_addr + BM_COMMAND_REG) = x;
 }
 
-
-static void pio_writeBusMstrStatus( unsigned char x )
-
-{
-
-   if ( ! pio_bmide_base_addr )
+static void pio_writeBusMstrStatus(u8 x) {
+   if (!pio_bmide_base_addr)
       return;
-   * ( pio_bmide_base_addr + BM_STATUS_REG ) =  x;
+   *(pio_bmide_base_addr + BM_STATUS_REG) = x;
 }
 
 //*************************************************************
@@ -2233,68 +1939,44 @@ static void pio_writeBusMstrStatus( unsigned char x )
 //
 //*************************************************************
 
-static unsigned char pio_inbyte( unsigned char addr )
-
-{
-
+static u8 pio_inbyte(u8 addr) {
    //!!! read an 8-bit ATA register
-
-   return * pio_reg_addrs[ addr ];
+   return *pio_reg_addrs[addr];
 }
 
 //*************************************************************
 
-static void pio_outbyte( int addr, unsigned char data )
-
-{
-
+static void pio_outbyte(int addr, u8 data) {
    //!!! write an 8-bit ATA register
-
-   * pio_reg_addrs[ addr ] = data;
+   *pio_reg_addrs[addr] = data;
 }
 
 //*************************************************************
 
-static unsigned int pio_inword( unsigned char addr )
-
-{
-
+static u32 pio_inword(u8 addr) {
    //!!! read an 8-bit ATA register (usually the ATA Data register)
-
-   return * ( (unsigned int *) pio_reg_addrs[ addr ] );
+   return *((u32 *)pio_reg_addrs[addr]);
 }
 
 //*************************************************************
 
-static void pio_outword( int addr, unsigned int data )
-
-{
-
+static void pio_outword(int addr, u32 data) {
    //!!! Write an 8-bit ATA register (usually the ATA Data register)
-
-   * ( (unsigned int *) pio_reg_addrs[ addr ] ) = data;
+   *((u32 *)pio_reg_addrs[addr]) = data;
 }
 
 //*************************************************************
 
-static unsigned long pio_indword( unsigned char addr )
-
-{
-
+static u32 pio_indword(u8 addr) { 
    //!!! read an 8-bit ATA register (usually the ATA Data register)
-
-   return * ( (unsigned long *) pio_reg_addrs[ addr ] );
+   return *((u32 *)pio_reg_addrs[addr]);
 }
 
 //*************************************************************
 
-static void pio_outdword( int addr, unsigned long data )
-
-{
-
+static void pio_outdword(int addr, u32 data) { 
    //!!! Write an 8-bit ATA register (usually the ATA Data register)
-
-   * ( (unsigned long *) pio_reg_addrs[ addr ] ) = data;
+   *((u32 *)pio_reg_addrs[addr]) = data;
 }
 
 //*************************************************************
@@ -2310,12 +1992,7 @@ static void pio_outdword( int addr, unsigned long data )
 // Data In transfers. It will handle 8-bit, 16-bit and 32-bit
 // I/O based data transfers.
 
-static void pio_drq_block_in( unsigned char addrDataReg,
-                       unsigned char * bufAddr,
-                       long wordCnt )
-
-{
-
+static void pio_drq_block_in(u8 addrDataReg, u8 *bufAddr, s32 wordCnt) {
    // NOTE: wordCnt is the size of a DRQ data block/packet
    // in words. The maximum value of wordCnt is normally:
    // a) For ATA, 16384 words or 32768 bytes (64 sectors,
@@ -2328,37 +2005,29 @@ static void pio_drq_block_in( unsigned char addrDataReg,
       long wc;
 
       // adjust pio_xfer_width - don't use DWORD if wordCnt is odd.
-
       pxw = pio_xfer_width;
-      if ( ( pxw == 32 ) && ( wordCnt & 0x00000001L ) )
+      if ((pxw == 32) && (wordCnt & 0x00000001L))
          pxw = 16;
 
       // Data transfer using INS instruction.
       // Break the transfer into chunks of 32768 or fewer bytes.
 
-      while ( wordCnt > 0 )
-      {
-         if ( wordCnt > 16384L )
+      while (wordCnt > 0) {
+         if (wordCnt > 16384L)
             wc = 16384;
          else
             wc = wordCnt;
-         if ( pxw == 8 )
-         {
+         if (pxw == 8) {
             // do REP INS
-            pio_rep_inbyte( addrDataReg, bufAddr, wc * 2L );
-         }
-         else
-         if ( pxw == 32 )
-         {
+            pio_rep_inbyte(addrDataReg, bufAddr, wc * 2L);
+         } else if (pxw == 32) {
             // do REP INSD
-            pio_rep_indword( addrDataReg, bufAddr, wc / 2L );
-         }
-         else
-         {
+            pio_rep_indword(addrDataReg, bufAddr, wc / 2L);
+         } else {
             // do REP INSW
-            pio_rep_inword( addrDataReg, bufAddr, wc );
+            pio_rep_inword(addrDataReg, bufAddr, wc);
          }
-         bufAddr = bufAddr + ( wc * 2 );
+         bufAddr = bufAddr + (wc * 2);
          wordCnt = wordCnt - wc;
       }
    }
@@ -2371,13 +2040,7 @@ static void pio_drq_block_in( unsigned char addrDataReg,
 // Note: pio_drq_block_out() is the primary way perform PIO
 // Data Out transfers. It will handle 8-bit, 16-bit and 32-bit
 // I/O based data transfers.
-
-static void pio_drq_block_out( unsigned char addrDataReg,
-                        unsigned char * bufAddr,
-                        long wordCnt )
-
-{
-
+static void pio_drq_block_out(u8 addrDataReg, u8 *bufAddr, long wordCnt) {
    // NOTE: wordCnt is the size of a DRQ data block/packet
    // in words. The maximum value of wordCnt is normally:
    // a) For ATA, 16384 words or 32768 bytes (64 sectors,
@@ -2392,35 +2055,27 @@ static void pio_drq_block_out( unsigned char addrDataReg,
       // adjust pio_xfer_width - don't use DWORD if wordCnt is odd.
 
       pxw = pio_xfer_width;
-      if ( ( pxw == 32 ) && ( wordCnt & 0x00000001L ) )
+      if ((pxw == 32) && (wordCnt & 0x00000001L))
          pxw = 16;
 
       // Data transfer using OUTS instruction.
       // Break the transfer into chunks of 32768 or fewer bytes.
-
-      while ( wordCnt > 0 )
-      {
-         if ( wordCnt > 16384L )
+      while (wordCnt > 0) {
+         if (wordCnt > 16384L)
             wc = 16384;
          else
             wc = wordCnt;
-         if ( pxw == 8 )
-         {
+         if (pxw == 8) {
             // do REP OUTS
-            pio_rep_outbyte( addrDataReg, bufAddr, wc * 2L );
-         }
-         else
-         if ( pxw == 32 )
-         {
+            pio_rep_outbyte(addrDataReg, bufAddr, wc * 2L);
+         } else if (pxw == 32) {
             // do REP OUTSD
-            pio_rep_outdword( addrDataReg, bufAddr, wc / 2L );
-         }
-         else
-         {
+            pio_rep_outdword(addrDataReg, bufAddr, wc / 2L);
+         } else {
             // do REP OUTSW
-            pio_rep_outword( addrDataReg, bufAddr, wc );
+            pio_rep_outword(addrDataReg, bufAddr, wc);
          }
-         bufAddr = bufAddr + ( wc * 2 );
+         bufAddr = bufAddr + (wc * 2);
          wordCnt = wordCnt - wc;
       }
    }
@@ -2448,12 +2103,7 @@ static void pio_drq_block_out( unsigned char addrDataReg,
 //
 //*************************************************************
 
-static void pio_rep_inbyte( unsigned char addrDataReg,
-                     unsigned char * bufAddr,
-                     long byteCnt )
-
-{
-
+static void pio_rep_inbyte(u8 addrDataReg, u8 *bufAddr, long byteCnt) {
    // Warning: Avoid calling this function with
    // byteCnt > 32768 (transfers 32768 bytes).
    // that bufOff is a value between 0 and 15 (0xf).
@@ -2461,122 +2111,86 @@ static void pio_rep_inbyte( unsigned char addrDataReg,
    //!!! repeat read an 8-bit register (ATA Data register when
    //!!! ATA status is BSY=0 DRQ=1). For example:
 
-   while ( byteCnt > 0 )
-   {
-      * bufAddr = pio_inbyte( addrDataReg );
-      bufAddr ++ ;
-      byteCnt -- ;
+   while (byteCnt > 0) {
+      *bufAddr = pio_inbyte(addrDataReg);
+      ++bufAddr;
+      --byteCnt;
    }
 }
 
 //*************************************************************
 
-static void pio_rep_outbyte( unsigned char addrDataReg,
-                      unsigned char * bufAddr,
-                      long byteCnt )
-
-{
-
+static void pio_rep_outbyte(u8 addrDataReg, u8 *bufAddr, long byteCnt) { 
    // Warning: Avoid calling this function with
    // byteCnt > 32768 (transfers 32768 bytes).
    // that bufOff is a value between 0 and 15 (0xf).
 
    //!!! repeat write an 8-bit register (ATA Data register when
    //!!! ATA status is BSY=0 DRQ=1). For example:
-
-   while ( byteCnt > 0 )
-   {
-      pio_outbyte( addrDataReg, * bufAddr );
-      bufAddr ++ ;
-      byteCnt -- ;
+   while (byteCnt > 0) {
+      pio_outbyte(addrDataReg, *bufAddr);
+      ++bufAddr;
+      --byteCnt;
    }
 }
 
 //*************************************************************
 
-static void pio_rep_inword( unsigned char addrDataReg,
-                     unsigned char * bufAddr,
-                     long wordCnt )
-
-{
-
+static void pio_rep_inword(u8 addrDataReg, u8 *bufAddr, long wordCnt) { 
    // Warning: Avoid calling this function with
    // wordCnt > 16384 (transfers 32768 bytes).
 
    //!!! repeat read a 16-bit register (ATA Data register when
    //!!! ATA status is BSY=0 DRQ=1). For example:
-
-   while ( wordCnt > 0 )
-   {
-      * (unsigned int *) bufAddr = pio_inword( addrDataReg );
+   while (wordCnt > 0) {
+      *(u32 *)bufAddr = pio_inword(addrDataReg);
       bufAddr += 2;
-      wordCnt -- ;
+      --wordCnt;
    }
 }
 
 //*************************************************************
 
-static void pio_rep_outword( unsigned char addrDataReg,
-                      unsigned char * bufAddr,
-                      long wordCnt )
-
-{
-
+static void pio_rep_outword(u8 addrDataReg, u8 *bufAddr, long wordCnt) { 
    // Warning: Avoid calling this function with
    // wordCnt > 16384 (transfers 32768 bytes).
 
    //!!! repeat write a 16-bit register (ATA Data register when
    //!!! ATA status is BSY=0 DRQ=1). For example:
-
-   while ( wordCnt > 0 )
-   {
-      pio_outword( addrDataReg, * (unsigned int *) bufAddr );
+   while (wordCnt > 0) {
+      pio_outword(addrDataReg, *(u32 *)bufAddr);
       bufAddr += 2;
-      wordCnt -- ;
+      --wordCnt;
    }
 }
 
 //*************************************************************
 
-static void pio_rep_indword( unsigned char addrDataReg,
-                      unsigned char * bufAddr,
-                      long dwordCnt )
-
-{
-
+static void pio_rep_indword(u8 addrDataReg, u8 *bufAddr, s32 dwordCnt) { 
    // Warning: Avoid calling this function with
    // dwordCnt > 8192 (transfers 32768 bytes).
 
    //!!! repeat read a 32-bit register (ATA Data register when
    //!!! ATA status is BSY=0 DRQ=1). For example:
-
-   while ( dwordCnt > 0 )
-   {
-      * (unsigned long *) bufAddr = pio_indword( addrDataReg );
+   while (dwordCnt > 0) {
+      *(u32 *)bufAddr = pio_indword(addrDataReg);
       bufAddr += 4;
-      dwordCnt -- ;
+      --dwordCnt;
    }
 }
 
 //*************************************************************
 
-static void pio_rep_outdword( unsigned char addrDataReg,
-                       unsigned char * bufAddr,
-                       long dwordCnt )
-
-{
-
+static void pio_rep_outdword(u8 addrDataReg, u8 *bufAddr, s32 dwordCnt) { 
    // Warning: Avoid calling this function with
    // dwordCnt > 8192 (transfers 32768 bytes).
 
    //!!! repeat write a 32-bit register (ATA Data register when
    //!!! ATA status is BSY=0 DRQ=1). For example:
-
-   while ( dwordCnt > 0 )
-   {
-      pio_outdword( addrDataReg, * (unsigned long *) bufAddr );
+   while (dwordCnt > 0) {
+      pio_outdword(addrDataReg, *(u32 *)bufAddr);
       bufAddr += 4;
-      dwordCnt -- ;
+      --dwordCnt;
    }
 }
 
@@ -2598,10 +2212,7 @@ static long tmr_cmd_start_time;      // command start time - see the
 //
 //**************************************************************
 
-static void tmr_set_timeout( void )
-
-{
-
+static void tmr_set_timeout() {
    // get the command start time
    tmr_cmd_start_time = SYSTEM_READ_TIMER();
 }
@@ -2614,17 +2225,14 @@ static void tmr_set_timeout( void )
 //
 //**************************************************************
 
-static int tmr_chk_timeout( void )
-
-{
+static int tmr_chk_timeout() {
    long curTime;
 
    // get current time
    curTime = SYSTEM_READ_TIMER();
 
    // timed out yet ?
-   if ( curTime >= ( tmr_cmd_start_time
-                     + ( TMR_TIME_OUT * SYSTEM_TIMER_TICKS_PER_SECOND ) ) )
+   if (curTime >= (tmr_cmd_start_time + (TMR_TIME_OUT * SYSTEM_TIMER_TICKS_PER_SECOND)))
       return 1;      // yes
 
    // no timeout yet
