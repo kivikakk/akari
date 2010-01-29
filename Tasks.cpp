@@ -252,8 +252,17 @@ void Tasks::Task::setIOMap(u16 port, bool enabled) {
 }
 
 void Tasks::Task::unblockType(const Symbol &type) {
-	if (userWaiting && userCall && userCall->insttype() == type)
+	if (userWaiting && userCall && userCall->insttype() == type) {
 		userWaiting = false;
+	}
+}
+
+void Tasks::Task::unblockTypeWith(const Symbol &type, u32 data) {
+	if (userWaiting && userCall && userCall->insttype() == type) {
+		if (userCall->unblockWith(data)) {
+			userWaiting = false;
+		}
+	}
 }
 
 Tasks::Task::Stream::Stream(): _wl_id(0) {
