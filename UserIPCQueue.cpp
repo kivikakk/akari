@@ -52,6 +52,10 @@ namespace IPC {
 			return (u32)static_cast<struct queue_item_info *>(&item->info);
 		}
 
+		bool unblockWith(u32 data) const {
+			return reply_to == data;
+		}
+
 		static Symbol type() { return Symbol("ProbeQueueCall"); }
 		Symbol insttype() const { return type(); }
 	
@@ -118,7 +122,7 @@ namespace IPC {
 	u32 sendQueue(pid_t id, u32 reply_to, const u8 *buffer, u32 len) {
 		Tasks::Task *task = Akari->tasks->getTaskById(id);
 		u32 msg_id = task->replyQueue->push_back(Akari->tasks->current->id, reply_to, buffer, len);
-		task->unblockType(ProbeQueueCall::type());
+		task->unblockTypeWith(ProbeQueueCall::type(), reply_to);
 		return msg_id;
 	}
 }
