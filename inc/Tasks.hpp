@@ -127,6 +127,7 @@ public:
 		void setIOMap(u16 port, bool enabled);
 
 		void unblockType(const Symbol &type);
+		void unblockTypeWith(const Symbol &type, u32 data);
 
 		// Task linked list.
 		Task *next, *priorityNext;
