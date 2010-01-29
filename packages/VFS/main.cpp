@@ -18,7 +18,7 @@
 #include <UserCalls.hpp>
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
-#include <list>
+#include <slist>
 #include <vector>
 #include <debug.hpp>
 
@@ -38,7 +38,7 @@ typedef struct {
 	u32 msg_id;
 } AwaitingRoot;
 
-std::list<AwaitingRoot> awaiting_root;
+std::slist<AwaitingRoot> awaiting_root;
 
 extern "C" int main() {
 	{
@@ -119,7 +119,7 @@ extern "C" int main() {
 			
 			sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
 
-			for (std::list<AwaitingRoot>::iterator it = awaiting_root.begin(); it != awaiting_root.end(); ++it)
+			for (std::slist<AwaitingRoot>::iterator it = awaiting_root.begin(); it != awaiting_root.end(); ++it)
 				sendQueue(it->pid, it->msg_id, 0, 0);
 
 			awaiting_root.clear();

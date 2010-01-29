@@ -17,7 +17,7 @@
 #include <entry.hpp>
 #include <debug.hpp>
 #include <Akari.hpp>
-#include <list>
+#include <slist>
 #include <UserGates.hpp>
 #include <Tasks.hpp>
 #include <Memory.hpp>
@@ -53,9 +53,9 @@ typedef struct {
 	u32 module_len;
 } loaded_module_t;
 
-std::list<loaded_module_t> modules;
+std::slist<loaded_module_t> modules;
 static loaded_module_t *module_by_name(const char *name) {
-	for (std::list<loaded_module_t>::iterator it = modules.begin(); it != modules.end(); ++it) {
+	for (std::slist<loaded_module_t>::iterator it = modules.begin(); it != modules.end(); ++it) {
 		if (POSIX::stricmp(name, it->name) == 0)
 			return &*it;
 	}
