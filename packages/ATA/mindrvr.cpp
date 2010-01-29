@@ -27,20 +27,17 @@
 
 #include "mindrvr.h"
 
-unsigned char int_ata_status;    // ATA status read by interrupt handler
-
-unsigned char int_bmide_status;  // BMIDE status read by interrupt handler
-
-unsigned char int_use_intr_flag = INT_DEFAULT_INTERRUPT_MODE;
+u8 int_ata_status;    // ATA status read by interrupt handler
+u8 int_bmide_status;  // BMIDE status read by interrupt handler
+u8 int_use_intr_flag = INT_DEFAULT_INTERRUPT_MODE;
 
 struct REG_CMD_INFO reg_cmd_info;
 
 int reg_config_info[2];
 
-unsigned char * pio_bmide_base_addr;
+u8 *pio_bmide_base_addr;
 
-unsigned char * pio_reg_addrs[9] =
-{
+u8 *pio_reg_addrs[9] = {
    PIO_BASE_ADDR1 + 0,  // [0] CB_DATA
    PIO_BASE_ADDR1 + 1,  // [1] CB_FR & CB_ER
    PIO_BASE_ADDR1 + 2,  // [2] CB_SC
@@ -52,7 +49,7 @@ unsigned char * pio_reg_addrs[9] =
    PIO_BASE_ADDR2 + 0   // [8] CB_DC & CB_ASTAT
 } ;
 
-unsigned char pio_xfer_width = PIO_DEFAULT_XFER_WIDTH;
+u8 pio_xfer_width = PIO_DEFAULT_XFER_WIDTH;
 
 //**************************************************************
 //
@@ -60,56 +57,40 @@ unsigned char pio_xfer_width = PIO_DEFAULT_XFER_WIDTH;
 //
 //**************************************************************
 
-static void sub_setup_command( void );
-static void sub_trace_command( void );
-static int sub_select( unsigned char dev );
-static void sub_wait_poll( unsigned char we, unsigned char pe );
+static void sub_setup_command();
+static void sub_trace_command();
+static int sub_select(u8 dev);
+static void sub_wait_poll(u8 we, u8 pe);
 
-static unsigned char pio_inbyte( unsigned char addr );
-static void pio_outbyte( int addr, unsigned char data );
-static unsigned int pio_inword( unsigned char addr );
-static void pio_outword( int addr, unsigned int data );
-static unsigned long pio_indword( unsigned char addr );
-static void pio_outdword( int addr, unsigned long data );
-static void pio_drq_block_in( unsigned char addrDataReg,
-                              unsigned char * bufAddr,
-                              long wordCnt );
-static void pio_drq_block_out( unsigned char addrDataReg,
-                               unsigned char * bufAddr,
-                               long wordCnt );
-static void pio_rep_inbyte( unsigned char addrDataReg,
-                            unsigned char * bufAddr,
-                            long byteCnt );
-static void pio_rep_outbyte( unsigned char addrDataReg,
-                             unsigned char * bufAddr,
-                             long byteCnt );
-static void pio_rep_inword( unsigned char addrDataReg,
-                            unsigned char * bufAddr,
-                            long wordCnt );
-static void pio_rep_outword( unsigned char addrDataReg,
-                             unsigned char * bufAddr,
-                             long wordCnt );
-static void pio_rep_indword( unsigned char addrDataReg,
-                             unsigned char * bufAddr,
-                             long dwordCnt );
-static void pio_rep_outdword( unsigned char addrDataReg,
-                              unsigned char * bufAddr,
-                              long dwordCnt );
+static u8 pio_inbyte(u8 addr);
+static void pio_outbyte(int addr, u8 data);
+static u32 pio_inword(u8 addr);
+static void pio_outword(int addr, u32 data);
+static u32 pio_indword(u8 addr);
+static void pio_outdword(int addr, u32 data);
+static void pio_drq_block_in(u8 addrDataReg, u8 *bufAddr, long wordCnt);
+static void pio_drq_block_out(u8 addrDataReg, u8 *bufAddr, long wordCnt);
+static void pio_rep_inbyte(u8 addrDataReg, u8 *bufAddr, long byteCnt);
+static void pio_rep_outbyte(u8 addrDataReg, u8 *bufAddr, long byteCnt);
+static void pio_rep_inword(u8 addrDataReg, u8 *bufAddr, long wordCnt);
+static void pio_rep_outword(u8 addrDataReg, u8 *bufAddr, long wordCnt);
+static void pio_rep_indword(u8 addrDataReg, u8 *bufAddr, long dwordCnt);
+static void pio_rep_outdword(u8 addrDataReg, u8 *bufAddr, long dwordCnt);
 
-static unsigned char pio_readBusMstrCmd( void );
-static unsigned char pio_readBusMstrStatus( void );
-static void pio_writeBusMstrCmd( unsigned char x );
-static void pio_writeBusMstrStatus( unsigned char x );
+static u8 pio_readBusMstrCmd();
+static u8 pio_readBusMstrStatus();
+static void pio_writeBusMstrCmd(u8 x);
+static void pio_writeBusMstrStatus(u8 x);
 
 static long tmr_cmd_start_time;     // command start time
-static void tmr_set_timeout( void );
-static int tmr_chk_timeout( void );
+static void tmr_set_timeout();
+static int tmr_chk_timeout();
 
 // This macro provides a small delay that is used in several
 // places in the ATA command protocols:
 
-#define DELAY400NS  { pio_inbyte( CB_ASTAT ); pio_inbyte( CB_ASTAT );  \
-                      pio_inbyte( CB_ASTAT ); pio_inbyte( CB_ASTAT ); }
+#define DELAY400NS  { pio_inbyte(CB_ASTAT); pio_inbyte(CB_ASTAT);  \
+                      pio_inbyte(CB_ASTAT); pio_inbyte(CB_ASTAT); }
 
 //*************************************************************
 //
@@ -927,7 +908,7 @@ int reg_pio_data_out_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, u8 *bufAddr,
 //
 //*************************************************************
 
-int reg_pio_data_out_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo, u8 * bufAddr, s32 numSect, int multiCnt) {
+int reg_pio_data_out_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo, u8 *bufAddr, s32 numSect, int multiCnt) {
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
