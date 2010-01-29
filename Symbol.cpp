@@ -65,3 +65,6 @@ bool Symbol::operator !=(const Symbol &r) const {
 	return (POSIX::strcmp(_content, r._content) != 0);
 }
 
+const char *Symbol::c_str() const {
+	return _content;
+}
