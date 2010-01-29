@@ -25,7 +25,7 @@
 // code at your own risk.
 
 
-#include "mindrvr.h"
+#include "mindrvr.hpp"
 
 u8 int_ata_status;    // ATA status read by interrupt handler
 u8 int_bmide_status;  // BMIDE status read by interrupt handler
@@ -249,7 +249,7 @@ int reg_reset(u8 devRtrn) {
    // If there is a device 0, wait for device 0 to set BSY=0.
    if (reg_config_info[0] != REG_CONFIG_TYPE_NONE) {
       while (true) {
-         status = pio_inbyte(CB_STAT);
+         u8 status = pio_inbyte(CB_STAT);
          if ((status & CB_STAT_BSY) == 0)
             break;
          if (tmr_chk_timeout()) {
@@ -266,8 +266,8 @@ int reg_reset(u8 devRtrn) {
       while (true) {
          pio_outbyte(CB_DH, CB_DH_DEV1);
          DELAY400NS;
-         sc = pio_inbyte(CB_SC);
-         sn = pio_inbyte(CB_SN);
+         u8 sc = pio_inbyte(CB_SC);
+         u8 sn = pio_inbyte(CB_SN);
          if ((sc == 0x01) && (sn == 0x01))
             break;
          if (tmr_chk_timeout()) {
@@ -391,8 +391,8 @@ static int exec_non_data_cmd(u8 dev) {
       while (true) {
          pio_outbyte(CB_DH, CB_DH_DEV1);
          DELAY400NS;
-         secCnt = pio_inbyte(CB_SC);
-         secNum = pio_inbyte(CB_SN);
+         u8 secCnt = pio_inbyte(CB_SC);
+         u8 secNum = pio_inbyte(CB_SN);
          if ((secCnt == 0x01) && (secNum == 0x01))
             break;
          if (tmr_chk_timeout()) {
@@ -416,6 +416,7 @@ static int exec_non_data_cmd(u8 dev) {
 
    // If status was polled or if any error read the status register,
    // otherwise get the status that was read by the interrupt handler.
+   u8 status;
    if ((polled) || (reg_cmd_info.ec))
       status = pio_inbyte(CB_STAT);
    else
@@ -645,7 +646,7 @@ static int exec_pio_data_in_cmd(u8 dev, u8 *bufAddr, s32 numSect, int multiCnt) 
 
 int reg_pio_data_in_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, u8 *bufAddr, s32 numSect, int multiCnt) {
    reg_cmd_info.cmd = cmd;
-   eg_cmd_info.fr = fr;
+   reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
    reg_cmd_info.dh = (u8)(CB_DH_LBA | (dev ? CB_DH_DEV1 : CB_DH_DEV0));
    reg_cmd_info.dc = (u8)(int_use_intr_flag ? 0 : CB_DC_NIEN);
@@ -720,6 +721,7 @@ static int exec_pio_data_out_cmd(u8 dev, u8 *bufAddr, s32 numSect, int multiCnt)
 static int exec_pio_data_out_cmd(u8 dev, u8 *bufAddr, s32 numSect, int multiCnt) {
    bool loopFlag = true;
    s32 wordCnt;
+   u8 status;
 
    // reset Bus Master Error bit
    pio_writeBusMstrStatus(BM_SR_MASK_ERR);
@@ -752,7 +754,7 @@ static int exec_pio_data_out_cmd(u8 dev, u8 *bufAddr, s32 numSect, int multiCnt)
    // Note: No interrupt is generated for the
    // first sector of a write command.
    while (true) {
-      u8 status = pio_inbyte(CB_ASTAT);
+      status = pio_inbyte(CB_ASTAT);
       if ((status & CB_STAT_BSY) == 0)
          break;
       if (tmr_chk_timeout()) {
@@ -945,9 +947,9 @@ int reg_pio_data_out_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo,
 //*************************************************************
 
 int reg_packet(u8 dev, u32 cpbc, u8 *cdbBufAddr, int dir, s32 dpbc, u8 *dataBufAddr) {
-   // unsigned char status;
-   // unsigned int byteCnt;
+   u8 status;
    long wordCnt;
+   u32 byteCnt;
 
    // reset Bus Master Error bit
    pio_writeBusMstrStatus(BM_SR_MASK_ERR);
@@ -1258,7 +1260,7 @@ static int set_up_xfer(int dir, s32 bc, u8 *bufAddr);
 static int set_up_xfer(int dir, s32 bc, u8 *bufAddr) {
    int numPrd;                      // number of PRD required
    int maxPrd;                      // max number of PRD allowed
-   u32 temp;
+   s32 temp;
    u32 phyAddr;           // physical memory address
    u32 *prdPtr;      // pointer to PRD entry list
 
@@ -2183,7 +2185,8 @@ static void pio_rep_outdword(u8 addrDataReg, u8 *bufAddr, s32 dwordCnt) {
 //**************************************************************
 
 
-static long tmr_cmd_start_time;      // command start time - see the
+// defined already around L85
+// static long tmr_cmd_start_time;      // command start time - see the
                               // tmr_set_timeout() and
                               // tmr_chk_timeout() functions.
 
