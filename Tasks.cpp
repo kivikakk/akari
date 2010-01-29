@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <entry.hpp>
+#include <Timer.hpp>
 #include <Tasks.hpp>
 #include <Akari.hpp>
 #include <Descriptor.hpp>
@@ -111,9 +111,9 @@ Tasks::Task *Tasks::prepareFetchNextTask() {
 		// it intentionally will be able to loop back to the task we switched from. (though
 		// of course, it won't if it's irqWait ...)
 
-		if ((t->irqWaiting && !t->irqListenHits) || t->userWaiting) {
+		if (t->userWaiting) {
 			Task *newCurrent = t;
-			while ((newCurrent->irqWaiting && !newCurrent->irqListenHits) || newCurrent->userWaiting) {
+			while (newCurrent->userWaiting) {
 				Task *next = _NextTask(newCurrent);
 				ASSERT(next != t);
 				newCurrent = next;
@@ -153,11 +153,6 @@ void *Tasks::assignInternalTask(Task *task) {
 	if (task->cpl > 0) {
 		Akari->descriptor->gdt->setTSSStack(task->ks + sizeof(struct modeswitch_registers));
 		Akari->descriptor->gdt->setTSSIOMap(task->iomap);
-	}
-
-	if (task->irqWaiting) {
-		task->irqWaiting = false;
-		task->irqListenHits--;
 	}
 
 	if (task->userWaiting) {
@@ -287,7 +282,7 @@ u32 Tasks::Task::Stream::registerListener() {
 }
 
 Tasks::Task::Stream::Listener &Tasks::Task::Stream::getListener(u32 id) {
-	for (LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
+	for (std::list<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
 		if (it->_id == id)
 			return *it;
 	}
@@ -295,13 +290,13 @@ Tasks::Task::Stream::Listener &Tasks::Task::Stream::getListener(u32 id) {
 }
 
 void Tasks::Task::Stream::writeAllListeners(const char *buffer, u32 n) {
-	for (LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
+	for (std::list<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
 		it->append(buffer, n);
 	}
 }
 
 bool Tasks::Task::Stream::hasWriter(u32 id) const {
-	for (LinkedList<u32>::iterator it = _writers.begin(); it != _writers.end(); ++it) {
+	for (std::list<u32>::iterator it = _writers.begin(); it != _writers.end(); ++it) {
 		if (*it == id)
 			return true;
 	}
@@ -309,7 +304,7 @@ bool Tasks::Task::Stream::hasWriter(u32 id) const {
 }
 
 bool Tasks::Task::Stream::hasListener(u32 id) const {
-	for (LinkedList<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
+	for (std::list<Listener>::iterator it = _listeners.begin(); it != _listeners.end(); ++it) {
 		if (it->_id == id)
 			return true;
 	}
@@ -421,7 +416,7 @@ u32 Tasks::Task::Queue::push_back(pid_t from, u32 reply_to, const void *data, u3
 void Tasks::Task::Queue::shift() {
 	if (list.empty()) return;
 	delete *list.begin();
-	list.shift();
+	list.pop_front();
 }
 
 void Tasks::Task::Queue::remove(Item *item) {
@@ -434,7 +429,7 @@ Tasks::Task::Queue::Item *Tasks::Task::Queue::first() {
 }
 
 Tasks::Task::Queue::Item *Tasks::Task::Queue::itemByReplyTo(u32 reply_to) {
-	for (LinkedList<Tasks::Task::Queue::Item *>::iterator it = list.begin(); it != list.end(); ++it) {
+	for (std::list<Tasks::Task::Queue::Item *>::iterator it = list.begin(); it != list.end(); ++it) {
 		if ((*it)->info.reply_to == reply_to)
 			return *it;
 	}
@@ -442,7 +437,7 @@ Tasks::Task::Queue::Item *Tasks::Task::Queue::itemByReplyTo(u32 reply_to) {
 }
 
 Tasks::Task::Queue::Item *Tasks::Task::Queue::itemById(u32 id) {
-	for (LinkedList<Tasks::Task::Queue::Item *>::iterator it = list.begin(); it != list.end(); ++it) {
+	for (std::list<Tasks::Task::Queue::Item *>::iterator it = list.begin(); it != list.end(); ++it) {
 		if ((*it)->info.id == id)
 			return *it;
 	}
@@ -450,7 +445,7 @@ Tasks::Task::Queue::Item *Tasks::Task::Queue::itemById(u32 id) {
 }
 
 Tasks::Task::Task(u8 cpl, const ASCIIString &name):
-		next(0), priorityNext(0), irqWaiting(false), irqListen(0), irqListenHits(0),
+		next(0), priorityNext(0), irqListen(0), irqListenHits(0), irqWaitStart(0),
 		userWaiting(false), userCall(0),
 		id(0), name(name), registeredName(),
 		cpl(cpl), pageDir(0),

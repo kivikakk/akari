@@ -25,7 +25,7 @@
 #include <Tasks.hpp>
 #include <Syscall.hpp>
 #include <BlockingCall.hpp>
-#include <entry.hpp>
+#include <Timer.hpp>
 
 namespace User {
 	void putc(char c) {
@@ -43,29 +43,58 @@ namespace User {
 		return Akari->tasks->current->id;
 	}
 
-	void irqWait() {
-		if (Akari->tasks->current->irqListenHits == 0) {
-			Akari->tasks->current->irqWaiting = true;
-			Akari->tasks->current->irqWaitStart = 0;
+	IRQWaitCall::IRQWaitCall(u32 timeout): _timeout(timeout)
+	{ }
 
-			Akari->syscall->returnToNextTask();
-			return;
+	u32 IRQWaitCall::operator ()() {
+		if (Akari->tasks->current->irqListenHits == 0) {
+			if (_timeout &&
+					AkariMicrokernelSwitches >=
+					(Akari->tasks->current->irqWaitStart + _timeout / 10)) {
+				// XXX magic number: 1000ms per second, 100 ticks per second
+				// -> timeout ms/10 gives no. of ticks for timeout
+				_wontBlock();
+				return static_cast<u32>(false);
+			} else {
+				_willBlock();
+				return 0;
+			}
 		}
 
+		_wontBlock();
 		Akari->tasks->current->irqListenHits--;
+		return static_cast<u32>(true);
+	}
+
+	Symbol IRQWaitCall::type() { return Symbol("IRQWaitCall"); }
+	Symbol IRQWaitCall::insttype() const { return type(); }
+
+	void irqWait() {
+		Akari->tasks->current->irqWaitStart = 0;
+
+		IRQWaitCall c(0);
+		c();
+		if (!c.shallBlock())
+			return;
+
+		Akari->tasks->current->userWaiting = true;
+		Akari->tasks->current->userCall = new IRQWaitCall(c);
+		Akari->syscall->returnToNextTask();
+		return;
 	}
 
 	bool irqWaitTimeout(u32 ms) {
-		if (Akari->tasks->current->irqListenHits == 0) {
-			Akari->tasks->current->irqWaiting = true;
-			Akari->tasks->current->irqWaitStart = AkariMicrokernelSwitches;
+		Akari->tasks->current->irqWaitStart = AkariMicrokernelSwitches;
 
-			Akari->syscall->returnToNextTask();
-			return;
-		}
+		IRQWaitCall c(ms);
+		u32 r = c();
+		if (!c.shallBlock())
+			return static_cast<bool>(r);
 
-		Akari->tasks->current->irqListenHits--;
-		return true;
+		Akari->tasks->current->userWaiting = true;
+		Akari->tasks->current->userCall = new IRQWaitCall(c);
+		Akari->syscall->returnToNextTask();
+		return false;
 	}
 
 	void irqListen(u32 irq) {
@@ -85,7 +114,7 @@ namespace User {
 		AkariPanic(s);
 	}
 
-	void exit() {
+	void sysexit() {
 		Akari->syscall->returnToNextTask();
 		// Find the Task* which refers to Akari->tasks->current, and get it to skip it.
 		Tasks::Task **scanner = &Akari->tasks->start;

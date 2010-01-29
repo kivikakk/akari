@@ -19,6 +19,8 @@
 
 #include <Subsystem.hpp>
 
+extern u32 AkariMicrokernelSwitches;
+
 class Timer : public Subsystem {
 	public:
 		Timer();
@@ -29,6 +31,7 @@ class Timer : public Subsystem {
 		const char *versionProduct() const;
 
 		void setTimer(u16);
+		void tick();
 };
 
 #endif

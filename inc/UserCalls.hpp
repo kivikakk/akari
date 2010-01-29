@@ -22,16 +22,19 @@
 
 #if defined(__AKARI_KERNEL)
 
+#include <BlockingCall.hpp>
+
 namespace User {
 	void putc(char c);
 	void puts(const char *s);
 	void putl(u32 n, u8 base);
 	u32 getProcessId();
 	void irqWait();
+	bool irqWaitTimeout(u32 ms);
 	void irqListen(u32 irq);
 	u32 ticks();
 	void panic(const char *s);
-	void exit();
+	void sysexit();
 	void defer();
 	void *malloc(u32 n);
 	void free(void *p);
@@ -42,6 +45,19 @@ namespace User {
 	u32 strlen(const char *s);
 	s32 strcmpn(const char *s1, const char *s2, u32 n);
 	s32 strpos(const char *haystack, const char *needle);
+
+	class IRQWaitCall : public BlockingCall {
+	public:
+		IRQWaitCall(u32 timeout);
+
+		u32 operator ()();
+
+		static Symbol type();
+		Symbol insttype() const;
+
+	protected:
+		u32 _timeout;
+	};
 }
 
 #elif defined(__AKARI_LINKAGE)
@@ -51,10 +67,11 @@ DEFN_SYSCALL1(puts, 1, void, const char *);
 DEFN_SYSCALL2(putl, 2, void, u32, u8);
 DEFN_SYSCALL0(getProcessId, 3, u32);
 DEFN_SYSCALL0(irqWait, 4, void);
+DEFN_SYSCALL1(irqWaitTimeout, 38, bool, u32);
 DEFN_SYSCALL1(irqListen, 5, void, u32);
 DEFN_SYSCALL0(ticks, 37, u32);
 DEFN_SYSCALL1(panic, 6, void, const char *);
-DEFN_SYSCALL0(exit, 7, void);
+DEFN_SYSCALL0(sysexit, 7, void);
 DEFN_SYSCALL0(defer, 8, void);
 DEFN_SYSCALL1(malloc, 9, void *, u32);
 DEFN_SYSCALL1(free, 10, void, void *);
@@ -73,10 +90,11 @@ DECL_SYSCALL1(puts, void, const char *);
 DECL_SYSCALL2(putl, void, u32, u8);
 DECL_SYSCALL0(getProcessId, u32);
 DECL_SYSCALL0(irqWait, void);
+DECL_SYSCALL1(irqWaitTimeout, bool, u32);
 DECL_SYSCALL1(irqListen, void, u32);
 DECL_SYSCALL0(ticks, u32);
 DECL_SYSCALL1(panic, void, const char *);
-DECL_SYSCALL0(exit, void);
+DECL_SYSCALL0(sysexit, void);
 DECL_SYSCALL0(defer, void);
 DECL_SYSCALL1(malloc, void *, u32);
 DECL_SYSCALL1(free, void, void *);

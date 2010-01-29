@@ -1,0 +1,233 @@
+// This file is part of Akari.
+// Copyright 2010 Arlen Cuss
+//
+// Akari is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Akari is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Akari.  If not, see <http://www.gnu.org/licenses/>.
+
+#ifndef __LIST
+#define __LIST
+
+namespace std {
+	template <typename T> class list {
+	protected:
+		struct listNode;
+	public:
+		explicit list(): _begin(0), _end(0)
+		{ }
+
+		list(const list &r): _begin(0), _end(0) {
+			for (typename list::iterator it = r.begin(); it != r.end(); ++it)
+				push_back(*it);
+		}
+
+		~list() {
+			clear();
+		}
+
+		class base_iterator {
+		public:
+			bool operator ==(const base_iterator &r) const {
+				return _data == r._data;
+			}
+
+			bool operator !=(const base_iterator &r) const {
+				return _data != r._data;
+			}
+
+			T &operator *() {
+				 return *_data->item;
+			}
+
+			const T &operator *() const {
+				 return *_data->item;
+			}
+
+			T *&operator ->() {
+				return _data->item;
+			}
+
+			T *const &operator ->() const {
+				return _data->item;
+			}
+
+		protected:
+			base_iterator(listNode *data) {
+				_data = data;
+			}
+
+			listNode *_data;
+		};
+
+		class iterator : public base_iterator {
+		friend class list;
+		public:
+			iterator &operator ++() {
+				this->_data = this->_data->next;
+				return *this;
+			}
+
+			iterator &operator --() {
+				this->_data = this->_data->prev;
+				return *this;
+			}
+
+		protected:
+			iterator(listNode *data): base_iterator(data)
+			{ }
+		};
+
+		class reverse_iterator : public base_iterator {
+		friend class list;
+		public:
+			reverse_iterator &operator ++() {
+				this->_data = this->_data->prev;
+				return *this;
+			}
+
+			reverse_iterator &operator --() {
+				this->_data = this->_data->next;
+				return *this;
+			}
+
+		protected:
+			reverse_iterator(listNode *data): base_iterator(data)
+			{ }
+		};
+
+		iterator begin() {
+			return iterator(_begin);
+		}
+
+		const iterator begin() const {
+			return iterator(_begin);
+		}
+
+		iterator end() {
+			return iterator(0);
+		}
+
+		const iterator end() const {
+			return iterator(0);
+		}
+
+		reverse_iterator rbegin() {
+			return reverse_iterator(_end);
+		}
+
+		const reverse_iterator rbegin() const {
+			return reverse_iterator(_end);
+		}
+
+		reverse_iterator rend() {
+			return reverse_iterator(0);
+		}
+
+		const reverse_iterator rend() const {
+			return reverse_iterator(0);
+		}
+
+		u32 size() const {
+			u32 len = 0;
+			for (iterator it = begin(); it != end(); ++it, ++len);
+			return len;
+		}
+
+		/*
+		const T &operator[](u32 index) const {
+			iterator t = begin();
+			while (index--)
+				++t;
+			return *t;
+		}
+
+		T &operator[](u32 index) {
+			iterator t = begin();
+			while (index--)
+				++t;
+			return *t;
+		}
+		*/
+
+		T &push_back(const T &data) {
+			listNode **writeHead = &_begin, *lastNode = 0;
+			while (*writeHead) {
+				lastNode = *writeHead;
+				writeHead = &(*writeHead)->next;
+			}
+
+			listNode *newNode = new listNode;
+			newNode->item = new T(data);
+			newNode->next = 0;
+			newNode->prev = lastNode;
+
+			*writeHead = newNode;
+			_end = newNode;
+
+			return *newNode->item;
+		}
+
+		void pop_front() {
+			listNode *old = _begin;
+			_begin = _begin->next;
+			_begin->prev = 0;
+			delete old->item;
+			delete old;
+		}
+
+		void remove(const T &data) {
+			listNode **writeHead = &_begin, *lastNode = 0;
+			while (*writeHead) {
+				if (*(*writeHead)->item == data) {
+					listNode *old = *writeHead;
+					*writeHead = (*writeHead)->next;
+					if (*writeHead)
+						(*writeHead)->prev = lastNode;
+					if (_end == old) _end = lastNode;
+					delete old->item;
+					delete old;
+					break;
+				}
+				lastNode = *writeHead;
+				writeHead = &(*writeHead)->next;
+			}
+		}
+
+		void clear() {
+			listNode *traverse = _begin;
+			while (traverse) {
+				listNode *next = traverse->next;
+				delete traverse->item;
+				delete traverse;
+				traverse = next;
+			}
+			_begin = 0;
+			_end = 0;
+		}
+
+		bool empty() const {
+			return !_begin;
+		}
+
+	protected:
+		struct listNode {
+			T *item;
+			listNode *next, *prev;
+		};
+
+		listNode *_begin, *_end;
+	};
+}
+
+#endif
+
+// vim: filetype=cpp:

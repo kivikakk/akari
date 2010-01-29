@@ -19,7 +19,7 @@
 
 #include <Akari.hpp>
 #include <Console.hpp>
-#include <List.hpp>
+#include <list>
 
 // Note this is not in fact a hash table, just an associative array.
 // We should make it a hash table in the future, though.
@@ -35,7 +35,7 @@ class HashTable {
 		{ }
 
 		bool hasKey(const K &key) const {
-			for (typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
+			for (typename std::list<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
 				if (key == it->key)
 					return true;
 			}
@@ -43,7 +43,7 @@ class HashTable {
 		}
 
 		const V &operator[](const K &key) const {
-			for (const typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
+			for (const typename std::list<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
 				if (key == it->key)
 					return it->value;
 			}
@@ -51,7 +51,7 @@ class HashTable {
 		}
 
 		V &operator[](const K &key) {
-			for (typename LinkedList<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
+			for (typename std::list<_InternalItem>::iterator it = items.begin(); it != items.end(); ++it) {
 				if (key == it->key)
 					return it->value;
 			}
@@ -69,7 +69,7 @@ class HashTable {
 			V value;
 		};
 
-		LinkedList<_InternalItem> items;
+		std::list<_InternalItem> items;
 };
 
 #endif

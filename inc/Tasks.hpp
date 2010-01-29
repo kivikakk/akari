@@ -22,7 +22,7 @@
 #include <interrupts.hpp>
 #include <HashTable.hpp>
 #include <Strings.hpp>
-#include <List.hpp>
+#include <list>
 #include <Symbol.hpp>
 #include <BlockingCall.hpp>
 #include <UserIPCQueue.hpp>
@@ -89,8 +89,8 @@ public:
 
 		protected:
 			bool _exclusive;
-			LinkedList<u32> _writers;
-			LinkedList<Listener> _listeners;
+			std::list<u32> _writers;
+			std::list<Listener> _listeners;
 
 			u32 _wl_id;
 			u32 _nextId();
@@ -117,7 +117,7 @@ public:
 			Item *itemById(u32 id);
 
 		protected:
-			LinkedList<Item *> list;
+			std::list<Item *> list;
 		};
 
 		static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);
@@ -132,7 +132,6 @@ public:
 		Task *next, *priorityNext;
 
 		// IRQ listening controls.
-		bool irqWaiting;
 		u32 irqListen, irqListenHits;
 		u32 irqWaitStart;
 

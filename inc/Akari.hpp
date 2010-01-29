@@ -18,7 +18,7 @@
 #define __AKARI_HPP__
 
 #include <arch.hpp>
-#include <List.hpp>
+#include <list>
 
 class Subsystem;
 class Memory;
@@ -36,7 +36,7 @@ class Kernel {
 	public:
 		static Kernel *Construct(u32, u32);
 
-		LinkedList<Subsystem *> subsystems;
+		std::list<Subsystem *> subsystems;
 
 		Memory *memory;
 		Console *console;

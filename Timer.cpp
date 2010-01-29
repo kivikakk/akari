@@ -17,6 +17,8 @@
 #include <Timer.hpp>
 #include <arch.hpp>
 
+u32 AkariMicrokernelSwitches = 0;
+
 Timer::Timer()
 { }
 
@@ -30,5 +32,9 @@ void Timer::setTimer(u16 hz) {
 	AkariOutB(0x43, 0x36);		// 0b00110110; not BCD, square, LSB+MSB, c0
 	AkariOutB(0x40, r & 0xFF);
 	AkariOutB(0x40, (r >> 8) & 0xFF);
+}
+
+void Timer::tick() {
+	++AkariMicrokernelSwitches;
 }
 

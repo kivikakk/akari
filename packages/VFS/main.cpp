@@ -18,18 +18,22 @@
 #include <UserCalls.hpp>
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
-#include <List.hpp>
+#include <list>
+#include <vector>
 #include <debug.hpp>
 
 #include "VFSProto.hpp"
 #include "main.hpp"
+
+// HACK: used in conjunction with __cxa_atexit, we're not doing anything dynamic, so just ignore it...
+void *__dso_handle = (void *)&__dso_handle;
 
 pid_t pidForDriver(u32 driver);
 u32 fs_read(pid_t pid, u32 inode, u32 offset, u32 length, u8 *buffer);
 VFSDirent *fs_readdir(pid_t pid, u32 inode, u32 index);
 VFSNode *fs_finddir(pid_t pid, u32 inode, const char *name);
 
-LinkedList<VFSDriver> drivers;
+std::vector<VFSDriver> drivers;
 VFSNode *vfs_root = 0;
 
 typedef struct {
@@ -37,7 +41,7 @@ typedef struct {
 	u32 msg_id;
 } AwaitingRoot;
 
-LinkedList<AwaitingRoot> awaiting_root;
+std::list<AwaitingRoot> awaiting_root;
 
 extern "C" int start() {
 	{
@@ -104,7 +108,7 @@ extern "C" int start() {
 
 			// printf("VFS: registered '%s' driver\n", driver.name);
 
-			VFSReplyRegisterDriver reply = { true, drivers.length() - 1 };
+			VFSReplyRegisterDriver reply = { true, drivers.size() - 1 };
 			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&reply), sizeof(reply));
 		} else if (request[0] == VFS_OP_MOUNT_ROOT) {
 			VFSOpMountRoot *op = reinterpret_cast<VFSOpMountRoot *>(request);
@@ -118,10 +122,10 @@ extern "C" int start() {
 			
 			sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
 
-			for (LinkedList<AwaitingRoot>::iterator it = awaiting_root.begin(); it != awaiting_root.end(); ++it)
+			for (std::list<AwaitingRoot>::iterator it = awaiting_root.begin(); it != awaiting_root.end(); ++it)
 				sendQueue(it->pid, it->msg_id, 0, 0);
 
-			awaiting_root.truncate();
+			awaiting_root.clear();
 		} else if (request[0] == VFS_OP_AWAIT_ROOT) {
 			if (vfs_root) {
 				sendQueue(info.from, info.id, 0, 0);

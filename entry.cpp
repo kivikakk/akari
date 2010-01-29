@@ -17,7 +17,7 @@
 #include <entry.hpp>
 #include <debug.hpp>
 #include <Akari.hpp>
-#include <List.hpp>
+#include <list>
 #include <UserGates.hpp>
 #include <Tasks.hpp>
 #include <Memory.hpp>
@@ -44,9 +44,9 @@ typedef struct {
 	u32 module_len;
 } loaded_module_t;
 
-LinkedList<loaded_module_t> modules;
+std::list<loaded_module_t> modules;
 static loaded_module_t *module_by_name(const char *name) {
-	for (LinkedList<loaded_module_t>::iterator it = modules.begin(); it != modules.end(); ++it) {
+	for (std::list<loaded_module_t>::iterator it = modules.begin(); it != modules.end(); ++it) {
 		if (POSIX::stricmp(name, it->name) == 0)
 			return &*it;
 	}
@@ -170,12 +170,9 @@ void IdleProcess() {
 	while (true) asm volatile("hlt");
 }
 
-u32 AkariMicrokernelSwitches = 0;
-
 // Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
 	// 100 times a second.
-	++AkariMicrokernelSwitches;
 	Akari->tasks->saveRegisterToTask(Akari->tasks->current, r);
 	Akari->tasks->cycleTask();
 	return Akari->tasks->assignInternalTask(Akari->tasks->current);

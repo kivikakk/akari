@@ -19,6 +19,7 @@
 #include <Akari.hpp>
 #include <interrupts.hpp>
 #include <debug.hpp>
+#include <UserCalls.hpp>
 
 Descriptor::Descriptor(): gdt(0), idt(0), irqt(0) {
 	gdt = new GDT(10);
@@ -206,18 +207,17 @@ void *Descriptor::IRQT::callHandler(u8 irq, struct modeswitch_registers *regs) {
 	while (iter) {
 		if (iter->irqListen == irq) {
 			iter->irqListenHits++;
+			iter->unblockType(User::IRQWaitCall::type());
 
-			// We're not using this out of a sort of an interest to see if we can deal with not
-			// returning immediately. It looks like it works, but at the same time, I'd say there
-			// are advantages to prioritising the I/O. Wait and see.
-
-			// Looks like it's their turn. We append the current `iter` to the linked
-			// list made of ATS#priorityStart and the Task's own priorityNext's.
-			Tasks::Task **append = &Akari->tasks->priorityStart;
-			while (*append)
-				append = &(*append)->priorityNext;
-			*append = iter;
-			iter->priorityNext = 0;
+			if (!iter->userWaiting) {
+				// Looks like it's their turn. We append the current `iter` to the linked
+				// list made of ATS#priorityStart and the Task's own priorityNext's.
+				Tasks::Task **append = &Akari->tasks->priorityStart;
+				while (*append)
+					append = &(*append)->priorityNext;
+				*append = iter;
+				iter->priorityNext = 0;
+			}
 		}
 		iter = iter->next;
 	}
