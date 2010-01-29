@@ -29,6 +29,8 @@ class Symbol {
 		bool operator !() const;
 		bool operator ==(const Symbol &) const;
 		bool operator !=(const Symbol &) const;
+		
+		const char *c_str() const;
 
 	protected:
 		const char *_content;
