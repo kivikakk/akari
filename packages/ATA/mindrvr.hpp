@@ -24,6 +24,11 @@
 // works and it is distributed without any warranty.  Use this
 // code at your own risk.
 
+#ifndef MINDRVR_H
+#define MINDRVR_H
+
+#include <arch.hpp>
+
 #define MIN_ATA_DRIVER_VERSION "0H"
 
 #define INCLUDE_ATA_DMA   1   // not zero to include ATA_DMA
@@ -356,3 +361,5 @@ extern int dma_pci_packet(u8 dev, u32 cpbc, u8 *cdbBufAddr, int dir, long dpbc, 
 #endif   // INCLUDE_ATAPI_DMA
 
 // end mindrvr.h
+
+#endif
