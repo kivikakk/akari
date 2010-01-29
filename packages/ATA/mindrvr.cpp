@@ -48,7 +48,7 @@ struct REG_CMD_INFO reg_cmd_info;
 
 int reg_config_info[2];
 
-u8 *pio_bmide_base_addr;
+u8 *pio_bmide_base_addr = PIO_BMIDE_BASE_ADDR;
 
 u8 *pio_reg_addrs[9] = {
    PIO_BASE_ADDR1 + 0,  // [0] CB_DATA
@@ -1937,42 +1937,42 @@ static void pio_writeBusMstrStatus(u8 x) {
 
 static u8 pio_inbyte(u8 addr) {
    //!!! read an 8-bit ATA register
-   return *pio_reg_addrs[addr];
+   return AkariInB(reinterpret_cast<u32>(pio_reg_addrs[addr]));
 }
 
 //*************************************************************
 
 static void pio_outbyte(int addr, u8 data) {
    //!!! write an 8-bit ATA register
-   *pio_reg_addrs[addr] = data;
+   AkariOutB(reinterpret_cast<u32>(pio_reg_addrs[addr]), data);
 }
 
 //*************************************************************
 
 static u32 pio_inword(u8 addr) {
    //!!! read an 8-bit ATA register (usually the ATA Data register)
-   return *((u32 *)pio_reg_addrs[addr]);
+   return AkariInW(reinterpret_cast<u32>(pio_reg_addrs[addr]));
 }
 
 //*************************************************************
 
 static void pio_outword(int addr, u32 data) {
    //!!! Write an 8-bit ATA register (usually the ATA Data register)
-   *((u32 *)pio_reg_addrs[addr]) = data;
+   AkariOutW(reinterpret_cast<u32>(pio_reg_addrs[addr]), data);
 }
 
 //*************************************************************
 
 static u32 pio_indword(u8 addr) { 
    //!!! read an 8-bit ATA register (usually the ATA Data register)
-   return *((u32 *)pio_reg_addrs[addr]);
+   return AkariInL(reinterpret_cast<u32>(pio_reg_addrs[addr]));
 }
 
 //*************************************************************
 
 static void pio_outdword(int addr, u32 data) { 
    //!!! Write an 8-bit ATA register (usually the ATA Data register)
-   *((u32 *)pio_reg_addrs[addr]) = data;
+   AkariOutL(reinterpret_cast<u32>(pio_reg_addrs[addr]), data);
 }
 
 //*************************************************************

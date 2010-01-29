@@ -37,6 +37,10 @@ inline void AkariOutW(u16 port, u16 data) {
 	asm volatile("outw %1, %0" : : "dN" (port), "a" (data));
 }
 
+inline void AkariOutL(u16 port, u32 data) {
+	asm volatile("outl %1, %0" : : "dN" (port), "a" (data));
+}
+
 inline u8 AkariInB(u16 port) {
 	u8 r;
 	asm volatile("inb %1, %0" : "=a" (r) : "dN" (port));
@@ -46,6 +50,12 @@ inline u8 AkariInB(u16 port) {
 inline u16 AkariInW(u16 port) {
 	u16 r;
 	asm volatile("inw %1, %0" : "=a" (r) : "dN" (port));
+	return r;
+}
+
+inline u32 AkariInL(u16 port) {
+	u32 r;
+	asm volatile("inl %1, %0" : "=a" (r) : "dN" (port));
 	return r;
 }
 

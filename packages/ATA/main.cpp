@@ -32,7 +32,9 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer);
 void ata_write_sectors(u32 start, u32 number, u8 *buffer);
 
 extern "C" int main() {
+	printf("reg_config start\n");
 	int devices_found = reg_config();
+	printf("reg_config complete\n");
 
 	if (devices_found == 0) {
 		printf("ATA: failed init - totally no hard drives\n");

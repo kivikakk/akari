@@ -54,18 +54,19 @@ extern int SYSTEM_WAIT_INTR_OR_TIMEOUT();
 
 // ATA Command Block base address
 // (the address of the ATA Data register)
-#define PIO_BASE_ADDR1 ((u8 *)0x1000)
+#define PIO_BASE_ADDR1 ((u8 *)0x1F0)
 
 // ATA Control Block base address
 // (the address of the ATA DevCtrl
 //  and AltStatus registers)
-#define PIO_BASE_ADDR2 ((u8 *)0x2000)
+#define PIO_BASE_ADDR2 ((u8 *)0x3F6)
 
 // BMIDE base address (address of
 // the BMIDE Command register for
 // the Primary or Secondary side of
 // the PCI ATA controller)
-#define PIO_BMIDE_BASE_ADDR ((u8 *)0x3000)
+// NOTE: bus-master currently unused?
+#define PIO_BMIDE_BASE_ADDR ((u8 *)0)
 
 // Size of the ATA Data register - allowed values are 8, 16 and 32
 #define PIO_DEFAULT_XFER_WIDTH 16
