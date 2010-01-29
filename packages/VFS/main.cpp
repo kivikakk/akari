@@ -25,9 +25,6 @@
 #include "VFSProto.hpp"
 #include "main.hpp"
 
-// HACK: used in conjunction with __cxa_atexit, we're not doing anything dynamic, so just ignore it...
-void *__dso_handle = (void *)&__dso_handle;
-
 pid_t pidForDriver(u32 driver);
 u32 fs_read(pid_t pid, u32 inode, u32 offset, u32 length, u8 *buffer);
 VFSDirent *fs_readdir(pid_t pid, u32 inode, u32 index);
@@ -43,7 +40,7 @@ typedef struct {
 
 std::list<AwaitingRoot> awaiting_root;
 
-extern "C" int start() {
+extern "C" int main() {
 	{
 		// Requests to driver 0 will come back here.
 		VFSDriver null_driver;

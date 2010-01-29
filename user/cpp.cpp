@@ -18,6 +18,9 @@
 #include <cpp.hpp>
 #include <list>
 
+// HACK: used in conjunction with __cxa_atexit, we're not doing anything dynamic, so just ignore it...
+void *__dso_handle = (void *)&__dso_handle;
+
 static std::list<void (*)(void *)> exit_handlers;
 
 extern "C" void __cxa_pure_virtual() {

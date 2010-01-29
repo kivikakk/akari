@@ -77,7 +77,7 @@ static s8 capslockInvert(s8 c) {
 }
 
 
-extern "C" int start() {
+extern "C" int main() {
 	// 128-bit=16 bytes bitfield
 	u8 held_scancodes[16];     
 

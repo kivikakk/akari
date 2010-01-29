@@ -19,6 +19,7 @@
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
 #include <debug.hpp>
+#include <cpp.hpp>
 
 #include "ATAProto.hpp"
 #include "main.hpp"
@@ -30,13 +31,12 @@ void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
 void ata_read_sectors(u32 start, u32 number, u8 *buffer);
 void ata_write_sectors(u32 start, u32 number, u8 *buffer);
 
-extern "C" int start() {
+extern "C" int main() {
 	int devices_found = reg_config();
 
 	if (devices_found == 0) {
 		printf("ATA: failed init - totally no hard drives\n");
-		exit();
-		return 1;
+		return 0;
 	}
 
 	printf("found %d device(s)\n", devices_found);

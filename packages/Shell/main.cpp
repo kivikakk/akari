@@ -22,7 +22,7 @@
 
 #include "../VFS/VFSProto.hpp"
 
-extern "C" int start() {
+extern "C" int main() {
 	const char *cwd = "/";
 	
 	printf("\n");

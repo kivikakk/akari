@@ -33,8 +33,17 @@
 #define INIT_STACK_SIZE		0x2000
 
 static void AkariEntryCont();
-
 void IdleProcess();
+
+// Unused: just for linkage purposes, since a real __cxa_atexit might need it.
+// (see below)
+void *__dso_handle = (void *)&__dso_handle;
+
+// Dummy __cxa_atexit: our kernel never exits, so we never need to call the
+// destructors.
+extern "C" int __cxa_atexit(void (*func)(void *), void *arg, void *dso_handle) {
+	return 0;
+}
 
 multiboot_info_t *AkariMultiboot;
 

@@ -42,7 +42,7 @@ static u32 root_dir_sectors, first_data_sector, first_fat_sector, data_sectors, 
 static u8 fat_type, fat32esque;
 static u32 root_cluster;
 
-extern "C" int start() {
+extern "C" int main() {
 	// Find MBR
 	while (!mbr)
 		mbr = processIdByName("system.io.mbr");
@@ -50,7 +50,7 @@ extern "C" int start() {
 	// Initialize our important stuff
 	if (!init()) {
 		printf("FAT: calling it quits in init");
-		exit();
+		return 1;
 	}
 
 	// Register our name

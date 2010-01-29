@@ -30,7 +30,7 @@ void ata_read_data(u32 new_sector, u16 offset, u32 length, u8 *buffer);
 master_boot_record_t hdd_mbr;
 pid_t ata = 0;
 
-extern "C" int start() {
+extern "C" int main() {
 	while (!ata)
 		ata = processIdByName("system.io.ata");
 

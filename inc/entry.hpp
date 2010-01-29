@@ -22,11 +22,9 @@
 
 extern "C" {
 	extern u8 __kstart, __kend;
-
 	extern multiboot_info_t *AkariMultiboot;
 
 	void AkariEntry();
-
 	void *AkariMicrokernel(struct modeswitch_registers *r);
 }
 

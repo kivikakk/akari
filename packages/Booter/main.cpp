@@ -38,7 +38,7 @@ static pid_t bootstrap(const char *filename) {
 	return pid;
 }
 
-extern "C" int start() {
+extern "C" int main() {
 	while (!vfs)
 		vfs = processIdByName("system.io.vfs");
 
@@ -52,7 +52,6 @@ extern "C" int start() {
 	bootstrap("/Kb");
 	bootstrap("/Shell");
 
-	exit();
 	return 0;
 }
 
