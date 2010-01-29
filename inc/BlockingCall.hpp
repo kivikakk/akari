@@ -28,6 +28,7 @@ public:
 	bool shallBlock() const;
 
 	virtual u32 operator ()() = 0;
+	virtual bool unblockWith(u32 data) const;
 	virtual Symbol insttype() const = 0;
 
 protected:

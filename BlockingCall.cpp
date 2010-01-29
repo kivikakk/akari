@@ -15,12 +15,18 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <BlockingCall.hpp>
+#include <debug.hpp>
 
 BlockingCall::BlockingCall(): _shallBlock(false) { }
 BlockingCall::~BlockingCall() { }
 
 bool BlockingCall::shallBlock() const {
 	return _shallBlock;
+}
+
+bool BlockingCall::unblockWith(u32 data) const {
+	AkariPanic("unblockWith not implemented");
+	return false;
 }
 
 void BlockingCall::_wontBlock() {
