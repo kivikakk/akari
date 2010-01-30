@@ -132,6 +132,7 @@ static void AkariEntryCont() {
 	Akari->tasks->current->next = idle;
 
 	// ATA driver
+	// XXX: IOPL 3
 	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 3, Akari->memory->_kernelDirectory, "ata");
 	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
 	/* ata->setIOMap(0x1F7, true);
@@ -143,15 +144,10 @@ static void AkariEntryCont() {
 	ata->setIOMap(0x376, true); */
 	idle->next = ata;
 	
-	// MBR driver
-	Tasks::Task *mbr = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "mbr");
-	Akari->elf->loadImageInto(mbr, reinterpret_cast<u8 *>(module_by_name("/mbr")->module));
-	ata->next = mbr;
-	
 	// FAT driver
 	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "fat");
 	Akari->elf->loadImageInto(fat, reinterpret_cast<u8 *>(module_by_name("/fat")->module));
-	mbr->next = fat;
+	ata->next = fat;
 	
 	// VFS driver
 	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "vfs");

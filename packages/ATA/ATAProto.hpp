@@ -17,8 +17,9 @@
 #ifndef ATA_PROTO_HPP
 #define ATA_PROTO_HPP
 
-#define ATA_OP_READ 	0x1
-#define ATA_OP_WRITE	0x2
+#define ATA_OP_READ 		0x1
+#define ATA_OP_WRITE		0x2
+#define ATA_OP_MBR_READ		0x3
 
 typedef struct {
 	u8 cmd;
@@ -34,5 +35,13 @@ typedef struct {
 	u32 length;
 	u8 data[];
 } ATAOpWrite;
+
+typedef struct {
+	u8 cmd;
+	u8 partition_id;
+	u32 sector;
+	u16 offset;
+	u32 length;
+} ATAOpMBRRead;
 
 #endif

@@ -51,4 +51,25 @@
 #define ATA_CACHE_FLUSH		0xE7
 #define ATA_IDENTIFY		0xEC
 
+typedef struct {
+	u8 bootable;	/* 0x80 if bootable, 0 otherwise */
+	u8 begin_head;
+	unsigned begin_cylinderhi : 2; /* 2 high bits of start cylinder */
+	unsigned begin_sector : 6;
+	u8 begin_cylinderlo; /* low bits of start cylinder */
+	u8 system_id;
+	u8 end_head;
+	unsigned end_cylinderhi : 2; /* 2 high bits of end cylinder */
+	unsigned end_sector : 6;
+	u8 end_cylinderlo; /* low bits of end cylinder */
+	u32 begin_disk_sector;
+	u32 sector_count;
+} __attribute__ ((__packed__)) primary_partition_t;
+
+typedef struct {
+	u8 boot[446];
+	primary_partition_t partitions[4];
+	u16 signature; /* should always be 0xaa55 */
+} __attribute__ ((__packed__)) master_boot_record_t;
+
 #endif

@@ -22,7 +22,7 @@
 
 #include "main.hpp"
 #include "../VFS/VFSProto.hpp"
-#include "../MBR/MBRProto.hpp"
+#include "../ATA/ATAProto.hpp"
 
 bool init();
 void fat_read_cluster(u32 cluster, u8 *buffer);
@@ -32,7 +32,7 @@ VFSDirent *fat_readdir(u32 inode, u32 index);
 VFSNode *fat_finddir(u32 inode, const char *name);
 static u8 *get_filename(const fat_dirent_t *fd);
 
-pid_t mbr = 0, vfs = 0;
+pid_t ata = 0, vfs = 0;
 u32 vfs_driver_no = 0;
 
 static fat_boot_record_t boot_record;
@@ -43,9 +43,9 @@ static u8 fat_type, fat32esque;
 static u32 root_cluster;
 
 extern "C" int main() {
-	// Find MBR
-	while (!mbr)
-		mbr = processIdByName("system.io.mbr");
+	// Find ATA
+	while (!ata)
+		ata = processIdByName("system.io.ata");
 
 	// Initialize our important stuff
 	if (!init()) {
@@ -218,21 +218,21 @@ void fat_read_cluster(u32 cluster, u8 *buffer) {
 }
 
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer) {
-	// Request to MBR driver: u8 0x0 ('read'), u8 parition_id, u32 sector, u16 offset, u32 length
+	// Request to ATA driver: u8 0x0 ('read'), u8 parition_id, u32 sector, u16 offset, u32 length
 	// Total: 12 bytes
 	
-	MBROpRead op = {
-		MBR_OP_READ,
+	ATAOpMBRRead op = {
+		ATA_OP_MBR_READ,
 		partition_id,
 		sector,
 		offset,
 		length
 	};
 
-	u32 msg_id = sendQueue(mbr, 0, reinterpret_cast<u8 *>(&op), sizeof(MBROpRead));
+	u32 msg_id = sendQueue(ata, 0, reinterpret_cast<u8 *>(&op), sizeof(ATAOpMBRRead));
 
 	struct queue_item_info *info = probeQueueFor(msg_id);
-	if (info->data_len != length) panic("FAT: MBR read not expected number of bytes back?");
+	if (info->data_len != length) panic("FAT: ATA read not expected number of bytes back?");
 
 	readQueue(info, buffer, 0, info->data_len);
 	shiftQueue(info);

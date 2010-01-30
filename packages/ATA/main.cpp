@@ -25,11 +25,15 @@
 #include "main.hpp"
 #include "mindrvr.hpp"
 
+void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer);
+
 void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
 void ata_write_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer);
 
 void ata_read_sectors(u32 start, u32 number, u8 *buffer);
 void ata_write_sectors(u32 start, u32 number, u8 *buffer);
+
+master_boot_record_t hdd_mbr;
 
 extern "C" int main() {
 	int devices_found = reg_config();
@@ -38,6 +42,9 @@ extern "C" int main() {
 		printf("ATA: failed init - totally no hard drives\n");
 		return 0;
 	}
+
+	ata_read_data(0, 0, 512, reinterpret_cast<u8 *>(&hdd_mbr));
+	if (hdd_mbr.signature != 0xAA55) panic("MBR: invalid MBR!\n");
 
 	// Now we need to wait and listen for commands!
 	if (!registerName("system.io.ata"))
@@ -62,6 +69,13 @@ extern "C" int main() {
 
 			ata_write_data(op->sector, op->offset, op->length, op->data);
 			sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
+		} else if (request[0] == ATA_OP_MBR_READ) {
+			ATAOpMBRRead *op = reinterpret_cast<ATAOpMBRRead *>(request);
+
+			u8 *buffer = new u8[op->length];
+			partition_read_data(op->partition_id, op->sector, op->offset, op->length, buffer);
+			sendQueue(info.from, info.id, buffer, op->length);
+			delete [] buffer;
 		} else {
 			panic("ATA: confused");
 		}
@@ -71,6 +85,11 @@ extern "C" int main() {
 
 	panic("ATA: ran off the end of the infinite loop");
 	return 1;
+}
+
+void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer) {
+	u32 new_sector = hdd_mbr.partitions[partition_id].begin_disk_sector + sector;
+	ata_read_data(new_sector, offset, length, buffer);
 }
 
 void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
