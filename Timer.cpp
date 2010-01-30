@@ -16,6 +16,7 @@
 
 #include <Timer.hpp>
 #include <arch.hpp>
+#include <algorithm>
 
 u32 AkariMicrokernelSwitches = 0;
 
@@ -80,7 +81,10 @@ void Timer::at(TimerEvent *event) {
 }
 
 void Timer::desched(TimerEvent *event) {
+	Akari->console->putString("deschedded\n");
 	std::list<TimerEvent *>::iterator it = std::find(events.begin(), events.end(), event);
+	if (it != events.end())
+		events.erase(it);
 }
 
 TimerEventWakeup::TimerEventWakeup(u32 at, Tasks::Task *task):
