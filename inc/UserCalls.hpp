@@ -50,6 +50,7 @@ namespace User {
 	class IRQWaitCall : public BlockingCall {
 	public:
 		IRQWaitCall(u32 timeout);
+		~IRQWaitCall();
 
 		u32 operator ()();
 
