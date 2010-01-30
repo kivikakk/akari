@@ -42,13 +42,22 @@ void Timer::setTimer(u16 hz) {
 
 void Timer::tick() {
 	++AkariMicrokernelSwitches;
-	if (!--time_til_next && !events.empty()) {
-		// Run event
+	while (!--time_til_next && !events.empty()) {
+		TimerEvent *event = *events.begin();
+		events.pop_front();
+
+		event->operator()();
+
+		if (!events.empty()) {
+			time_til_next = (*events.begin())->at - AkariMicrokernelSwitches;
+		}
 	}
 }
 
 void Timer::at(TimerEvent *event) {
-	// I take a freshly, newly allocated object.
+	// Takes any event, won't delete it - is callers'
+	// responsibility post-event fire. Delete it before
+	// the event fires and you may regret it.
 	
 	bool was_empty = events.empty();
 	ASSERT(event->at > AkariMicrokernelSwitches);
@@ -70,6 +79,10 @@ void Timer::at(TimerEvent *event) {
 	}
 }
 
+void Timer::desched(TimerEvent *event) {
+	std::list<TimerEvent *>::iterator it = std::find(events.begin(), events.end(), event);
+}
+
 TimerEventWakeup::TimerEventWakeup(u32 at, Tasks::Task *task):
 	TimerEvent(at), wakeup(task)
 { }
@@ -77,5 +90,6 @@ TimerEventWakeup::TimerEventWakeup(u32 at, Tasks::Task *task):
 void TimerEventWakeup::operator()() {
 	// XXX What if the task exited? :-/
 	wakeup->userWaiting = false;
+	Akari->console->putString("call!\n");
 }
 

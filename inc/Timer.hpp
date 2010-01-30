@@ -46,6 +46,7 @@ public:
 	void tick();
 
 	void at(TimerEvent *event);
+	void desched(TimerEvent *event);
 
 protected:
 	u32 time_til_next;
