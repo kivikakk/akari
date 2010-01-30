@@ -7,3 +7,4 @@ all: $(TESTS)
 %_test.o: %_test.cpp %_test.expected
 	@g++ -I../inc $< -o $@
 	@(./$@ | diff - $(patsubst %.cpp,%.expected,$<)) || (r=$$?; rm $@; echo $< failed; exit $$r)
+	@rm $@
