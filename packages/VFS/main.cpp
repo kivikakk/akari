@@ -52,7 +52,7 @@ extern "C" int main() {
 	if (!registerName("system.io.vfs"))
 		panic("VFS: could not register system.io.vfs");
 
-	printf("[VFS] ");
+	printf("[VFS]\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();
