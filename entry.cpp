@@ -178,6 +178,7 @@ void IdleProcess() {
 // Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
 	// 100 times a second.
+	Akari->timer->tick();
 	Akari->tasks->saveRegisterToTask(Akari->tasks->current, r);
 	Akari->tasks->cycleTask();
 	return Akari->tasks->assignInternalTask(Akari->tasks->current);
