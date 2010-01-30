@@ -102,7 +102,7 @@ extern "C" int main() {
 	}
 
 	// All done.
-	printf("[FAT] ");
+	printf("[FAT]\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();
