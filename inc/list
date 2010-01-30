@@ -187,8 +187,8 @@ namespace std {
 			listNode *newNode = new listNode;
 			newNode->item = new T(data);
 			newNode->next = pos._data;
-			newNode->next->prev = newNode;
 			newNode->prev = pos._data->prev;
+			newNode->next->prev = newNode;
 			newNode->prev->next = newNode;
 
 			return iterator(newNode);
@@ -216,6 +216,8 @@ namespace std {
 
 			if (newNode->prev)
 				newNode->prev->next = newNode;
+			else
+				_begin = newNode;
 
 			_end = newNode;
 		}
