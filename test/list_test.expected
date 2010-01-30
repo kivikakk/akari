@@ -1,7 +1,10 @@
-my_list(4): 4, 3, 2, 1
-my_list(5): 1, 4, 3, 2, 1
-my_list(6): 1, 4, 2, 3, 2, 1
-my_list(7): 1, 4, 2, 3, 3, 2, 1
-my_list(8): 1, 4, 2, 3, 3, 2, 4, 1
-my_list(9): 1, 4, 2, 3, 3, 2, 4, 1, 0
-my_list(10): 0, 1, 4, 2, 3, 3, 2, 4, 1, 0
+my_list(4): itemful 4, 3, 2, 1
+my_list(5): itemful 1, 4, 3, 2, 1
+my_list(6): itemful 1, 4, 2, 3, 2, 1
+my_list(7): itemful 1, 4, 2, 3, 3, 2, 1
+my_list(8): itemful 1, 4, 2, 3, 3, 2, 4, 1
+my_list(9): itemful 1, 4, 2, 3, 3, 2, 4, 1, 0
+my_list(10): itemful 0, 1, 4, 2, 3, 3, 2, 4, 1, 0
+my_list(0): empty 
+my_list(2): itemful 1, 2
+my_list(0): empty 

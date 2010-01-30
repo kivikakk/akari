@@ -8,7 +8,7 @@ typedef std::list<int> list_type;
 list_type my_list;
 
 void report() {
-	printf("my_list(%u): ", (unsigned int)my_list.size());
+	printf("my_list(%u): %s ", (unsigned int)my_list.size(), my_list.empty() ? "empty" : "itemful");
 	for (list_type::iterator it = my_list.begin(); it != my_list.end(); ++it) {
 		if (it != my_list.begin())
 			printf(", ");
@@ -40,5 +40,16 @@ int main() {
 	report();
 
 	my_list.insert(my_list.begin(), 0);
+	report();
+
+	my_list.clear();
+	report();
+
+	my_list.push_back(1);
+	my_list.push_back(2);
+	report();
+
+	my_list.pop_front();
+	my_list.pop_front();
 	report();
 }

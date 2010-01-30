@@ -203,6 +203,8 @@ namespace std {
 
 			if (newNode->next)
 				newNode->next->prev = newNode;
+			else
+				_end = newNode;
 
 			_begin = newNode;
 		}
@@ -226,7 +228,12 @@ namespace std {
 			// amortised constant time
 			listNode *old = _begin;
 			_begin = _begin->next;
-			_begin->prev = 0;
+
+			if (_begin)
+				_begin->prev = 0;
+			else
+				_end = 0;
+
 			delete old->item;
 			delete old;
 		}
