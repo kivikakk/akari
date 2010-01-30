@@ -194,6 +194,28 @@ namespace std {
 			return iterator(newNode);
 		}
 
+		iterator erase(iterator pos) {
+			// amortised constant time (given we're erasing one)
+			listNode *old = pos._data;
+			if (old->prev == 0) {
+				pop_front();
+				return begin();
+			}
+
+			if (old->next == 0) {
+				pop_back();
+				return end();
+			}
+
+			iterator ret = iterator(old->next);
+			old->prev->next = old->next;
+			old->next->prev = old->prev;
+			delete old->item;
+			delete old;
+
+			return ret;
+		}
+
 		void push_front(const T &data) {
 			// amortised constant time
 			listNode *newNode = new listNode;
@@ -238,7 +260,24 @@ namespace std {
 			delete old;
 		}
 
+		void pop_back() {
+			// amortised constant time
+			listNode *old = _end;
+			_end = _end->prev;
+
+			if (_end)
+				_end->next = 0;
+			else
+				_begin = 0;
+
+			delete old->item;
+			delete old;
+		}
+
 		void remove(const T &data) {
+			// linear in size of list
+			// XXX: this should remove any and all "data"s found;
+			// currently only removes one.
 			listNode **writeHead = &_begin, *lastNode = 0;
 			while (*writeHead) {
 				if (*(*writeHead)->item == data) {
