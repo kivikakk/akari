@@ -85,7 +85,6 @@ void Timer::desched(const TimerEvent &event) {
 	std::list< counted_ptr<TimerEvent> >::iterator it = std::find(events.begin(), events.end(), &event);
 	if (it != events.end()) {
 		events.erase(it);
-		Akari->console->putString("deschedded\n");
 	}
 }
 
@@ -96,6 +95,5 @@ TimerEventWakeup::TimerEventWakeup(u32 at, Tasks::Task *task):
 void TimerEventWakeup::operator()() {
 	// XXX What if the task exited? :-/
 	wakeup->userWaiting = false;
-	Akari->console->putString("call!\n");
 }
 
