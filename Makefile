@@ -35,8 +35,11 @@ $(TARGET)-copy: $(TARGET) menu.lst
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
 	$(MTOOLS_BIN)/mcopy -D o menu.lst a:/boot/grub/menu.lst
 
-$(TARGET): $(OBJS) $(LDFILE) user packages obj
+$(TARGET): $(OBJS) $(LDFILE) user packages obj test
 	$(LD) $(LDOPTS) -T$(LDFILE) $(OBJS) -o $(TARGET)
+
+test: force_subdir
+	cd test; $(MAKE) $(MFLAGS) all
 
 packages: force_subdir user
 	cd packages; $(MAKE) $(MFLAGS) all
