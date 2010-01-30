@@ -48,9 +48,7 @@ namespace User {
 
 	IRQWaitCall::~IRQWaitCall() {
 		if (event) {
-			Akari->timer->desched(event);
-			delete event;
-			event = 0;
+			event = counted_ptr<TimerEventWakeup>(0);
 		}
 	}
 
@@ -62,16 +60,18 @@ namespace User {
 				// XXX magic number: 1000ms per second, 100 ticks per second
 				// -> timeout ms/10 gives no. of ticks for timeout
 				// Should already be descheduled.
-				delete event;
-				event = 0;
+				event = counted_ptr<TimerEventWakeup>(0);
 
 				_wontBlock();
 				return static_cast<u32>(false);
 			} else {
-				event = new TimerEventWakeup(
-							Akari->tasks->current->irqWaitStart + timeout / 10,
-							Akari->tasks->current);
-				Akari->timer->at(event);
+				if (timeout) {
+					event = counted_ptr<TimerEventWakeup>(
+							new TimerEventWakeup(
+								Akari->tasks->current->irqWaitStart + timeout / 10,
+								Akari->tasks->current));
+					Akari->timer->at(event);
+				}
 
 				_willBlock();
 				return 0;
@@ -79,9 +79,8 @@ namespace User {
 		}
 
 		if (event) {
-			Akari->timer->desched(event);
-			delete event;
-			event = 0;
+			Akari->timer->desched(*event);
+			event = counted_ptr<TimerEventWakeup>(0);
 		}
 
 		_wontBlock();

@@ -23,8 +23,9 @@ u32 AkariMicrokernelSwitches = 0;
 TimerEvent::TimerEvent(u32 at): at(at)
 { }
 
-TimerEvent::~TimerEvent()
-{ }
+TimerEvent::~TimerEvent() {
+	Akari->timer->desched(*this);
+}
 
 Timer::Timer()
 { }
@@ -44,7 +45,7 @@ void Timer::setTimer(u16 hz) {
 void Timer::tick() {
 	++AkariMicrokernelSwitches;
 	while (!--time_til_next && !events.empty()) {
-		TimerEvent *event = *events.begin();
+		counted_ptr<TimerEvent> event = *events.begin();
 		events.pop_front();
 
 		event->operator()();
@@ -55,7 +56,7 @@ void Timer::tick() {
 	}
 }
 
-void Timer::at(TimerEvent *event) {
+void Timer::at(counted_ptr<TimerEvent> event) {
 	// Takes any event, won't delete it - is callers'
 	// responsibility post-event fire. Delete it before
 	// the event fires and you may regret it.
@@ -63,9 +64,9 @@ void Timer::at(TimerEvent *event) {
 	bool was_empty = events.empty();
 	ASSERT(event->at > AkariMicrokernelSwitches);
 
-	for (std::list<TimerEvent *>::iterator it = events.begin(); it != events.end(); ++it) {
+	for (std::list< counted_ptr<TimerEvent> >::iterator it = events.begin(); it != events.end(); ++it) {
 		if (event->at < (*it)->at) {
-			std::list<TimerEvent *>::iterator new_it = events.insert(it, event);
+			std::list< counted_ptr<TimerEvent> >::iterator new_it = events.insert(it, event);
 			if (new_it == events.begin()) {
 				time_til_next = event->at - AkariMicrokernelSwitches;
 			}
@@ -80,11 +81,12 @@ void Timer::at(TimerEvent *event) {
 	}
 }
 
-void Timer::desched(TimerEvent *event) {
-	Akari->console->putString("deschedded\n");
-	std::list<TimerEvent *>::iterator it = std::find(events.begin(), events.end(), event);
-	if (it != events.end())
+void Timer::desched(const TimerEvent &event) {
+	std::list< counted_ptr<TimerEvent> >::iterator it = std::find(events.begin(), events.end(), &event);
+	if (it != events.end()) {
 		events.erase(it);
+		Akari->console->putString("deschedded\n");
+	}
 }
 
 TimerEventWakeup::TimerEventWakeup(u32 at, Tasks::Task *task):

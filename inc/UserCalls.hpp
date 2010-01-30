@@ -24,6 +24,7 @@
 
 #include <BlockingCall.hpp>
 #include <Timer.hpp>
+#include <counted_ptr>
 
 namespace User {
 	void putc(char c);
@@ -59,7 +60,7 @@ namespace User {
 
 	protected:
 		u32 timeout;
-		TimerEventWakeup *event;
+		counted_ptr<TimerEventWakeup> event;
 	};
 }
 

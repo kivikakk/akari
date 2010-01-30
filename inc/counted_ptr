@@ -1,0 +1,102 @@
+// This file is part of Akari.
+// Copyright 2010 Arlen Cuss
+//
+// Akari is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Akari is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Akari.  If not, see <http://www.gnu.org/licenses/>.
+
+#ifndef __COUNTED_PTR
+#define __COUNTED_PTR
+
+// Adapted from the lovely code at:
+// http://ootips.org/yonat/4dev/counted_ptr.h
+// License at /yonat/4dev/:
+// "Feel free to use it."
+// Yonat has also communicated that s/he has pplaced them in the public domain
+// (I cannot work out if it is a male or female name!).
+
+template <typename X>
+class counted_ptr {
+public:
+	explicit counted_ptr(X *p=0): _ptr(p), _counter(new int(1)) {
+	}
+
+	~counted_ptr() {
+		release();
+	}
+
+	counted_ptr(const counted_ptr &r): _ptr(r._ptr), _counter(r._counter) {
+		++*_counter;
+	}
+
+	template <typename Y> friend class counted_ptr;
+
+	template <typename Y> counted_ptr(const counted_ptr<Y> &r): _ptr(r._ptr), _counter(r._counter) {
+		++*_counter;
+	}
+
+	counted_ptr &operator =(const counted_ptr &r) {
+		if (this != &r) {
+			release();
+			_ptr = r._ptr;
+			_counter = r._counter;
+			++*_counter;
+		}
+		return *this;
+	}
+
+	bool operator ==(const counted_ptr &r) const {
+		return r._ptr == _ptr;
+	}
+
+	bool operator ==(const X *ptr) const {
+		return _ptr == ptr;
+	}
+
+	operator bool() const {
+		return _ptr;
+	}
+
+	template <typename Y> counted_ptr &operator =(const counted_ptr<Y> &r) {
+		if (this != &r) {
+			release();
+			_ptr = r._ptr;
+			_counter = r._counter;
+			++*_counter;
+		}
+		return *this;
+	}
+
+	X &operator *() const { return *_ptr; }
+	X *operator->() const { return _ptr; }
+	X *get() const { return _ptr; }
+
+	bool unique() const {
+		return *_counter == 1;
+	}
+
+private:
+	X *_ptr;
+	int *_counter;
+
+	void release() {
+		if (--*_counter == 0) {
+			if (_ptr)
+				delete _ptr;
+			delete _counter;
+		}
+	}
+};
+
+#endif
+
+// vim: set filetype=cpp: 

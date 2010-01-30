@@ -20,6 +20,7 @@
 #include <Subsystem.hpp>
 #include <Tasks.hpp>
 #include <list>
+#include <counted_ptr>
 
 extern u32 AkariMicrokernelSwitches;
 
@@ -45,12 +46,12 @@ public:
 	void setTimer(u16);
 	void tick();
 
-	void at(TimerEvent *event);
-	void desched(TimerEvent *event);
+	void at(counted_ptr<TimerEvent> event);
+	void desched(const TimerEvent &event);
 
 protected:
 	u32 time_til_next;
-	std::list<TimerEvent *> events;
+	std::list< counted_ptr<TimerEvent> > events;
 };
 
 class TimerEventWakeup : public TimerEvent {
