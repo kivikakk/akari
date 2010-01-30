@@ -77,7 +77,16 @@ namespace std {
 			}
 
 			iterator &operator --() {
-				this->_data = this->_data->prev;
+				// XXX: I'm not sure if this is even tenable.
+				// _end doesn't exist, which is the whole problem.
+				// We don't have a pointer to our actual list. Hence
+				// if we're the end() iterator, _data is 0 and we
+				// basically are hanging out in the middle of nowhere.
+				// Do we want one?
+				if (this->_data)
+					this->_data = this->_data->prev;
+				else
+					this->_data = _end;
 				return *this;
 			}
 
@@ -95,7 +104,10 @@ namespace std {
 			}
 
 			reverse_iterator &operator --() {
-				this->_data = this->_data->next;
+				if (this->_data)
+					this->_data = this->_data->next;
+				else
+					this->_data = _begin;
 				return *this;
 			}
 
@@ -158,25 +170,58 @@ namespace std {
 		}
 		*/
 
-		T &push_back(const T &data) {
-			listNode **writeHead = &_begin, *lastNode = 0;
-			while (*writeHead) {
-				lastNode = *writeHead;
-				writeHead = &(*writeHead)->next;
+		iterator insert(iterator pos, const T &data) {
+			// amortised constant time
+			if (pos._data == 0) {
+				// End of list
+				push_back(data);
+				return iterator(_end);
+			}
+
+			if (pos._data->prev == 0) {
+				// Start of list
+				push_front(data);
+				return begin();
 			}
 
 			listNode *newNode = new listNode;
 			newNode->item = new T(data);
+			newNode->next = pos._data;
+			newNode->next->prev = newNode;
+			newNode->prev = pos._data->prev;
+			newNode->prev->next = newNode;
+
+			return iterator(newNode);
+		}
+
+		void push_front(const T &data) {
+			// amortised constant time
+			listNode *newNode = new listNode;
+			newNode->item = new T(data);
+			newNode->next = _begin;
+			newNode->prev = 0;
+
+			if (newNode->next)
+				newNode->next->prev = newNode;
+
+			_begin = newNode;
+		}
+
+		void push_back(const T &data) {
+			// amortised constant time
+			listNode *newNode = new listNode;
+			newNode->item = new T(data);
 			newNode->next = 0;
-			newNode->prev = lastNode;
+			newNode->prev = _end;
 
-			*writeHead = newNode;
+			if (newNode->prev)
+				newNode->prev->next = newNode;
+
 			_end = newNode;
-
-			return *newNode->item;
 		}
 
 		void pop_front() {
+			// amortised constant time
 			listNode *old = _begin;
 			_begin = _begin->next;
 			_begin->prev = 0;

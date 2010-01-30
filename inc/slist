@@ -103,7 +103,17 @@ namespace std {
 			return len;
 		}
 
-		T &push_back(const T &data) {
+		// iterator insert(iterator position, const T &x) {
+			// Not implemented because, due to lack of prev ptr,
+			// insert can make your program "disasterously slow"
+			// according to the STL ref. (needs to traverse up til
+			// here)
+			//   Use list instead, it does it in constant time
+			// since it can just step back in the list to slot in
+			// x.
+		// }
+
+		void push_back(const T &data) {
 			listNode **writeHead = &_begin;
 			while (*writeHead) {
 				writeHead = &(*writeHead)->next;
@@ -114,8 +124,6 @@ namespace std {
 			newNode->next = 0;
 
 			*writeHead = newNode;
-
-			return *newNode->item;
 		}
 
 		void pop_front() {
