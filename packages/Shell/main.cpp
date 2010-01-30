@@ -22,6 +22,8 @@
 
 #include "../VFS/VFSProto.hpp"
 
+void lobster();
+
 extern "C" int main() {
 	const char *cwd = "/";
 	
@@ -53,6 +55,8 @@ extern "C" int main() {
 
 			closedir(dirp);
 
+		} else if (line[0] == "lobster") {
+			lobster();
 		} else {
 			printf("%s: command not found\n", line[0].c_str());
 		}
@@ -83,5 +87,22 @@ extern "C" int main() {
 
 	panic("shell exited?");
 	return 1;
+}
+
+void lobster() {
+	printf(
+		"                         ,.---.\n"
+		"               ,,,,     /    _ `.\n"
+		"                \\\\\\\\   /      \\  )\n"
+		"                 |||| /\\/``-.__\\/\n"
+		"                 ::::/\\/_\n"
+		" {{`-.__.-'(`(^^(^^^(^ 0 `.========='\n"
+		"{{{{{{ { ( ( (  (   (-----:=\n"
+		" {{.-'~~'-.(,(,,(,,,(__0_.'=========.\n"
+		"                 ::::\\/\\ \n"
+		"                 |||| \\/\\  ,-'/\\\n"
+		"                ////   \\ `` _/  )\n"
+		"               ''''     \\  `   /\n"
+		"                         `---''\n");
 }
 
