@@ -23,6 +23,7 @@
 #if defined(__AKARI_KERNEL)
 
 #include <BlockingCall.hpp>
+#include <Timer.hpp>
 
 namespace User {
 	void putc(char c);
@@ -56,7 +57,8 @@ namespace User {
 		Symbol insttype() const;
 
 	protected:
-		u32 _timeout;
+		u32 timeout;
+		TimerEventWakeup *event;
 	};
 }
 

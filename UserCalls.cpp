@@ -43,26 +43,45 @@ namespace User {
 		return Akari->tasks->current->id;
 	}
 
-	IRQWaitCall::IRQWaitCall(u32 timeout): _timeout(timeout)
+	IRQWaitCall::IRQWaitCall(u32 timeout): timeout(timeout), event(0)
 	{ }
+
+	IRQWaitCall::~IRQWaitCall() {
+		if (event) {
+			Akari->timer->desched(event);
+			delete event;
+			event = 0;
+		}
+	}
 
 	u32 IRQWaitCall::operator ()() {
 		if (Akari->tasks->current->irqListenHits == 0) {
-			if (_timeout &&
+			if (timeout &&
 					AkariMicrokernelSwitches >=
-					(Akari->tasks->current->irqWaitStart + _timeout / 10)) {
+					(Akari->tasks->current->irqWaitStart + timeout / 10)) {
 				// XXX magic number: 1000ms per second, 100 ticks per second
 				// -> timeout ms/10 gives no. of ticks for timeout
+				// Should already be descheduled.
+				delete event;
+				event = 0;
+
 				_wontBlock();
 				return static_cast<u32>(false);
 			} else {
-				Akari->timer->at(new TimerEventWakeup(
-							Akari->tasks->current->irqWaitStart + _timeout / 10,
-							Akari->tasks->current));
+				event = new TimerEventWakeup(
+							Akari->tasks->current->irqWaitStart + timeout / 10,
+							Akari->tasks->current)
+				Akari->timer->at(event);
 
 				_willBlock();
 				return 0;
 			}
+		}
+
+		if (event) {
+			Akari->timer->desched(event);
+			delete event;
+			event = 0;
 		}
 
 		_wontBlock();
