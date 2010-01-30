@@ -70,7 +70,7 @@ namespace User {
 			} else {
 				event = new TimerEventWakeup(
 							Akari->tasks->current->irqWaitStart + timeout / 10,
-							Akari->tasks->current)
+							Akari->tasks->current);
 				Akari->timer->at(event);
 
 				_willBlock();
