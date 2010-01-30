@@ -49,6 +49,7 @@ extern "C" int main() {
 		shiftQueue(info);
 	}
 
+	bootstrap("/PCI");
 	bootstrap("/Kb");
 	bootstrap("/Shell");
 

@@ -14,15 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-include ../Makefile.inc
+TARGET = PCI
+COPYDEST = C:/PCI
 
-PACKAGES = ATA FAT VFS Booter PCI Kb Shell
-
-all: $(PACKAGES)
-
-$(PACKAGES): force_subdir
-	cd $@; $(MAKE) $(MFLAGS) all
-
-force_subdir:
-	@true
+include ../PackageMakefile.inc
 

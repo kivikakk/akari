@@ -43,6 +43,16 @@ namespace Process {
 		new_task->setIOMap(0x60, true);
 		new_task->setIOMap(0x64, true);
 
+		// HACK for PCI to work
+		new_task->setIOMap(0xCF8, true);
+		new_task->setIOMap(0xCF9, true);
+		new_task->setIOMap(0xCFA, true);
+		new_task->setIOMap(0xCFB, true);
+		new_task->setIOMap(0xCFC, true);
+		new_task->setIOMap(0xCFD, true);
+		new_task->setIOMap(0xCFE, true);
+		new_task->setIOMap(0xCFF, true);
+
 		return new_task->id;
 	}
 }
