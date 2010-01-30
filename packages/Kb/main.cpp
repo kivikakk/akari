@@ -159,9 +159,7 @@ extern "C" int main() {
 			}
 		}
 
-		while (!irqWaitTimeout(1000)) {
-			printf("[KbTimeout]");
-		}
+		irqWait();
 		scancode = AkariInB(0x60);
 	}
 
