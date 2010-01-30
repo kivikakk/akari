@@ -8,3 +8,7 @@ my_list(10): itemful 0, 1, 4, 2, 3, 3, 2, 4, 1, 0
 my_list(0): empty 
 my_list(2): itemful 1, 2
 my_list(0): empty 
+my_list(11): itemful 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
+my_list(10): itemful 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
+my_list(9): itemful 9, 8, 6, 5, 4, 3, 2, 1, 0
+my_list(7): itemful 9, 8, 6, 4, 3, 2, 1

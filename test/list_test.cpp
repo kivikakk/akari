@@ -68,4 +68,18 @@ int main() {
 	my_list.pop_front();
 	my_list.pop_front();
 	report();
+
+	for (int i = 10; i >= 0; i--)
+		my_list.push_back(i);
+	report();
+
+	my_list.erase(my_list.begin());
+	report();
+
+	my_list.erase(++++my_list.begin());
+	report();
+
+	my_list.remove(5);
+	my_list.remove(0);
+	report();
 }
