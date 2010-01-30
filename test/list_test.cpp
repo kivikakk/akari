@@ -82,4 +82,22 @@ int main() {
 	my_list.remove(5);
 	my_list.remove(0);
 	report();
+
+	my_list.erase(my_list.begin());
+	my_list.erase(my_list.begin());
+	my_list.erase(my_list.begin());
+	my_list.erase(my_list.begin());
+	my_list.erase(my_list.begin());
+	my_list.erase(my_list.begin());
+	my_list.erase(my_list.begin());
+	report();
+
+	my_list.push_back(2);
+	report();
+	my_list.push_front(0);
+	report();
+	my_list.erase(my_list.rbegin());
+	report();
+	my_list.erase(my_list.begin());
+	report();
 }
