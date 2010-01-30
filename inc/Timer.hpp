@@ -18,20 +18,47 @@
 #define __TIMER_HPP__
 
 #include <Subsystem.hpp>
+#include <Tasks.hpp>
+#include <list>
 
 extern u32 AkariMicrokernelSwitches;
 
+class TimerEvent {
+public:
+	TimerEvent(u32 at);
+	virtual ~TimerEvent();
+
+	virtual void operator()() = 0;
+
+	u32 at;
+};
+
 class Timer : public Subsystem {
-	public:
-		Timer();
+public:
+	Timer();
 
-		u8 versionMajor() const;
-		u8 versionMinor() const;
-		const char *versionManufacturer() const;
-		const char *versionProduct() const;
+	u8 versionMajor() const;
+	u8 versionMinor() const;
+	const char *versionManufacturer() const;
+	const char *versionProduct() const;
 
-		void setTimer(u16);
-		void tick();
+	void setTimer(u16);
+	void tick();
+
+	void at(TimerEvent *event);
+
+protected:
+	u32 time_til_next;
+	std::list<TimerEvent *> events;
+};
+
+class TimerEventWakeup : public TimerEvent {
+public:
+	TimerEventWakeup(u32 at, Tasks::Task *task);
+	void operator()();
+
+protected:
+	Tasks::Task *wakeup;
 };
 
 #endif

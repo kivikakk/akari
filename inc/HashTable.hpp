@@ -60,7 +60,8 @@ class HashTable {
 			add.key = key;
 			add.value = V();
 			
-			return items.push_back(add).value;
+			items.push_back(add);
+			return items.rbegin()->value;
 		}
 
 	protected:

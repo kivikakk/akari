@@ -19,6 +19,12 @@
 
 u32 AkariMicrokernelSwitches = 0;
 
+TimerEvent::TimerEvent(u32 at): at(at)
+{ }
+
+TimerEvent::~TimerEvent()
+{ }
+
 Timer::Timer()
 { }
 
@@ -36,5 +42,40 @@ void Timer::setTimer(u16 hz) {
 
 void Timer::tick() {
 	++AkariMicrokernelSwitches;
+	if (!--time_til_next && !events.empty()) {
+		// Run event
+	}
+}
+
+void Timer::at(TimerEvent *event) {
+	// I take a freshly, newly allocated object.
+	
+	bool was_empty = events.empty();
+	ASSERT(event->at > AkariMicrokernelSwitches);
+
+	for (std::list<TimerEvent *>::iterator it = events.begin(); it != events.end(); ++it) {
+		if (event->at < (*it)->at) {
+			std::list<TimerEvent *>::iterator new_it = events.insert(it, event);
+			if (new_it == events.begin()) {
+				time_til_next = event->at - AkariMicrokernelSwitches;
+			}
+			return;
+		}
+	}
+
+	// Got this far? Push it at the end.
+	events.push_back(event);
+	if (was_empty) {
+		time_til_next = event->at - AkariMicrokernelSwitches;
+	}
+}
+
+TimerEventWakeup::TimerEventWakeup(u32 at, Tasks::Task *task):
+	TimerEvent(at), wakeup(task)
+{ }
+
+void TimerEventWakeup::operator()() {
+	// XXX What if the task exited? :-/
+	wakeup->userWaiting = false;
 }
 

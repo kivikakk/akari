@@ -56,6 +56,10 @@ namespace User {
 				_wontBlock();
 				return static_cast<u32>(false);
 			} else {
+				Akari->timer->at(new TimerEventWakeup(
+							Akari->tasks->current->irqWaitStart + _timeout / 10,
+							Akari->tasks->current));
+
 				_willBlock();
 				return 0;
 			}
