@@ -39,8 +39,7 @@ static pid_t bootstrap(const char *filename) {
 }
 
 extern "C" int main() {
-	while (!vfs)
-		vfs = processIdByName("system.io.vfs");
+	vfs = processIdByNameBlock("system.io.vfs");
 
 	{
 		VFSOpAwaitRoot op = { VFS_OP_AWAIT_ROOT };

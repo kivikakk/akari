@@ -43,9 +43,7 @@ static u8 fat_type, fat32esque;
 static u32 root_cluster;
 
 extern "C" int main() {
-	// Find ATA
-	while (!ata)
-		ata = processIdByName("system.io.ata");
+	ata = processIdByNameBlock("system.io.ata");
 
 	// Initialize our important stuff
 	if (!init()) {

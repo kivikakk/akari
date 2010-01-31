@@ -85,8 +85,6 @@ extern "C" int main() {
 	bool capslock_down = false, numlock_down = false, scrolllock_down = false;
 	bool pressed_ctrl = false, pressed_alt = false, pressed_shift = false;
 
-	for (int i = 0; i < 1000000; ++i);
-
 	if (!registerName("system.io.keyboard"))
 		panic("could not register system.io.keyboard");
 

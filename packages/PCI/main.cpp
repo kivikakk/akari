@@ -25,7 +25,7 @@
 #include "main.hpp"
 
 bool init();
-u16 check_vendor(u16 bus, u16 slot);
+u16 check_vendor(u16 bus, u16 slot, u16 fn);
 
 extern "C" int main() {
 	if (!init()) {
@@ -41,7 +41,13 @@ extern "C" int main() {
 
 	for (u32 bus = 0; bus < 256; ++bus) {
 		for (u32 device = 0; device < 32; ++device) {
-			check_vendor(bus, device);
+			for (u32 fn = 0; fn < 8; ++fn) {
+				u16 cv = check_vendor(bus, device, fn);
+
+				if (fn == 0 && cv == 0xFFFF) {
+					break;
+				}
+			}
 		}
 	}
 
@@ -90,13 +96,13 @@ u16 read_config_word(u16 bus, u16 slot, u16 fn, u16 offset) {
 	return ((AkariInL(CONFIG_DATA) >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
-u16 check_vendor(u16 bus, u16 slot) {
-	u16 vendor = read_config_word(bus, slot, 0, 0);
+u16 check_vendor(u16 bus, u16 slot, u16 fn) {
+	u16 vendor = read_config_word(bus, slot, fn, 0);
 	u16 device;
 
 	if (vendor != 0xFFFF) {
-		device = read_config_word(bus, slot, 0, 2);
-		printf("%x/%x: vendor %x, device %x\n", bus, slot, vendor, device);
+		device = read_config_word(bus, slot, fn, 2);
+		printf("%x/%x/%x: vendor %x, device %x\n", bus, slot, fn, vendor, device);
 	}
 
 	return vendor;

@@ -31,15 +31,47 @@ namespace IPC {
 		return Akari->tasks->current->id;
 	}
 
+	class ProcessIdByNameCall : public BlockingCall {
+	public:
+		ProcessIdByNameCall(const char *name): name(name)
+		{ }
+
+		u32 operator()() {
+			if (!Akari->tasks->registeredTasks->hasKey(name)) {
+				_willBlock();
+				return 0;
+			}
+
+			return static_cast<u32>((*Akari->tasks->registeredTasks)[name]->id);
+		}
+
+		const Symbol &getName() const { return name; }
+
+		static Symbol type() { return Symbol("ProcessIdByNameCall"); }
+		Symbol insttype() const { return type(); }
+
+	protected:
+		Symbol name;
+	};
+
+	pid_t processIdByName_impl(const char *name, bool block) {
+		ProcessIdByNameCall c(name);
+		pid_t r = static_cast<pid_t>(c());
+		if (!block || !c.shallBlock())
+			return r;
+
+		Akari->tasks->current->userWaiting = true;
+		Akari->tasks->current->userCall = new ProcessIdByNameCall(c);
+		Akari->syscall->returnToNextTask();
+		return 0;
+	}
+
 	pid_t processIdByName(const char *name) {
-		Symbol sName(name);
+		return processIdByName_impl(name, false);
+	}
 
-		if (!Akari->tasks->registeredTasks->hasKey(sName))
-			return 0;
-
-		Tasks::Task *task = (*Akari->tasks->registeredTasks)[sName];
-		pid_t r = task->id;
-		return r;
+	pid_t processIdByNameBlock(const char *name) {
+		return processIdByName_impl(name, true);
 	}
 
 	bool registerName(const char *name) {
@@ -50,6 +82,14 @@ namespace IPC {
 
 		(*Akari->tasks->registeredTasks)[sName] = Akari->tasks->current;
 		Akari->tasks->current->registeredName = sName;
+
+		for (Tasks::Task *task = Akari->tasks->start; (task); task = task->next) {
+			if (task->userWaiting && task->userCall && task->userCall->insttype() == ProcessIdByNameCall::type()) {
+				if (static_cast<ProcessIdByNameCall *>(task->userCall)->getName() == sName)
+					task->userWaiting = false;
+			}
+		}
+
 		return true;
 	}
 
@@ -96,7 +136,7 @@ namespace IPC {
 		return _listener;
 	}
 
-	u32 ReadStreamCall::operator ()() {
+	u32 ReadStreamCall::operator()() {
 		if (_n == 0) {
 			_wontBlock();
 			return 0;

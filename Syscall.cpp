@@ -48,6 +48,7 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 
 	addSyscall(24, reinterpret_cast<void *>(&User::IPC::processId));
 	addSyscall(25, reinterpret_cast<void *>(&User::IPC::processIdByName));
+	addSyscall(39, reinterpret_cast<void *>(&User::IPC::processIdByNameBlock));
 	addSyscall(12, reinterpret_cast<void *>(&User::IPC::registerName));
 
 	addSyscall(13, reinterpret_cast<void *>(&User::IPC::registerStream));
