@@ -23,19 +23,16 @@ COPYDEST = a:/Akari
 
 ASMSRCS := $(wildcard *.s)
 CXXSRCS := $(wildcard *.cpp)
+CXXDEPS := $(patsubst %.cpp,obj/%.cpp.d,$(CXXSRCS))
 OBJS := $(patsubst %.s,obj/%.s.o,$(ASMSRCS)) $(patsubst %.cpp,obj/%.cpp.o,$(CXXSRCS))
 
-# Linkage target set in Makefile.inc, since packages need to know that too.
-LINKAGE_CXXSRCS := $(wildcard User*.cpp)
-LINKAGE_OBJS := $(patsubst %.cpp,obj/linkage/%.cpp.o,$(LINKAGE_CXXSRCS))
-
-all: clean $(TARGET)-copy
+all: $(TARGET)-copy
 
 $(TARGET)-copy: $(TARGET) menu.lst
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
 	$(MTOOLS_BIN)/mcopy -D o menu.lst a:/boot/grub/menu.lst
 
-$(TARGET): $(OBJS) $(LDFILE) user packages obj test
+$(TARGET): $(OBJS) $(LDFILE) user packages test
 	$(LD) $(LDOPTS) -T$(LDFILE) $(OBJS) -o $(TARGET)
 
 test: force_subdir
@@ -47,20 +44,22 @@ packages: force_subdir user
 user: force_subdir
 	cd user; $(MAKE) $(MFLAGS) all
 
-obj/%.s.o: %.s obj
+include $(CXXDEPS)
+
+obj/%.cpp.d: %.cpp
+	$(CXX) -M $(CXXOPTS) -D__AKARI_KERNEL -D__CPLUSPLUS $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+obj/%.s.o: %.s
 	$(AS) $(ASOPTS) -o $@ $<
-obj/%.cpp.o: %.cpp obj
+obj/%.cpp.o: %.cpp
 	$(CXX) $(CXXOPTS) -D__AKARI_KERNEL -D__CPLUSPLUS -c -o $@ $<
 
-obj:
-	if [ ! -e obj ]; then mkdir obj; fi
-
-obj/linkage: obj
-	if [ ! -e obj/linkage ]; then mkdir obj/linkage; fi
-
 clean:
-	@-rm $(TARGET) $(OBJS)
-	cd user; make clean
+	-rm $(TARGET) $(OBJS) $(CXXDEPS)
+	-cd user; make clean
+	-cd packages; make clean
 
 force_subdir:
 	@true

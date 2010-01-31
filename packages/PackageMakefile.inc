@@ -20,18 +20,26 @@ include ../../Makefile.inc
 
 ASMSRCS := $(wildcard *.s)
 CXXSRCS := $(wildcard *.cpp)
+CXXDEPS := $(patsubst %.cpp,obj/%.cpp.d,$(CXXSRCS))
 OBJS := $(patsubst %.s,obj/%.s.o,$(ASMSRCS)) $(patsubst %.cpp,obj/%.cpp.o,$(CXXSRCS))
 
 COPTS += -I../../inc -I../../user/inc
 CXXOPTS += -I../../inc -I../../user/inc
 
-all: clean $(TARGET)-copy
+all: $(TARGET)-copy
 
 $(TARGET)-copy: $(TARGET)
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
 
 $(TARGET): $(OBJS) ../../$(LINKAGE_TARGET) obj
 	$(LD) $(OBJS) ../../$(LINKAGE_TARGET) -o $(TARGET)
+
+include $(CXXDEPS)
+
+obj/%.cpp.d: %.cpp obj
+	$(CXX) -M $(CXXOPTS) -D__CPLUSPLUS $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
 
 obj/%.s.o: %.s obj
 	$(AS) $(ASOPTS) -o $@ $<
@@ -42,6 +50,6 @@ obj:
 	if [ ! -e obj ]; then mkdir obj; fi
 
 clean:
-	@-rm $(TARGET) $(OBJS)
+	-rm $(TARGET) $(OBJS) $(CXXDEPS)
 
 # vim: filetype=make:

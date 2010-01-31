@@ -26,3 +26,5 @@ $(PACKAGES): force_subdir
 force_subdir:
 	@true
 
+clean:
+	@for i in $(PACKAGES); do (cd $$i; make clean); done
