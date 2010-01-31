@@ -17,9 +17,9 @@
 #ifndef __ORDERED_ARRAY_HPP__
 #define __ORDERED_ARRAY_HPP__
 
-#include <POSIX.hpp>
 #include <arch.hpp>
 #include <debug.hpp>
+#include <string>
 
 template <typename T>
 class OrderedArray {
@@ -31,7 +31,7 @@ class OrderedArray {
 			ASSERT(maxSize);
 			ASSERT(lessThan);
 
-			POSIX::memset(_array, 0, maxSize * sizeof(T));
+			memset(_array, 0, maxSize * sizeof(T));
 		}
 
 		~OrderedArray() {

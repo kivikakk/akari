@@ -331,11 +331,11 @@ void Tasks::Task::Stream::Listener::append(const char *data, u32 n) {
 	if (!_buffer) {
 		_buflen = n;
 		_buffer = new char[n];
-		POSIX::memcpy(_buffer, data, n);
+		memcpy(_buffer, data, n);
 	} else {
 		char *newbuf = new char[_buflen + n];
-		POSIX::memcpy(newbuf, _buffer, _buflen);
-		POSIX::memcpy(newbuf + _buflen, data, n);
+		memcpy(newbuf, _buffer, _buflen);
+		memcpy(newbuf + _buflen, data, n);
 		delete [] _buffer;
 		_buffer = newbuf;
 		_buflen += n;
@@ -402,7 +402,7 @@ Tasks::Task::Queue::Item::Item(u32 id, u32 timestamp, pid_t from, u32 reply_to, 
 	info.data_len = data_len;
 
 	data = new char[data_len];
-	POSIX::memcpy(data, _data, data_len);
+	memcpy(data, _data, data_len);
 }
 
 Tasks::Task::Queue::Item::~Item() {
@@ -453,7 +453,7 @@ Tasks::Task::Queue::Item *Tasks::Task::Queue::itemById(u32 id) {
 	return 0;
 }
 
-Tasks::Task::Task(u8 cpl, const ASCIIString &name):
+Tasks::Task::Task(u8 cpl, const std::string &name):
 		next(0), priorityNext(0), irqListen(0), irqListenHits(0), irqWaitStart(0),
 		userWaiting(false), userCall(0),
 		id(0), name(name), registeredName(),

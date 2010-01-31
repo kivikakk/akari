@@ -71,7 +71,7 @@ void *isr_handler(struct modeswitch_registers *r) {
 		Akari->console->putString("\nProcess 0x");
 		Akari->console->putInt(Akari->tasks->current->id, 16);
 		Akari->console->putString(" \"");
-		Akari->console->putString(Akari->tasks->current->name.getCString());
+		Akari->console->putString(Akari->tasks->current->name.c_str());
 		Akari->console->putString("\" killed.\n");
 
 		// TODO OMG: refactor this code! It's terrible! Half-copied from

@@ -17,8 +17,6 @@
 #ifndef __VECTOR
 #define __VECTOR
 
-#include <UserCalls.hpp>
-
 namespace std {
 	template <typename T> class vector {
 	public:
@@ -26,7 +24,7 @@ namespace std {
 		{ }
 
 		vector(const vector &r): _capacity(r._capacity), _size(r._size) {
-			_array = reinterpret_cast<T *>(malloc(sizeof(T) * _capacity));
+			_array = reinterpret_cast<T *>(new u8[sizeof(T) * _capacity]);
 			for (u32 i = 0; i < _size; ++i)
 				new(&_array[i]) T(r._array[i]);
 		}
@@ -36,14 +34,14 @@ namespace std {
 				for (u32 i = 0; i < _size; ++i)
 					_array[i].~T();
 
-				free(_array);
+				delete [] reinterpret_cast<u8 *>(_array);
 			}
 		}
 
 		vector &operator =(const vector &r) {
 			_capacity = r._capacity;
 			_size = r._size;
-			_array = reinterpret_cast<T *>(malloc(sizeof(T) * _capacity));
+			_array = reinterpret_cast<T *>(new u8[sizeof(T) * _capacity]);
 			for (u32 i = 0; i < _size; ++i)
 				new(&_array[i]) T(r._array[i]);
 			return *this;
@@ -81,14 +79,14 @@ namespace std {
 			else
 				_capacity <<= 1;
 
-			T *_newarray = reinterpret_cast<T *>(malloc(sizeof(T) * _capacity));
+			T *_newarray = reinterpret_cast<T *>(new u8[sizeof(T) * _capacity]);
 
 			for (u32 i = 0; i < _size; ++i) {
 				new(&_newarray[i]) T(_array[i]);
 				_array[i].~T();
 			}
 
-			free(_array);
+			delete [] reinterpret_cast<u8 *>(_array);
 			_array = _newarray;
 		}
 

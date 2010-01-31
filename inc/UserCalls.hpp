@@ -40,13 +40,6 @@ namespace User {
 	void defer();
 	void *malloc(u32 n);
 	void free(void *p);
-	void *memcpy(void *dest, const void *src, u32 n);
-	char *strcpy(char *dest, const char *src);
-	s32 strcmp(const char *s1, const char *s2);
-	s32 stricmp(const char *s1, const char *s2);
-	u32 strlen(const char *s);
-	s32 strcmpn(const char *s1, const char *s2, u32 n);
-	s32 strpos(const char *haystack, const char *needle);
 
 	class IRQWaitCall : public BlockingCall {
 	public:
@@ -79,13 +72,6 @@ DEFN_SYSCALL0(sysexit, 7, void);
 DEFN_SYSCALL0(defer, 8, void);
 DEFN_SYSCALL1(malloc, 9, void *, u32);
 DEFN_SYSCALL1(free, 10, void, void *);
-DEFN_SYSCALL3(memcpy, 11, void *, void *, const void *, u32);
-DEFN_SYSCALL2(strcpy, 28, char *, char *, const char *);
-DEFN_SYSCALL2(strcmp, 29, s32, const char *, const char *);
-DEFN_SYSCALL2(stricmp, 30, s32, const char *, const char *);
-DEFN_SYSCALL1(strlen, 32, u32, const char *);
-DEFN_SYSCALL3(strcmpn, 33, s32, const char *, const char *, u32);
-DEFN_SYSCALL2(strpos, 34, s32, const char *, const char *);
 
 #else
 
@@ -102,13 +88,6 @@ DECL_SYSCALL0(sysexit, void);
 DECL_SYSCALL0(defer, void);
 DECL_SYSCALL1(malloc, void *, u32);
 DECL_SYSCALL1(free, void, void *);
-DECL_SYSCALL3(memcpy, void *, void *, const void *, u32);
-DECL_SYSCALL2(strcpy, char *, char *, const char *);
-DECL_SYSCALL2(strcmp, s32, const char *, const char *);
-DECL_SYSCALL2(stricmp, s32, const char *, const char *);
-DECL_SYSCALL1(strlen, u32, const char *);
-DECL_SYSCALL3(strcmpn, s32, const char *, const char *, u32);
-DECL_SYSCALL2(strpos, s32, const char *, const char *);
 
 #endif
 

@@ -18,7 +18,6 @@
 
 #if defined(__AKARI_KERNEL)
 #include <Akari.hpp>
-#include <POSIX.hpp>
 #include <Symbol.hpp>
 #include <debug.hpp>
 #include <Console.hpp>
@@ -160,40 +159,7 @@ namespace User {
 
 	void free(void *p) {
 		ASSERT(Akari->tasks->current->heap);
-		// TODO! :-)
-	}
-
-	void *memcpy(void *dest, const void *src, u32 n) {
-		char *w = static_cast<char *>(dest);
-		const char *r = static_cast<const char *>(src);
-
-		while (n--)
-			*w++ = *r++;
-		return dest;
-	}
-
-	char *strcpy(char *dest, const char *src) {
-		return POSIX::strcpy(dest, src);
-	}
-
-	s32 strcmp(const char *s1, const char *s2) {
-		return POSIX::strcmp(s1, s2);
-	}
-
-	s32 stricmp(const char *s1, const char *s2) {
-		return POSIX::stricmp(s1, s2);
-	}
-
-	u32 strlen(const char *s) {
-		return POSIX::strlen(s);
-	}
-	
-	s32 strcmpn(const char *s1, const char *s2, u32 n) {
-		return POSIX::strcmpn(s1, s2, n);
-	}
-
-	s32 strpos(const char *haystack, const char *needle) {
-		return POSIX::strpos(haystack, needle);
+		Akari->tasks->current->heap->free(p);
 	}
 }
 #endif

@@ -18,7 +18,6 @@
 #include <Console.hpp>
 #include <Descriptor.hpp>
 #include <Akari.hpp>
-#include <POSIX.hpp>
 #include <debug.hpp>
 #include <entry.hpp>
 #include <physmem.hpp>
@@ -67,7 +66,7 @@ void Memory::setPaging(bool mode) {
 
 	_frameCount = (0x100000 + _upperMemory * 1024) / 0x1000;
 	_frames = static_cast<u32 *>(alloc(INDEX_BIT(_frameCount) + 1));
-	POSIX::memset(_frames, 0, INDEX_BIT(_frameCount) + 1);
+	memset(_frames, 0, INDEX_BIT(_frameCount) + 1);
 
 	_kernelDirectory = PageDirectory::Allocate();
 
@@ -307,6 +306,10 @@ void *Memory::Heap::allocAligned(u32 n) {
 	return reinterpret_cast<void *>(dataStart);
 }
 
+void Memory::Heap::free(void *p) {
+	// TODO.
+}
+
 Memory::Heap::Entry::Entry(u32 start, u32 size, bool isHole):
 start(start), size(size), isHole(isHole)
 { }
@@ -384,7 +387,7 @@ void Memory::Page::allocFrame(u32 addr, bool kernel, bool writeable) {
 
 Memory::PageTable *Memory::PageTable::Allocate(u32 *phys) {
 	PageTable *table = static_cast<PageTable *>(Akari->memory->allocAligned(sizeof(PageTable), phys));
-	POSIX::memset(table, 0, sizeof(PageTable));
+	memset(table, 0, sizeof(PageTable));
 	return table;
 }
 
@@ -417,7 +420,7 @@ Memory::PageDirectory *Memory::PageDirectory::Allocate() {
 	u32 phys;
 
 	PageDirectory *dir = static_cast<PageDirectory *>(Akari->memory->allocAligned(sizeof(PageDirectory), &phys));
-	POSIX::memset(dir, 0, sizeof(PageDirectory));
+	memset(dir, 0, sizeof(PageDirectory));
 	u32 off = reinterpret_cast<u32>(dir->tablePhysicals) - reinterpret_cast<u32>(dir);
 	dir->physicalAddr = phys + off;						// check above
 

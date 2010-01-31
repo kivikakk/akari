@@ -56,7 +56,7 @@ typedef struct {
 std::slist<loaded_module_t> modules;
 static loaded_module_t *module_by_name(const char *name) {
 	for (std::slist<loaded_module_t>::iterator it = modules.begin(); it != modules.end(); ++it) {
-		if (POSIX::stricmp(name, it->name) == 0)
+		if (stricmp(name, it->name) == 0)
 			return &*it;
 	}
 	return 0;
@@ -88,12 +88,12 @@ void AkariEntry() {
 		u32 len = module_ptr->mod_end - module_ptr->mod_start;
 
 		loaded_module_t mod = {
-			POSIX::strdup(reinterpret_cast<const char *>(module_ptr->string)),
+			strdup(reinterpret_cast<const char *>(module_ptr->string)),
 			static_cast<char *>(Akari->memory->alloc(len)),
 			len
 		};
 
-		POSIX::memcpy(mod.module, reinterpret_cast<const void *>(module_ptr->mod_start), len);
+		memcpy(mod.module, reinterpret_cast<const void *>(module_ptr->mod_start), len);
 
 		modules.push_back(mod);
 		++module_ptr;

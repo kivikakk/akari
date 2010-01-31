@@ -18,7 +18,6 @@
 
 #if defined(__AKARI_KERNEL)
 #include <Akari.hpp>
-#include <POSIX.hpp>
 #include <Symbol.hpp>
 #include <debug.hpp>
 #include <Console.hpp>
@@ -149,7 +148,7 @@ namespace IPC {
 		}
 
 		if (len > _n) len = _n;
-		POSIX::memcpy(_buffer, _listener->view(), len);
+		memcpy(_buffer, _listener->view(), len);
 		_listener->cut(len);
 
 		_wontBlock();

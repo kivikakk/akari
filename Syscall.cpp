@@ -25,6 +25,7 @@
 Syscall::Syscall(): _syscalls_assigned(0) {
 	Akari->descriptor->idt->installHandler(0x80, &Syscall::_handler);
 
+	// TODO: renumber me someday. There are big holes.
 	addSyscall(0, reinterpret_cast<void *>(&User::putc));
 	addSyscall(1, reinterpret_cast<void *>(&User::puts));
 	addSyscall(2, reinterpret_cast<void *>(&User::putl));
@@ -34,17 +35,10 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(5, reinterpret_cast<void *>(&User::irqListen));
 	addSyscall(37, reinterpret_cast<void *>(&User::ticks));
 	addSyscall(6, reinterpret_cast<void *>(&User::panic));
-	addSyscall(7, reinterpret_cast<void *>(&User::sysexit));
+	addSyscall(7, reinterpret_cast<void *>(&User::sysexit));		// Don't change my number from 7 without changing entry.cpp.
 	addSyscall(8, reinterpret_cast<void *>(&User::defer));
 	addSyscall(9, reinterpret_cast<void *>(&User::malloc));
 	addSyscall(10, reinterpret_cast<void *>(&User::free));
-	addSyscall(11, reinterpret_cast<void *>(&User::memcpy));
-	addSyscall(28, reinterpret_cast<void *>(&User::strcpy));
-	addSyscall(29, reinterpret_cast<void *>(&User::strcmp));
-	addSyscall(30, reinterpret_cast<void *>(&User::stricmp));
-	addSyscall(32, reinterpret_cast<void *>(&User::strlen));
-	addSyscall(33, reinterpret_cast<void *>(&User::strcmpn));
-	addSyscall(34, reinterpret_cast<void *>(&User::strpos));
 
 	addSyscall(24, reinterpret_cast<void *>(&User::IPC::processId));
 	addSyscall(25, reinterpret_cast<void *>(&User::IPC::processIdByName));

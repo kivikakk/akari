@@ -15,8 +15,8 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Symbol.hpp>
-#include <POSIX.hpp>
 #include <Akari.hpp>
+#include <string>
 #include <Console.hpp>
 
 Symbol::Symbol(): _content(0)
@@ -24,13 +24,13 @@ Symbol::Symbol(): _content(0)
 
 // Every symbol has its own copy of the string.  Don't just use the pointer
 // assuming it won't change - it might be from userspace for all you know.
-Symbol::Symbol(const char *content): _content(POSIX::strdup(content))
+Symbol::Symbol(const char *content): _content(strdup(content))
 { }
 
 // Unfortunately we can't just use the other Symbol's pointer, even though we
 // know they have their own copy, because we don't know when it'll die, and I
 // don't want to do reference counting.
-Symbol::Symbol(const Symbol &symbol): _content(POSIX::strdup(symbol._content))
+Symbol::Symbol(const Symbol &symbol): _content(strdup(symbol._content))
 { }
 
 Symbol::~Symbol() {
@@ -41,7 +41,7 @@ Symbol::~Symbol() {
 Symbol &Symbol::operator =(const Symbol &symbol) {
 	if (_content)
 		delete [] _content;
-	_content = POSIX::strdup(symbol._content);
+	_content = strdup(symbol._content);
 	return *this;
 }
 
@@ -55,14 +55,14 @@ bool Symbol::operator ==(const Symbol &r) const {
 	if (!_content) return !r._content;
 	if (!r._content) return false;
 
-	return (POSIX::strcmp(_content, r._content) == 0);
+	return (strcmp(_content, r._content) == 0);
 }
 
 bool Symbol::operator !=(const Symbol &r) const {
 	if (!_content) return !!r._content;
 	if (!r._content) return true;
 
-	return (POSIX::strcmp(_content, r._content) != 0);
+	return (strcmp(_content, r._content) != 0);
 }
 
 const char *Symbol::c_str() const {

@@ -21,7 +21,7 @@
 #include <Memory.hpp>
 #include <interrupts.hpp>
 #include <HashTable.hpp>
-#include <Strings.hpp>
+#include <string>
 #include <list>
 #include <Symbol.hpp>
 #include <BlockingCall.hpp>
@@ -142,7 +142,7 @@ public:
 
 		// GUID and other identifying information.
 		pid_t id;
-		ASCIIString name;
+		std::string name;
 		Symbol registeredName;
 		
 		// Real task process data.
@@ -157,7 +157,7 @@ public:
 		Queue *replyQueue;
 
 	protected:
-		Task(u8 cpl, const ASCIIString &name);
+		Task(u8 cpl, const std::string &name);
 		~Task();
 	};
 

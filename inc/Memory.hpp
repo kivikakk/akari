@@ -54,6 +54,7 @@ public:
 
 		void *alloc(u32);
 		void *allocAligned(u32);
+		void free(void *);
 
 	protected:
 		class Entry {

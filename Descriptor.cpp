@@ -15,11 +15,12 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Descriptor.hpp>
+#include <UserCalls.hpp>
+#include <Memory.hpp>
 #include <Tasks.hpp>
 #include <Akari.hpp>
 #include <interrupts.hpp>
 #include <debug.hpp>
-#include <UserCalls.hpp>
 
 Descriptor::Descriptor(): gdt(0), idt(0), irqt(0) {
 	gdt = new GDT(10);
@@ -79,7 +80,7 @@ void Descriptor::GDT::writeTSS(s32 num, u16 ss0, u32 esp0) {
 	u32 base = reinterpret_cast<u32>(&_tssEntry);
 	u32 limit = base + sizeof(TSSEntry);
 
-	POSIX::memset(&_tssEntry, 0, sizeof(TSSEntry));
+	memset(&_tssEntry, 0, sizeof(TSSEntry));
 	
 	_tssEntry.ss0 = ss0; _tssEntry.esp0 = esp0;
 	_tssEntry.cs = 0x0b;	// 0x08 and 0x10 (kern code/data) + 0x3 (RPL ring 3)
@@ -118,7 +119,7 @@ void Descriptor::GDT::setTSSStack(u32 addr) {
 }
 
 void Descriptor::GDT::setTSSIOMap(u8 *const &iomap) {
-	POSIX::memcpy(_tssEntry.iomap, iomap, 8192);
+	memcpy(_tssEntry.iomap, iomap, 8192);
 }
 
 Descriptor::IDT::IDT() {

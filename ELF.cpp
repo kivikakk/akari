@@ -147,20 +147,20 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 					Akari->console->putInt(copy, 16);
 					Akari->console->putString("\n");
 #endif
-					POSIX::memset(dest, 0, copy);
+					memset(dest, 0, copy);
 				} else if (ph->p_filesz < ph->p_memsz) {
 					s32 file_left = static_cast<s32>(ph->p_filesz) - copied;
 					if (static_cast<s32>(copy) > file_left) {
 						if (file_left < 0) file_left = 0;
 						if (file_left) {
-							POSIX::memcpy(dest, (u8 *)(image + phys + copied), file_left);
+							memcpy(dest, (u8 *)(image + phys + copied), file_left);
 						}
-						POSIX::memset(dest + file_left, 0, copy - file_left);
+						memset(dest + file_left, 0, copy - file_left);
 					} else {
-						POSIX::memcpy(dest, (u8 *)(image + phys + copied), copy);
+						memcpy(dest, (u8 *)(image + phys + copied), copy);
 					}
 				} else if (ph->p_filesz == ph->p_memsz) {
-					POSIX::memcpy(dest, (u8 *)(image + phys + copied), copy);
+					memcpy(dest, (u8 *)(image + phys + copied), copy);
 				} else {
 					AkariPanic("ph->p_filesz is greater than ph->p_memsz!");
 				}

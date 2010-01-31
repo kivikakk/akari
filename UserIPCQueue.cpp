@@ -18,7 +18,6 @@
 
 #if defined(__AKARI_KERNEL)
 #include <Akari.hpp>
-#include <POSIX.hpp>
 #include <Symbol.hpp>
 #include <debug.hpp>
 #include <Syscall.hpp>
@@ -104,7 +103,7 @@ namespace IPC {
 		if (offset + len > item->info.data_len) len = item->info.data_len - offset;
 
 		// Sane offset and length. Off we go.
-		POSIX::memcpy(dest, item->data + offset, len);
+		memcpy(dest, item->data + offset, len);
 		return len;
 	}
 
