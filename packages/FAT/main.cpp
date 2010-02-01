@@ -159,6 +159,8 @@ bool init() {
 		return false;
 	}
 
+	UASSERT(!fat32esque);
+
 	if (!fat32esque) {
 		root_dir_sectors = ((boot_record.directory_entries * 32) + (boot_record.bytes_per_sector - 1)) / boot_record.bytes_per_sector;
 		fat_sectors = boot_record.sectors_per_fat;
