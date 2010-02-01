@@ -15,7 +15,7 @@
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 TARGET = VFS
-COPYDEST = A:/VFS
+COPYDEST = C:/VFS
 
 include ../PackageMakefile.inc
 

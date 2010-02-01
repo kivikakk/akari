@@ -1,3 +1,4 @@
+#!/bin/bash
 # This file is part of Akari.
 # Copyright 2010 Arlen Cuss
 # 
@@ -14,8 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-TARGET = Booter
-COPYDEST = C:/Booter
+cat <<EOF >crt0.c
+int _start() { }
+EOF
 
-include ../PackageMakefile.inc
+i386-elf-gcc -c crt0.c
+rm crt0.c
 
+echo "Now copy ./crt0.o to /opt/local/i386-elf/lib/"

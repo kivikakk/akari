@@ -15,7 +15,7 @@
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 TARGET = ATA
-COPYDEST = A:/ATA
+COPYDEST = C:/ATA
 
 include ../PackageMakefile.inc
 
