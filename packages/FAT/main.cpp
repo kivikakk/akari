@@ -55,9 +55,7 @@ extern "C" int main() {
 	if (!registerName("system.io.fs.fat"))
 		panic("FAT: could not register system.io.fs.fat");
 
-	// Find VFS
-	while (!vfs)
-		vfs = processIdByName("system.io.vfs");
+	vfs = processIdByNameBlock("system.io.vfs");
 
 	// Register with VFS
 	{
