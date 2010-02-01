@@ -28,6 +28,11 @@ pid_t vfs = 0;
 
 static pid_t bootstrap(const char *filename) {
 	FILE *prog = fopen(filename, "r");
+	if (!prog) {
+		printf("couldn't open %s\n");
+		panic("!prog");
+	}
+
 	u32 image_len = flen(prog);
 	u8 *image = new u8[image_len];
 	fread(image, image_len, 1, prog);
