@@ -20,7 +20,7 @@
 #include <Subsystem.hpp>
 #include <Memory.hpp>
 #include <interrupts.hpp>
-#include <HashTable.hpp>
+#include <map>
 #include <string>
 #include <list>
 #include <Symbol.hpp>
@@ -153,7 +153,7 @@ public:
 		u32 ks;
 		u8 iomap[8192];
 
-		HashTable<Symbol, Stream *> *streamsByName;
+		std::map<Symbol, Stream *> *streamsByName;
 		Queue *replyQueue;
 
 	protected:
@@ -170,7 +170,7 @@ public:
 
 	Task *start, *current;
 	Task *priorityStart;
-	HashTable<Symbol, Task *> *registeredTasks;
+	std::map<Symbol, Task *> registeredTasks;
 };
 
 #endif

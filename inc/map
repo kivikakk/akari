@@ -1,0 +1,117 @@
+// This file is part of Akari.
+// Copyright 2010 Arlen Cuss
+//
+// Akari is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Akari is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Akari.  If not, see <http://www.gnu.org/licenses/>.
+
+#ifndef __MAP
+#define __MAP
+
+#include <list>
+
+// TODO: we need to actually make a decent lookup mechanism for this. Currently very inefficient.
+
+namespace std {
+	template <typename K, typename V>
+	class map {
+	public:
+		map()
+		{ }
+
+		~map()
+		{ }
+
+		typedef struct {
+			const K first;
+			V second;
+		} pair;
+
+		class iterator {
+		friend class map;
+		public:
+			iterator()
+			{ }
+
+			bool operator ==(const iterator &r) const {
+				return it == r.it;
+			}
+
+			bool operator !=(const iterator &r) const {
+				return it != r.it;
+			}
+
+			pair &operator *() { return *it; }
+			const pair &operator *() const { return *it; }
+
+			pair *&operator ->() { return &*it; }
+			pair *const &operator ->() const { return &*it; }
+
+		protected:
+			iterator(typename std::list<pair>::iterator _it): it(_it)
+			{ }
+
+			typename std::list<pair>::iterator it;
+		};
+
+		iterator begin() {
+			return iterator(items.begin());
+		}
+
+		const iterator begin() const {
+			return iterator(items.begin());
+		}
+
+		iterator end() {
+			return iterator(items.end());
+		}
+
+		const iterator end() const {
+			return iterator(items.end());
+		}
+
+		iterator find(const K &first) const {
+			for (typename std::list<pair>::iterator it = items.begin(); it != items.end(); ++it) {
+				if (first == it->first)
+					return iterator(it);
+			}
+			return end();
+		}
+
+		const V &operator[](const K &first) const {
+			for (const typename std::list<pair>::iterator it = items.begin(); it != items.end(); ++it) {
+				if (first == it->first)
+					return it->second;
+			}
+			return V();
+		}
+
+		V &operator[](const K &first) {
+			for (typename std::list<pair>::iterator it = items.begin(); it != items.end(); ++it) {
+				if (first == it->first)
+					return it->second;
+			}
+
+			pair add = { first, V() };
+			
+			items.push_back(add);
+			return items.rbegin()->second;
+		}
+
+	protected:
+		std::list<pair> items;
+	};
+}
+
+#endif
+
+// vim: set filetype=cpp:

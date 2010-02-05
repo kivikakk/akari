@@ -20,9 +20,8 @@
 #include <Descriptor.hpp>
 #include <UserIPC.hpp>
 
-Tasks::Tasks(): start(0), current(0), priorityStart(0) {
-	registeredTasks = new HashTable<Symbol, Task *>();
-}
+Tasks::Tasks(): start(0), current(0), priorityStart(0)
+{ }
 
 u8 Tasks::versionMajor() const { return 0; }
 u8 Tasks::versionMinor() const { return 1; }
@@ -466,15 +465,17 @@ Tasks::Task::Task(u8 cpl, const std::string &name):
 	for (u16 i = 0; i < 8192; ++i)
 		iomap[i] = 0xFF;
 
-	streamsByName = new HashTable<Symbol, Stream *>();
+	streamsByName = new std::map<Symbol, Stream *>();
 	replyQueue = new Queue();
 }
 
 Tasks::Task::~Task() {
 	if (userCall) delete userCall;
 	// TODO: destroy pageDir? the actual space allocated within the heap?
-	// TODO: do we need to deallocate the Stream*s within streamsByName?
 	// TODO: what about payloads in replyQueue?
+	
+	// TODO: do we need to deallocate the Stream*s within streamsByName?
+	// Good chance we do.
 	delete streamsByName;
 	delete replyQueue;
 }

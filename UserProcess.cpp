@@ -21,6 +21,7 @@
 #include <debug.hpp>
 #include <Tasks.hpp>
 #include <ELF.hpp>
+#include <Akari.hpp>
 
 namespace User {
 namespace Process {

@@ -17,6 +17,7 @@
 #include <Timer.hpp>
 #include <arch.hpp>
 #include <algorithm>
+#include <Akari.hpp>
 
 u32 AkariMicrokernelSwitches = 0;
 

@@ -36,12 +36,12 @@ namespace IPC {
 		{ }
 
 		u32 operator()() {
-			if (!Akari->tasks->registeredTasks->hasKey(name)) {
+			if (Akari->tasks->registeredTasks.find(name) == Akari->tasks->registeredTasks.end()) {
 				_willBlock();
 				return 0;
 			}
 
-			return static_cast<u32>((*Akari->tasks->registeredTasks)[name]->id);
+			return static_cast<u32>(Akari->tasks->registeredTasks[name]->id);
 		}
 
 		const Symbol &getName() const { return name; }
@@ -76,10 +76,10 @@ namespace IPC {
 	bool registerName(const char *name) {
 		Symbol sName(name);
 
-		if (Akari->tasks->registeredTasks->hasKey(sName))
+		if (Akari->tasks->registeredTasks.find(sName) != Akari->tasks->registeredTasks.end())
 			return false;
 
-		(*Akari->tasks->registeredTasks)[sName] = Akari->tasks->current;
+		Akari->tasks->registeredTasks[sName] = Akari->tasks->current;
 		Akari->tasks->current->registeredName = sName;
 
 		for (Tasks::Task *task = Akari->tasks->start; (task); task = task->next) {
@@ -94,7 +94,7 @@ namespace IPC {
 
 	bool registerStream(const char *node) {
 		Symbol sNode(node);
-		if (Akari->tasks->current->streamsByName->hasKey(node)) {
+		if (Akari->tasks->current->streamsByName->find(node) != Akari->tasks->current->streamsByName->end()) {
 			AkariPanic("node already registered - cannot register atop it");
 		}
 
@@ -107,7 +107,7 @@ namespace IPC {
 	static inline Tasks::Task::Stream *getStream(pid_t id, const char *node) {
 		Symbol sNode(node);
 		Tasks::Task *task = Akari->tasks->getTaskById(id);
-		if (!task || !task->streamsByName->hasKey(sNode))
+		if (!task || (task->streamsByName->find(sNode) == task->streamsByName->end()))
 			return 0;
 
 		return (*task->streamsByName)[sNode];

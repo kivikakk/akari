@@ -17,7 +17,7 @@
 #include <ELF.hpp>
 #include <ELFInternal.hpp>
 #include <debug.hpp>
-#include <HashTable.hpp>
+#include <Akari.hpp>
 
 #define ELF_DEBUG false
 
