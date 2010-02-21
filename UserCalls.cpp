@@ -128,11 +128,14 @@ namespace User {
 	}
 
 	void panic(const char *s) {
-		// TODO: check permission. should be ring 1 or 0, but at least definitely not 3.
-		// even ring 1 tasks should be able to die and come back up. that's the point, right?
-		// so ring 1 tasks panicking should, like ring 3 ones, just be killed off. (and
-		// the idea is that the system notes this and fixes it. yep) (TODO!)
-		AkariPanic(s);
+		Akari->console->putString("Process 0x");
+		Akari->console->putInt(Akari->task->current, 16);
+		Akari->console->putString(" dieing (panic'd)\n");
+
+		// when exit becomes more complicated later we may have to do cleanup
+		// instead of just a sysexit, may not be ideal for a process that's
+		// dieing because it sucks.
+		sysexit();
 	}
 
 	void sysexit() {
