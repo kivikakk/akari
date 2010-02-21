@@ -129,7 +129,7 @@ namespace User {
 
 	void panic(const char *s) {
 		Akari->console->putString("Process 0x");
-		Akari->console->putInt(Akari->task->current, 16);
+		Akari->console->putInt(Akari->tasks->current->id, 16);
 		Akari->console->putString(" dieing (panic'd)\n");
 
 		// when exit becomes more complicated later we may have to do cleanup
