@@ -130,7 +130,16 @@ namespace User {
 	void panic(const char *s) {
 		Akari->console->putString("Process 0x");
 		Akari->console->putInt(Akari->tasks->current->id, 16);
-		Akari->console->putString(" dieing (panic'd)\n");
+		Akari->console->putString(" \"");
+		Akari->console->putString(Akari->tasks->current->name.c_str());
+		Akari->console->putString("\" ");
+		const char *rn = Akari->tasks->current->registeredName.c_str();
+		if (rn) {
+			Akari->console->putString("(:");
+			Akari->console->putString(rn);
+			Akari->console->putString(") ");
+		}
+		Akari->console->putString("dying (panic'd)\n");
 
 		// when exit becomes more complicated later we may have to do cleanup
 		// instead of just a sysexit, may not be ideal for a process that's
