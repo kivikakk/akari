@@ -21,17 +21,15 @@
 AkariPreboot:
 	cmp $0x2BADB002, %eax
 	jne .NoMultiboot
-	jmp .HasMultiboot
+
+	mov %ebx, _AkariMultiboot
+
+	jmp _AkariEntry
 
 .NoMultiboot:
 	pushl $AkariEntryNoMultibootMessage
 	call _AkariPanic
 	hlt
-
-.HasMultiboot:
-	mov %ebx, _AkariMultiboot
-
-	jmp _AkariEntry
 
 .section .data
 AkariEntryNoMultibootMessage:
