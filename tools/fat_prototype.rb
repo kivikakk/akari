@@ -17,11 +17,27 @@
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 class FAT
-  def initialize(image_io)
-	@io = image_io
+  def initialize(io, part_id)
+	@io, @part_id = io, part_id
+
 	@mbr = _mbr_of(_raw_read(0, 0, 512))
-	br = _fat_boot_record_of(_read(0, 0, 0, 0x24))
-	p br
+	@fbr = _fat_boot_record_of(_read(0, 0, 0x24))
+	ebr = _fat_ebr_of(_read(0, 0x24, 476))
+	ebr32 = _fat_ebr32_of(_read(0, 0x24, 476))
+	p @mbr
+	p _read(0, 0, 512)
+	p ebr
+	p ebr32
+	p @fbr
+
+	@fat_style =
+	  if @fbr[:total_sectors_small] > 0 and [0x28, 0x29].include?(ebr[:signature])
+		:fat
+	  elsif @fbr[:total_sectors_large] > 0 and [0x28, 0x29].include?(ebr32[:signature])
+		:fat32
+	  else
+		raise "Unknown FAT type"
+	  end
   end
 
 
@@ -43,10 +59,21 @@ class FAT
 	end
 
 	def _fat_boot_record_of(s)
-	  comp = [:oem_identifier, :bytes_per_sector, :sectors_per_cluster, :reserved_sectors, :fat_count,
-		:dirent_count, :sector_count_small, :media_descriptor, :sectors_per_fat, :sectors_per_track,
-		:media_sides, :hidden_sectors, :total_sectors_large].zip(s.unpack('x3Z8SCSCSSCSSSL'))
-	  Hash[*comp.flatten]
+	  Hash[*[:oem_identifier, :bytes_per_sector, :sectors_per_cluster, :reserved_sectors, :fats,
+		:directory_entries, :total_sectors_small, :media_descriptor, :sectors_per_fat, :sectors_per_track,
+		:media_sides, :hidden_sectors, :total_sectors_large].zip(s.unpack('x3Z8SCSCSSCSSSLL')).flatten]
+	end
+
+	def _fat_ebr_of(s)
+	  Hash[*[:drive_number, :nt_flags, :signature, :serial_number, :volume_label, :system_id].zip(
+		s.unpack('CCCLA11A8')).flatten]
+	end
+
+	def _fat_ebr32_of(s)
+	  p s[28...(28+26)]
+	  Hash[*[:fat_size, :flags, :fat_version_minor, :fat_version_major, :root_directory_cluster,
+		:fsinfo_cluster, :backup_boot_cluster].zip(s.unpack('LSCCLSS')).flatten].merge(
+		  _fat_ebr_of(s[28...(28+26)]))
 	end
 
 	def _raw_read(sector, offset, length)
@@ -54,10 +81,10 @@ class FAT
 	  @io.read length
 	end
 
-	def _read(partition_id, sector, offset, length)
-	  _raw_read(@mbr[partition_id][:begin_disk_sector] + sector, offset, length)
+	def _read(sector, offset, length)
+	  _raw_read(@mbr[@part_id][:begin_disk_sector] + sector, offset, length)
 	end
 end
 
-fat = FAT.new(File.open(ARGV[0], 'rb'))
+fat = FAT.new(File.open(ARGV[0], 'rb'), 0)
 

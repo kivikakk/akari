@@ -17,8 +17,6 @@
 #ifndef MAIN_HPP
 #define MAIN_HPP
 
-#define FAT_MAX_WILL_ALLOC 0x80000
-
 typedef struct fat_extended_boot_record
 {
 	u8 drive_number;
