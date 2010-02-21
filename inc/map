@@ -53,7 +53,7 @@ namespace std {
 			pair &operator *() { return *it; }
 			const pair &operator *() const { return *it; }
 
-			pair *&operator ->() { return &*it; }
+			pair *operator ->() { return &*it; }
 			pair *const &operator ->() const { return &*it; }
 
 		protected:

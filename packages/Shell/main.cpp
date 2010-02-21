@@ -60,29 +60,6 @@ extern "C" int main() {
 		} else {
 			printf("%s: command not found\n", line[0].c_str());
 		}
-
-				/*
-			char *name = new char[strlen(dirent->name) + 2];
-			*name = '/';
-			strcpy(name + 1, dirent->name);
-
-			FILE *file = fopen(name, "r");
-			printf("Shell:\tgot file handle for %s: %x\n", name, file);
-			printf("Shell:\tlen is %x\n", flen(file));
-
-			u8 *buf = new u8[flen(file) + 1];
-			fread(buf, flen(file), 1, file);
-			buf[flen(file)] = 0;
-
-			printf("%s\n", buf);
-
-			fclose(file);
-
-			delete [] getline();
-		}
-		closedir(dirp);
-
-		*/
 	}
 
 	panic("shell exited?");

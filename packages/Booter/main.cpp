@@ -29,7 +29,7 @@ pid_t vfs = 0;
 static pid_t bootstrap(const char *filename) {
 	FILE *prog = fopen(filename, "r");
 	if (!prog) {
-		printf("couldn't open %s\n");
+		printf("couldn't open %s\n", filename);
 		panic("!prog");
 	}
 

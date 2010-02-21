@@ -52,7 +52,8 @@ FILE *fopen(const char *filename, const char *mode) {
 	if (strcmp(mode, "r") != 0) panic("fs.cpp: don't know how to not read!");
 
 	VFSNode *node = resolve_path(filename);
-	if (!node) return 0;
+	if (!node)
+		return 0;
 
 	FILE *stream = new FILE;
 	stream->file = node;

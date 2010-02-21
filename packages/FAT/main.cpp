@@ -19,12 +19,14 @@
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
 #include <debug.hpp>
+#include <map>
 
 #include "main.hpp"
 #include "../VFS/VFSProto.hpp"
 #include "../ATA/ATAProto.hpp"
 
 bool init();
+u8 *fat_read_fat_cluster(u32 cluster);
 void fat_read_cluster(u32 cluster, u8 *buffer);
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer);
 u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer);
@@ -36,11 +38,12 @@ pid_t ata = 0, vfs = 0;
 u32 vfs_driver_no = 0;
 
 static fat_boot_record_t boot_record;
-static u8 *fat_data;
 
 static u32 root_dir_sectors, first_data_sector, first_fat_sector, data_sectors, total_clusters, fat_sectors;
 static u8 fat_type, fat32esque;
 static u32 root_cluster;
+
+static std::map<u32, u8 *> fat_clusters;
 
 extern "C" int main() {
 	ata = processIdByNameBlock("system.io.ata");
@@ -157,8 +160,6 @@ bool init() {
 		return false;
 	}
 
-	UASSERT(!fat32esque);
-
 	if (!fat32esque) {
 		root_dir_sectors = ((boot_record.directory_entries * 32) + (boot_record.bytes_per_sector - 1)) / boot_record.bytes_per_sector;
 		fat_sectors = boot_record.sectors_per_fat;
@@ -187,6 +188,7 @@ bool init() {
 		fat_type = 32;
 	}
 
+#define SHOW_FAT_INFORMATION
 	#ifdef SHOW_FAT_INFORMATION
 		printf("FAT: No. of FATs: 0x%x\n", boot_record.fats);
 		printf("FAT: Sectors per FAT: 0x%x\n", fat_sectors);
@@ -204,15 +206,30 @@ bool init() {
 		printf("FAT: Root cluster: 0x%x\n", root_cluster);
 	#endif
 
-	fat_data = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
-
-	partition_read_data(0, first_fat_sector, 0, boot_record.sectors_per_cluster * boot_record.bytes_per_sector, reinterpret_cast<u8 *>(fat_data));
+	fat_read_fat_cluster(0);
 
 	return true;
 }
 
+u8 *fat_read_fat_cluster(u32 cluster) {
+	std::map<u32, u8 *>::iterator it = fat_clusters.find(cluster);
+	if (it != fat_clusters.end())
+		return it->second;
+
+	u8 *cluster_data = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
+	partition_read_data(0, first_fat_sector + cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, cluster_data);
+
+	fat_clusters[cluster] = cluster_data;
+
+	return cluster_data;
+}
+
 void fat_read_cluster(u32 cluster, u8 *buffer) {
-	partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
+	if (!fat32esque) {
+		partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
+	} else {
+		partition_read_data(0, first_data_sector + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
+	}
 }
 
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer) {
@@ -262,11 +279,30 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 
 		if (length) {
 			// follow cluster
+			u32 bytes_per_cluster = boot_record.sectors_per_cluster * boot_record.bytes_per_sector;
+			u32 bytes_per_entry = fat32esque ? sizeof(u32) : sizeof(u16);
+			u32 entries_per_cluster = bytes_per_cluster / bytes_per_entry;
+			u32 relative_cluster = current_cluster / entries_per_cluster;
+			u32 cluster_index = current_cluster - relative_cluster * entries_per_cluster;
+
+			void *cluster = fat_read_fat_cluster(relative_cluster);
+
 			if (fat32esque) {
-				// u32 fat_entry = reinterpret_cast<u32 *>(fat_data)[current_cluster];
+				u32 fat_entry = reinterpret_cast<u32 *>(cluster)[cluster_index];
+				fat_entry &= 0x0FFFFFFF;
+
+				if (fat_entry == 0) panic("FAT: lead to a free cluster!");
+				else if (fat_entry == 1) panic("FAT: lead to a reserved cluster!");
+				else if (fat_entry >= 0x0FFFFFF0 && fat_entry <= 0x0FFFFFF7) panic("FAT: lead to an end-reserved cluster!");
+				else if (fat_entry >= 0x0FFFFFF8) {
+					// looks like end-of-file.
+					return copied;
+				} else {
+					current_cluster = fat_entry;
+				}
 			} else {
 				// FAT-16, so it's 16.
-				u16 fat_entry = reinterpret_cast<u16 *>(fat_data)[current_cluster];
+				u16 fat_entry = reinterpret_cast<u16 *>(cluster)[cluster_index];
 				if (fat_entry == 0) panic("FAT: lead to a free cluster!");
 				else if (fat_entry == 1) panic("FAT: lead to a reserved cluster!");
 				else if (fat_entry >= 0xFFF0 && fat_entry <= 0xFFF7) panic("FAT: lead to an end-reserved cluster!");
