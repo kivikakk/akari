@@ -17,6 +17,8 @@
 .text
 .code16
 
+.org 74
+
 movb $0x0e, %ah
 movb $0x00, %bh
 movb $0x07, %bl
@@ -24,6 +26,3 @@ movb $65, %al
 int $0x10
 jmp .
 
-#;.section bootheader
-.org 510
-.word 0xAA55
