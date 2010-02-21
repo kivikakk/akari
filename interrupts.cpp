@@ -66,7 +66,7 @@ void *isr_handler(struct modeswitch_registers *r) {
 		Akari->console->putInt(r->callback.cs, 16);
 		Akari->console->putString(", EFLAGS: ");
 		Akari->console->putInt(r->callback.eflags, 16);
-		Akari->console->putString(", user ESP (may be garbage): ");
+		Akari->console->putString(", user ESP: ");
 		Akari->console->putInt(r->useresp, 16);
 		Akari->console->putString("\nProcess 0x");
 		Akari->console->putInt(Akari->tasks->current->id, 16);
