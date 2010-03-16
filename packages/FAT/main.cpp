@@ -30,6 +30,7 @@ u8 *fat_read_fat_cluster(u32 cluster);
 void fat_read_cluster(u32 cluster, u8 *buffer);
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer);
 u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer);
+u32 fat_entry_for(u32 for_cluster);
 VFSDirent *fat_readdir(u32 inode, u32 index);
 VFSNode *fat_finddir(u32 inode, const char *name);
 static u8 *get_filename(const fat_dirent_t *fd);
@@ -259,60 +260,63 @@ void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8
 
 
 u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
-	// TODO: follow clusters while offset >= 2048
-	// TODO: figure out what the above TODO means
+	// TODO: follow clusters while offset >= bytes_per_sector * sectors_per_cluster
+	// i.e. if the offset is greater than a single cluster size, we'll just have to
+	// read clusters and decrement offset until we can actually get some data.
 	
 	u32 current_cluster = inode;
-	static u8 scratch[4097];
+	static u8 *scratch = 0;
+	static u32 scratch_len = 0;
 
-	// XXX We don't know node->length!
-	/*
-	if (length + offset > node->length) {
-		if (offset > node->length) return 0;
-		length = node->length - offset;
+	if (scratch && scratch_len < boot_record.bytes_per_sector * boot_record.sectors_per_cluster) {
+		delete [] scratch;
+		scratch = 0;
+		scratch_len = 0;
 	}
-	*/
 
-	printf("fat_read_data: inode %x, off %x, len %x\n", inode, offset, length);
+	if (!scratch) {
+		scratch = new u8[
+			(scratch_len =
+			 boot_record.bytes_per_sector * boot_record.sectors_per_cluster)];
+	}
 
-	u32 sorta_checksum = 0;
+	while (offset > boot_record.bytes_per_sector * boot_record.sectors_per_cluster) {
+		u32 fat_entry = fat_entry_for(current_cluster);
+		if (fat_entry == 0) panic("FAT: lead to a free cluster!");
+		else if (fat_entry == 1) panic("FAT: lead to a reserved cluster!");
+		else if (fat_entry >= 0x0FFFFFF0 && fat_entry <= 0x0FFFFFF7) panic("FAT: lead to an end-reserved cluster!");
+		else if (fat_entry >= 0x0FFFFFF8) {
+			// EOF
+			return 0;
+		} else {
+			current_cluster = fat_entry;
+			offset -= boot_record.bytes_per_sector * boot_record.sectors_per_cluster;
+		}
+	}
 
 	u32 copied = 0;
 	while (length > 0) {
 		fat_read_cluster(current_cluster, scratch);
-		sorta_checksum += scratch[0];
-		u16 copy_len = min(length, 4096 - offset);
+		u16 copy_len = min(length, boot_record.bytes_per_sector * boot_record.sectors_per_cluster - offset);
 		memcpy(buffer, scratch + offset, copy_len);
+		offset = 0;
 
 		buffer += copy_len; length -= copy_len; copied += copy_len;
 
 		if (length) {
-			// follow cluster
-			u32 bytes_per_cluster = boot_record.sectors_per_cluster * boot_record.bytes_per_sector;
-			u32 bytes_per_entry = fat32esque ? sizeof(u32) : sizeof(u16);
-			u32 entries_per_cluster = bytes_per_cluster / bytes_per_entry;
-			u32 relative_cluster = current_cluster / entries_per_cluster;
-			u32 cluster_index = current_cluster - relative_cluster * entries_per_cluster;
-
-			void *cluster = fat_read_fat_cluster(relative_cluster);
+			u32 fat_entry = fat_entry_for(current_cluster);
 
 			if (fat32esque) {
-				u32 fat_entry = reinterpret_cast<u32 *>(cluster)[cluster_index];
-				fat_entry &= 0x0FFFFFFF;
-
 				if (fat_entry == 0) panic("FAT: lead to a free cluster!");
 				else if (fat_entry == 1) panic("FAT: lead to a reserved cluster!");
 				else if (fat_entry >= 0x0FFFFFF0 && fat_entry <= 0x0FFFFFF7) panic("FAT: lead to an end-reserved cluster!");
 				else if (fat_entry >= 0x0FFFFFF8) {
 					// looks like end-of-file.
-					printf("EOF: sc %x\n", sorta_checksum);
 					return copied;
 				} else {
 					current_cluster = fat_entry;
 				}
 			} else {
-				// FAT-16, so it's 16.
-				u16 fat_entry = reinterpret_cast<u16 *>(cluster)[cluster_index];
 				if (fat_entry == 0) panic("FAT: lead to a free cluster!");
 				else if (fat_entry == 1) panic("FAT: lead to a reserved cluster!");
 				else if (fat_entry >= 0xFFF0 && fat_entry <= 0xFFF7) panic("FAT: lead to an end-reserved cluster!");
@@ -327,6 +331,26 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 	}
 
 	return copied;
+}
+
+u32 fat_entry_for(u32 for_cluster) {
+	// follow cluster
+	u32 bytes_per_cluster = boot_record.sectors_per_cluster * boot_record.bytes_per_sector;
+	u32 bytes_per_entry = fat32esque ? sizeof(u32) : sizeof(u16);
+	u32 entries_per_cluster = bytes_per_cluster / bytes_per_entry;
+	u32 relative_cluster = for_cluster / entries_per_cluster;
+	u32 cluster_index = for_cluster - relative_cluster * entries_per_cluster;
+
+	void *cluster = fat_read_fat_cluster(relative_cluster);
+
+	if (fat32esque) {
+		u32 fat_entry = reinterpret_cast<u32 *>(cluster)[cluster_index];
+		fat_entry &= 0x0FFFFFFF;
+		return fat_entry;
+	} else {
+		u16 fat_entry = reinterpret_cast<u16 *>(cluster)[cluster_index];
+		return fat_entry;
+	}
 }
 
 VFSDirent *fat_readdir(u32 inode, u32 index) {
