@@ -212,10 +212,11 @@ bool init() {
 }
 
 u8 *fat_read_fat_cluster(u32 cluster) {
-	printf("fat_read_fat_cluster\n");
 	std::map<u32, u8 *>::iterator it = fat_clusters.find(cluster);
 	if (it != fat_clusters.end())
 		return it->second;
+
+	printf("fat_read_fat_cluster (new %x)\n", cluster);
 
 	u8 *cluster_data = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
 	// ??
@@ -227,7 +228,7 @@ u8 *fat_read_fat_cluster(u32 cluster) {
 }
 
 void fat_read_cluster(u32 cluster, u8 *buffer) {
-	printf("fat_read_cluster: cluster %x\n", cluster);
+	// printf("fat_read_cluster: cluster %x\n", cluster);
 	if (!fat32esque) {
 		// partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
 	} else {
@@ -272,12 +273,15 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 	}
 	*/
 
-	printf("fat_read_data: inode %x\n", inode);
+	printf("fat_read_data: inode %x, off %x, len %x\n", inode, offset, length);
+
+	u32 sorta_checksum = 0;
 
 	u32 copied = 0;
 	while (length > 0) {
 		fat_read_cluster(current_cluster, scratch);
-		u16 copy_len = min(length, 2048 - offset);
+		sorta_checksum += scratch[0];
+		u16 copy_len = min(length, 4096 - offset);
 		memcpy(buffer, scratch + offset, copy_len);
 
 		buffer += copy_len; length -= copy_len; copied += copy_len;
@@ -301,6 +305,7 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 				else if (fat_entry >= 0x0FFFFFF0 && fat_entry <= 0x0FFFFFF7) panic("FAT: lead to an end-reserved cluster!");
 				else if (fat_entry >= 0x0FFFFFF8) {
 					// looks like end-of-file.
+					printf("EOF: sc %x\n", sorta_checksum);
 					return copied;
 				} else {
 					current_cluster = fat_entry;
