@@ -189,7 +189,6 @@ bool init() {
 		fat_type = 32;
 	}
 
-#define SHOW_FAT_INFORMATION
 	#ifdef SHOW_FAT_INFORMATION
 		printf("FAT: No. of FATs: 0x%x\n", boot_record.fats);
 		printf("FAT: Sectors per FAT: 0x%x\n", fat_sectors);
@@ -217,8 +216,6 @@ u8 *fat_read_fat_cluster(u32 cluster) {
 	if (it != fat_clusters.end())
 		return it->second;
 
-	printf("fat_read_fat_cluster (new %x)\n", cluster);
-
 	u8 *cluster_data = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
 	// ??
 	partition_read_data(0, first_fat_sector + cluster * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, cluster_data);
@@ -229,7 +226,6 @@ u8 *fat_read_fat_cluster(u32 cluster) {
 }
 
 void fat_read_cluster(u32 cluster, u8 *buffer) {
-	// printf("fat_read_cluster: cluster %x\n", cluster);
 	if (!fat32esque) {
 		// partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
 	} else {
@@ -260,10 +256,6 @@ void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8
 
 
 u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
-	// TODO: follow clusters while offset >= bytes_per_sector * sectors_per_cluster
-	// i.e. if the offset is greater than a single cluster size, we'll just have to
-	// read clusters and decrement offset until we can actually get some data.
-	
 	u32 current_cluster = inode;
 	static u8 *scratch = 0;
 	static u32 scratch_len = 0;
@@ -354,8 +346,6 @@ u32 fat_entry_for(u32 for_cluster) {
 }
 
 VFSDirent *fat_readdir(u32 inode, u32 index) {
-	printf("fat_readdir\n");
-
 	if (inode == 0) {
 		// root
 		u8 *cluster = new u8[512 * 1];
@@ -399,8 +389,6 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 }
 
 VFSNode *fat_finddir(u32 inode, const char *name) {
-	printf("fat_finddir\n");
-
 	if (inode == 0) {
 		// root
 		u8 *cluster = new u8[512 * 1];
