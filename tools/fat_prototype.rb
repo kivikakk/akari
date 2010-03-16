@@ -25,19 +25,37 @@ class FAT
 	ebr = _fat_ebr_of(_read(0, 0x24, 476))
 	ebr32 = _fat_ebr32_of(_read(0, 0x24, 476))
 	p @mbr
-	p _read(0, 0, 512)
-	p ebr
 	p ebr32
 	p @fbr
 
 	@fat_style =
 	  if @fbr[:total_sectors_small] > 0 and [0x28, 0x29].include?(ebr[:signature])
+		raise "FAT16 not handled"
+		@ebr = ebr
 		:fat
 	  elsif @fbr[:total_sectors_large] > 0 and [0x28, 0x29].include?(ebr32[:signature])
+		@ebr = ebr32
 		:fat32
 	  else
 		raise "Unknown FAT type"
 	  end
+
+	p (fat_sectors = @ebr[:fat_size])
+	p (first_data_sector = @fbr[:reserved_sectors] + fat_sectors * @fbr[:fats])
+	p (first_fat_sector = @fbr[:reserved_sectors])
+
+	p (root_cluster = @ebr[:root_directory_cluster])
+
+	puts "b/s"
+	p (bytes_per_cluster = @fbr[:bytes_per_sector] * @fbr[:sectors_per_cluster])
+
+	cluster_zero = _read(first_fat_sector, 0, bytes_per_cluster)
+	p first_fat_sector
+	p root_cluster
+	p first_data_sector
+	p _read(first_data_sector, 0, 512)
+
+	p @ebr[:fat_size]
   end
 
 

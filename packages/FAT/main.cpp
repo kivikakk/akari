@@ -39,7 +39,7 @@ u32 vfs_driver_no = 0;
 
 static fat_boot_record_t boot_record;
 
-static u32 root_dir_sectors, first_data_sector, first_fat_sector, data_sectors, total_clusters, fat_sectors;
+static u32 first_data_sector, first_fat_sector, fat_sectors;
 static u8 fat_type, fat32esque;
 static u32 root_cluster;
 
@@ -161,26 +161,26 @@ bool init() {
 	}
 
 	if (!fat32esque) {
-		root_dir_sectors = ((boot_record.directory_entries * 32) + (boot_record.bytes_per_sector - 1)) / boot_record.bytes_per_sector;
+		// root_dir_sectors = ((boot_record.directory_entries * 32) + (boot_record.bytes_per_sector - 1)) / boot_record.bytes_per_sector;
 		fat_sectors = boot_record.sectors_per_fat;
 		first_data_sector = boot_record.reserved_sectors + fat_sectors * boot_record.fats;
 		first_fat_sector = boot_record.reserved_sectors;
-		data_sectors = boot_record.total_sectors_small - (boot_record.reserved_sectors + (boot_record.fats * boot_record.sectors_per_fat) + root_dir_sectors);
-		total_clusters = data_sectors / boot_record.sectors_per_cluster;
+		// data_sectors = boot_record.total_sectors_small - (boot_record.reserved_sectors + (boot_record.fats * boot_record.sectors_per_fat) + root_dir_sectors);
+		// total_clusters = data_sectors / boot_record.sectors_per_cluster;
 
 		root_cluster = first_data_sector;
 
-		if (total_clusters < 4095)
-			fat_type = 12;
-		else if (total_clusters < 65525)
-			fat_type = 16;
-		else if (total_clusters == 0)
-			panic("FAT: we think it's not FAT32 yet the cluster count is 0.\n");
-		else
-			panic("FAT: we think it's not FAT32 yet the cluster count is 65525+.\n");
+		// if (total_clusters < 4095)
+			// fat_type = 12;
+		// else if (total_clusters < 65525)
+			// fat_type = 16;
+		// else if (total_clusters == 0)
+			// panic("FAT: we think it's not FAT32 yet the cluster count is 0.\n");
+		// else
+			// panic("FAT: we think it's not FAT32 yet the cluster count is 65525+.\n");
 	} else {
 		/* FAT32 */
-		fat_sectors = (boot_record.fat32_ebr.fat_size + (boot_record.bytes_per_sector - 1)) / boot_record.bytes_per_sector;
+		fat_sectors = boot_record.fat32_ebr.fat_size;
 		first_data_sector = boot_record.reserved_sectors + fat_sectors * boot_record.fats;
 		first_fat_sector = boot_record.reserved_sectors;
 
@@ -198,9 +198,9 @@ bool init() {
 		printf("FAT: First FAT sector: 0x%x\n", first_fat_sector);
 
 		if (!fat32esque) {
-			printf("FAT: Total data sectors: 0x%x\n", data_sectors);
-			printf("FAT: Total clusters: 0x%x\n", total_clusters);
-			printf("FAT: Root dir sectors: 0x%x\n", root_dir_sectors);
+			// printf("FAT: Total data sectors: 0x%x\n", data_sectors);
+			// printf("FAT: Total clusters: 0x%x\n", total_clusters);
+			// printf("FAT: Root dir sectors: 0x%x\n", root_dir_sectors);
 		}
 
 		printf("FAT: Root cluster: 0x%x\n", root_cluster);
@@ -212,12 +212,14 @@ bool init() {
 }
 
 u8 *fat_read_fat_cluster(u32 cluster) {
+	printf("fat_read_fat_cluster\n");
 	std::map<u32, u8 *>::iterator it = fat_clusters.find(cluster);
 	if (it != fat_clusters.end())
 		return it->second;
 
 	u8 *cluster_data = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
-	partition_read_data(0, first_fat_sector + cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, cluster_data);
+	// ??
+	partition_read_data(0, first_fat_sector + cluster * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, cluster_data);
 
 	fat_clusters[cluster] = cluster_data;
 
@@ -225,8 +227,9 @@ u8 *fat_read_fat_cluster(u32 cluster) {
 }
 
 void fat_read_cluster(u32 cluster, u8 *buffer) {
+	printf("fat_read_cluster: cluster %x\n", cluster);
 	if (!fat32esque) {
-		partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
+		// partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
 	} else {
 		partition_read_data(0, first_data_sector + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
 	}
@@ -259,7 +262,7 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 	// TODO: figure out what the above TODO means
 	
 	u32 current_cluster = inode;
-	static u8 scratch[2048];
+	static u8 scratch[4097];
 
 	// XXX We don't know node->length!
 	/*
@@ -268,6 +271,8 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 		length = node->length - offset;
 	}
 	*/
+
+	printf("fat_read_data: inode %x\n", inode);
 
 	u32 copied = 0;
 	while (length > 0) {
@@ -320,16 +325,17 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 }
 
 VFSDirent *fat_readdir(u32 inode, u32 index) {
+	printf("fat_readdir\n");
 
 	if (inode == 0) {
 		// root
-		u8 *cluster = new u8[512 * root_dir_sectors];
-		partition_read_data(0, root_cluster, 0, 512 * root_dir_sectors, cluster);
+		u8 *cluster = new u8[512 * 1];
+		partition_read_data(0, root_cluster, 0, 512 * 1, cluster);
 		
 		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
 
 		u32 current = 0;
-		for (u32 position = 0; position < (512 / 32) * root_dir_sectors; ++position, ++fd) {
+		for (u32 position = 0; position < (512 / 32) * 1; ++position, ++fd) {
 			if (fd->filename[0] == 0)
 				break;
 			else if (fd->filename[0] == 0xe5)
@@ -364,13 +370,15 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 }
 
 VFSNode *fat_finddir(u32 inode, const char *name) {
+	printf("fat_finddir\n");
+
 	if (inode == 0) {
 		// root
-		u8 *cluster = new u8[512 * root_dir_sectors];
-		partition_read_data(0, root_cluster, 0, 512 * root_dir_sectors, cluster);
+		u8 *cluster = new u8[512 * 1];
+		fat_read_cluster(root_cluster, cluster);
 
 		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
-		for (u32 position = 0; position < (512 / 32) * root_dir_sectors; ++position, ++fd) {
+		for (u32 position = 0; position < (512 / 32) * 1; ++position, ++fd) {
 			if (fd->filename[0] == 0)
 				break;
 			else if (fd->filename[0] == 0xe5)
