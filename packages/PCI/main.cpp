@@ -91,9 +91,13 @@ extern "C" int main() {
 }
 
 u16 read_config_word(u16 bus, u16 slot, u16 fn, u16 offset) {
-	pci_config_cycle pcc = { 0, offset & 0xFC, fn, slot, bus, 0, 1 };
+	pci_config_cycle pcc = { 0, (offset & 0xFC) >> 2, fn, slot, bus, 0, 1 };
 	AkariOutL(CONFIG_ADDRESS, *(reinterpret_cast<u32 *>(&pcc)));
 	return ((AkariInL(CONFIG_DATA) >> ((offset & 2) * 8)) & 0xFFFF);
+}
+
+u32 read_config_long(u16 bus, u16 slot, u16 fn, u16 offset) {
+	return read_config_word(bus, slot, fn, offset) | (read_config_word(bus, slot, fn, offset + 2) << 16);
 }
 
 u16 check_vendor(u16 bus, u16 slot, u16 fn) {
@@ -103,6 +107,18 @@ u16 check_vendor(u16 bus, u16 slot, u16 fn) {
 	if (vendor != 0xFFFF) {
 		device = read_config_word(bus, slot, fn, 2);
 		printf("%x/%x/%x: vendor %x, device %x\n", bus, slot, fn, vendor, device);
+
+		pci_device_regular pciinfo;
+		for (u32 i = 0; i < sizeof(pciinfo); i += 4) {
+			*(reinterpret_cast<u32 *>(&pciinfo) + (i / 4)) = read_config_long(bus, slot, fn, i);
+		}
+
+		// in the future we only really need to evaluate the entire config struct
+		// for devices we care about.
+
+		printf("\tbar0: %x, bar1: %x, bar2: %x, bar3: %x, bar4: %x, bar5: %x\n",
+				pciinfo.bar0, pciinfo.bar1, pciinfo.bar2,
+				pciinfo.bar3, pciinfo.bar4, pciinfo.bar5);
 	}
 
 	return vendor;

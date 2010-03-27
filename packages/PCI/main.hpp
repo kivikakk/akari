@@ -30,4 +30,19 @@ typedef struct {
 	unsigned enable : 1;
 } __attribute__((__packed__)) pci_config_cycle;
 
+typedef struct {
+	u16 vendor_id, device_id;
+	u16 command, status;
+	u8 revision_id, prog_if, subclass, class_code;
+	u8 cache_line_size, latency_timer, header_type, bist;
+	u32 bar0, bar1, bar2, bar3, bar4, bar5;
+	u32 cardbus_cis_ptr;
+	u16 subsystem_vendor_id, subsystem_id;
+	u32 expansion_rom_base_addr;
+	u8 capabilities_ptr;
+	unsigned reserved_0 : 24;
+	u32 reserved_1;
+	u8 interrupt_line, interrupt_pin, min_grant, max_latency;
+} __attribute__((__packed__)) pci_device_regular;
+
 #endif
