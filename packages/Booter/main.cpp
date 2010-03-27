@@ -22,8 +22,10 @@
 
 extern "C" int main() {
 	bootstrap("/PCI");
-	bootstrap("/Kb");
-	bootstrap("/Shell");
+	// We should really wait for PCI to finish?
+	
+	// bootstrap("/Kb");
+	// bootstrap("/Shell");
 
 	return 0;
 }
