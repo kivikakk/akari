@@ -18,6 +18,7 @@
 #include <UserIPC.hpp>
 #include <stdarg.hpp>
 #include <string>
+#include <stdio.hpp>
 
 static pid_t keyboard_pid = 0;
 static u32 keyboard_hook = -1;
@@ -56,35 +57,10 @@ void printf(const char *format, ...) {
 	va_list ap;
 	va_start(ap, format);
 
-	bool is_escape = false;
-	char c;
-	while ((c = *format++)) {
-		if (c == '%') {
-			if (!is_escape) {
-				is_escape = true;
-				continue;
-			} else {
-				putc(c);
-				is_escape = false;
-			}
-		} else if (is_escape) {
-			switch (c) {
-			case 's':
-				puts(va_arg(ap, const char *));
-				break;
-			case 'd':
-				putl(va_arg(ap, u32), 10);
-				break;
-			case 'x':
-				putl(va_arg(ap, u32), 16);
-				break;
-			}
-			is_escape = false;
-		} else {
-			putc(c);
-		}
-	}
+	char *ret;
+	vasprintf(&ret, format, ap);
+	puts(ret);
+	delete [] ret;
 
 	va_end(ap);
 }
-

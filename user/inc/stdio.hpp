@@ -18,6 +18,7 @@
 #define __STDIO_HPP
 
 #include <string>
+#include <stdarg.hpp>
 
 std::string getline();
 void printf(const char *format, ...);

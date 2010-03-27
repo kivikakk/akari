@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <string>
 #include <UserCalls.hpp>
+#include <string>
 
 std::string::string(): _str(0), _length(0)
 { }
@@ -55,6 +55,28 @@ bool std::string::operator ==(const char *c) const {
 	if (!c || *c == 0) return false;
 
 	return (strcmp(_str, c) == 0);
+}
+
+std::string &std::string::operator +=(const char *c) {
+	u32 rlen = strlen(c);
+	char *newstr = new char[_length + rlen + 1];
+	memcpy(newstr, _str, _length);
+	strcpy(newstr + _length, c);
+	_length += rlen;
+	delete [] _str;
+	_str = newstr;
+	return *this;
+}
+
+std::string &std::string::operator +=(char c) {
+	char *newstr = new char[_length + 1 + 1];
+	memcpy(newstr, _str, _length);
+	newstr[_length] = c;
+	newstr[_length + 1] = 0;
+	++_length;
+	delete [] _str;
+	_str = newstr;
+	return *this;
 }
 
 const char &std::string::operator[](u32 pos) const {
@@ -217,4 +239,46 @@ char *strdup(const char *src) {
 	char *result = new char[strlen(src) + 1];
 	strcpy(result, src);
 	return result;
+}
+
+int vasprintf(char **ret, const char *format, va_list ap) {
+	std::string s;
+
+	bool is_escape = false;
+	char c;
+	while ((c = *format++)) {
+		if (c == '%') {
+			if (!is_escape) {
+				is_escape = true;
+				continue;
+			} else {
+				s += c;
+				is_escape = false;
+			}
+		} else if (is_escape) {
+			switch (c) {
+			case 's': {
+				s += va_arg(ap, const char *);
+				break;
+			}
+			case 'd': {
+				u32 d = va_arg(ap, u32);
+				s += "<d>";
+				break;
+			}
+			case 'x': {
+				u32 x = va_arg(ap, u32);
+				s += "<x>";
+				break;
+			}
+			}
+
+			is_escape = false;
+		} else {
+			s += c;
+		}
+	}
+
+	*ret = strdup(s.c_str());
+	return s.length();
 }

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef __STDARG_HPP
-#define __STDARG_HPP
+#ifndef __STDARG_HPP__
+#define __STDARG_HPP__
 
 // This is probably GCC specific.
 
