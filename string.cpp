@@ -257,20 +257,40 @@ int vasprintf(char **ret, const char *format, va_list ap) {
 			}
 		} else if (is_escape) {
 			switch (c) {
-			case 's': {
-				s += va_arg(ap, const char *);
-				break;
-			}
-			case 'd': {
-				u32 d = va_arg(ap, u32);
-				s += "<d>";
-				break;
-			}
-			case 'x': {
-				u32 x = va_arg(ap, u32);
-				s += "<x>";
-				break;
-			}
+				case 's': {
+					s += va_arg(ap, const char *);
+					break;
+				}
+				case 'd':
+				case 'x': {
+					u32 n = va_arg(ap, u32);
+					u32 base = (c == 'd') ? 10 : 16;
+					u32 index = 1, digits = 1;
+					u32 separator = 0;
+
+					switch (base) {
+						case 10: separator = 3; break;
+						case 2: case 8: case 16: separator = 4; break;
+					}
+
+					while (n / index >= base)
+						index *= base, ++digits;
+
+					do {
+						u8 c = (n / index);
+						n -= static_cast<u32>(c) * index;
+
+						s += (c >= 0 && c <= 9) ? (c + '0') : (c - 10 + 'a');
+						index /= base;
+
+						--digits;
+
+						if (separator > 0 && digits % separator == 0 && index >= 1)
+							s += ',';
+					} while (index >= 1);
+
+					break;
+				}
 			}
 
 			is_escape = false;

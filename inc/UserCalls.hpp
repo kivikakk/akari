@@ -29,7 +29,6 @@
 namespace User {
 	void putc(char c);
 	void puts(const char *s);
-	void putl(u32 n, u8 base);
 	u32 getProcessId();
 	void irqWait();
 	bool irqWaitTimeout(u32 ms);
@@ -61,7 +60,6 @@ namespace User {
 
 DEFN_SYSCALL1(putc, 0, void, char);
 DEFN_SYSCALL1(puts, 1, void, const char *);
-DEFN_SYSCALL2(putl, 2, void, u32, u8);
 DEFN_SYSCALL0(getProcessId, 3, u32);
 DEFN_SYSCALL0(irqWait, 4, void);
 DEFN_SYSCALL1(irqWaitTimeout, 38, bool, u32);
@@ -77,7 +75,6 @@ DEFN_SYSCALL1(free, 10, void, void *);
 
 DECL_SYSCALL1(putc, void, char);
 DECL_SYSCALL1(puts, void, const char *);
-DECL_SYSCALL2(putl, void, u32, u8);
 DECL_SYSCALL0(getProcessId, u32);
 DECL_SYSCALL0(irqWait, void);
 DECL_SYSCALL1(irqWaitTimeout, bool, u32);

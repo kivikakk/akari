@@ -33,11 +33,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	const Elf32_Ehdr *hdr = reinterpret_cast<const Elf32_Ehdr *>(image);
 
 #if ELF_DEBUG
-	Akari->console->putString("image is at 0x");
-	Akari->console->putInt(reinterpret_cast<u32>(image), 16);
-	Akari->console->putString(", entry point apparently 0x");
-	Akari->console->putInt(hdr->e_entry, 16);
-	Akari->console->putString("\n");
+	Akari->console->putString("image is at 0x%x, entry point apparently 0x%x\n", reinterpret_cast<u32>(image), hdr->e_entry);
 #endif
 
 	if (hdr->e_ident[EI_MAG0] != 0x7f) return false;
@@ -72,11 +68,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	ASSERT(wand_page);
 
 #if ELF_DEBUG
-	Akari->console->putString("wppA was ");
-	Akari->console->putInt(wand_page->pageAddress, 16);
-	Akari->console->putString(", wp at ");
-	Akari->console->putInt((u32)wand_page, 16);
-	Akari->console->putString("\n");
+	Akari->console->printf("wppA was %x, wp at %x\n", wand_page->pageAddress, (u32)wand_page);
 #endif
 
 	// We can now twiddle wand_page->pageAddress to change where 'magic_wand' looks at.
@@ -87,13 +79,8 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 
 		if (ph->p_type == PT_LOAD) {
 #if ELF_DEBUG
-			Akari->console->putString("header at "); Akari->console->putInt(ph->p_offset, 16);
-			Akari->console->putString(" mapped to v/p "); Akari->console->putInt(ph->p_vaddr, 16);
-			Akari->console->putString("/"); Akari->console->putInt(ph->p_paddr, 16);
-			Akari->console->putString(" f/msz "); Akari->console->putInt(ph->p_filesz, 16);
-			Akari->console->putString("/"); Akari->console->putInt(ph->p_memsz, 16);
-			Akari->console->putString(" align "); Akari->console->putInt(ph->p_align, 16);
-			Akari->console->putChar('\n');
+			Akari->console->printf("header at %x mapped to v/p %x/%x f/msz %x/%x align %x\n",
+				ph->p_offset, ph->p_vaddr, ph->p_paddr, ph->p_filesz, ph->p_memsz, ph->p_align);
 #endif
 
 			unsigned long phys = ph->p_offset, virt = ph->p_vaddr, copied = 0;
@@ -104,8 +91,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 					copy = ph->p_memsz - copied;
 
 #if ELF_DEBUG
-				Akari->console->putString("\tvirt 0x");
-				Akari->console->putInt((virt + copied), 16);
+				Akari->console->printf("\tvirt 0x%x", virt + copied);
 #endif
 
 				Memory::Page *page = task->pageDir->getPage((virt + copied) & 0xfffff000, true);
@@ -116,36 +102,21 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 
 
 #if ELF_DEBUG
-				Akari->console->putString(" (wand ");
-				Akari->console->putInt(wand_page->pageAddress, 16);
-				Akari->console->putString(" ");
-				Akari->console->putInt(*((u8 *)magic_wand), 16);
+				Akari->console->printf(" (wand %x %x", wand_page->pageAddress, *((u8 *)magic_wand));
 #endif
 				wand_page->pageAddress = page->pageAddress;
 				__asm__ __volatile__("mov %%cr3, %%eax; mov %%eax, %%cr3" : : : "%eax");
 #if ELF_DEBUG
-				Akari->console->putString("->");
-				Akari->console->putInt(*((u8 *)magic_wand), 16);
-				Akari->console->putString(" ");
-				Akari->console->putInt(wand_page->pageAddress, 16);
-				Akari->console->putString(")");
-
-				Akari->console->putString(" len 0x");
-				Akari->console->putInt(copy, 16);
-				Akari->console->putString(" phys 0x");
-				Akari->console->putInt(page->pageAddress * 0x1000, 16);
-				Akari->console->putString(" off 0x");
-				Akari->console->putInt((virt + copied) % 0x1000, 16);
-				Akari->console->putString("\n");
+				Akari->console->printf("->%x %x) len 0x%x phys 0x%x off 0x%x\n",
+						*((u8 *)magic_wand), wand_page->pageAddress,
+						copy, page->pageAddress * 0x1000, (virt + copied) % 0x1000);
 #endif
 
 				u8 *dest = magic_wand + ((virt + copied) % 0x1000);
 
 				if (ph->p_filesz == 0) {
 #if ELF_DEBUG
-					Akari->console->putString("\nblanking ");
-					Akari->console->putInt(copy, 16);
-					Akari->console->putString("\n");
+					Akari->console->printf("\nblanking %x\n", copy);
 #endif
 					memset(dest, 0, copy);
 				} else if (ph->p_filesz < ph->p_memsz) {

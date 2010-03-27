@@ -56,23 +56,9 @@ void *isr_handler(struct modeswitch_registers *r) {
 		Akari->console->putString((r->callback.int_no < 32 && isr_messages[r->callback.int_no]) ? isr_messages[r->callback.int_no] : "[Intel reserved]");
 		Akari->console->putString(" exception occured!\n");
 
-		Akari->console->putString("EIP: ");
-		Akari->console->putInt(r->callback.eip, 16);
-		Akari->console->putString(", ESP: ");
-		Akari->console->putInt(r->callback.esp, 16);
-		Akari->console->putString(", EBP: ");
-		Akari->console->putInt(r->callback.ebp, 16);
-		Akari->console->putString(", CS: ");
-		Akari->console->putInt(r->callback.cs, 16);
-		Akari->console->putString(", EFLAGS: ");
-		Akari->console->putInt(r->callback.eflags, 16);
-		Akari->console->putString(", user ESP: ");
-		Akari->console->putInt(r->useresp, 16);
-		Akari->console->putString("\nProcess 0x");
-		Akari->console->putInt(Akari->tasks->current->id, 16);
-		Akari->console->putString(" \"");
-		Akari->console->putString(Akari->tasks->current->name.c_str());
-		Akari->console->putString("\" killed.\n");
+		Akari->console->printf("EIP: %x, ESP: %x, EBP: %x, CS: %x, EFLAGS: %x, useresp: %x\nProcess 0x%x \"%s\" killed.\n",
+			r->callback.eip, r->callback.esp, r->callback.ebp, r->callback.cs, r->callback.eflags, r->useresp,
+			Akari->tasks->current->id, Akari->tasks->current->name.c_str());
 
 		// TODO OMG: refactor this code! It's terrible! Half-copied from
 		// UserCalls.cpp and the surrounding architecture to skip a killed

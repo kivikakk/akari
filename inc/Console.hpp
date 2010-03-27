@@ -33,7 +33,7 @@ public:
 	void putChar(s8);
 	void putString(const char *);
 	void putStringN(const char *, u32);
-	void putInt(u32, u8);
+	void printf(const char *format, ...);
 
 protected:
 	u8 _cursorX, _cursorY;

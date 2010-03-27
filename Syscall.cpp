@@ -28,7 +28,6 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	// TODO: renumber me someday. There are big holes.
 	addSyscall(0, reinterpret_cast<void *>(&User::putc));
 	addSyscall(1, reinterpret_cast<void *>(&User::puts));
-	addSyscall(2, reinterpret_cast<void *>(&User::putl));
 	addSyscall(3, reinterpret_cast<void *>(&User::getProcessId));
 	addSyscall(4, reinterpret_cast<void *>(&User::irqWait));
 	addSyscall(38, reinterpret_cast<void *>(&User::irqWaitTimeout));

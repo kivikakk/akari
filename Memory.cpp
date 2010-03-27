@@ -166,9 +166,7 @@ void *Memory::PageFault(struct modeswitch_registers *r) {
 	if (reserved) 	Akari->console->putString(" * Clobbered reserved bits in page.\n");
 	if (insFetch) 	Akari->console->putString(" * On instruction fetch.\n");
 
-	Akari->console->putString("Address: 0x");
-	Akari->console->putInt(faultingAddress, 16);
-	Akari->console->putChar('\n');
+	Akari->console->printf("Address: 0x%x\n", faultingAddress);
 
 	// Return 0, which tells the interrupt handler to kill this process.
 	return 0;

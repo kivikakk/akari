@@ -16,6 +16,8 @@
 
 #include <Console.hpp>
 #include <debug.hpp>
+#include <stdarg.hpp>
+#include <string>
 
 #define SCREEN_VMEM	0xb8000
 #define PORT_CURSOR_IDX		0x3D4
@@ -64,35 +66,16 @@ void Console::putStringN(const char *s, u32 n) {
 		putChar(*s++), --n;
 }
 
-void Console::putInt(u32 n, u8 base) {
-	ASSERT(base >= 2 && base <= 36);
-	u32 index = 1, digits = 1;
+void Console::printf(const char *format, ...) {
+	va_list ap;
+	va_start(ap, format);
 
-	u32 separator = 0;
+	char *ret;
+	vasprintf(&ret, format, ap);
+	putString(ret);
+	delete [] ret;
 
-	switch (base) {
-	case 10: separator = 3; break;
-
-	case 2:
-	case 8: 
-	case 16: separator = 4; break;
-	}
-
-	while (n / index >= base)
-		index *= base, ++digits;
-
-	do {
-		u8 c = (n / index);
-		n -= static_cast<u32>(c) * index;
-
-		putChar( (c >= 0 && c <= 9) ? (c + '0') : (c - 10 + 'a') );
-		index /= base;
-
-		--digits;
-
-		if (separator > 0 && digits % separator == 0 && index >= 1)
-			putChar(',');
-	} while (index >= 1);
+	va_end(ap);
 }
 
 void Console::_scroll() {
@@ -138,4 +121,3 @@ void Console::_updateCursor() const {
 	AkariOutB(PORT_CURSOR_IDX, PORT_CURSOR_LSB_IDX);
 	AkariOutB(PORT_CURSOR_DATA, index & 0xFF);
 }
-

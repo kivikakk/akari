@@ -35,9 +35,6 @@ namespace User {
 		Akari->console->putString(s);
 	}
 
-	void putl(u32 n, u8 base) {
-		Akari->console->putInt(n, base);
-	}
 	u32 getProcessId() {
 		return Akari->tasks->current->id;
 	}
@@ -128,11 +125,7 @@ namespace User {
 	}
 
 	void panic(const char *s) {
-		Akari->console->putString("Process 0x");
-		Akari->console->putInt(Akari->tasks->current->id, 16);
-		Akari->console->putString(" \"");
-		Akari->console->putString(Akari->tasks->current->name.c_str());
-		Akari->console->putString("\" ");
+		Akari->console->printf("Process 0x%x \"%s\" ", Akari->tasks->current->id, Akari->tasks->current->name.c_str());
 		const char *rn = Akari->tasks->current->registeredName.c_str();
 		if (rn) {
 			Akari->console->putString("(:");
