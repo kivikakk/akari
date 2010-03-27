@@ -14,17 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <stdio.hpp>
-#include <fs.hpp>
-#include <UserCalls.hpp>
+#ifndef __PROC_HPP
+#define __PROC_HPP
+
 #include <arch.hpp>
-#include <proc.hpp>
 
-extern "C" int main() {
-	bootstrap("/PCI");
-	bootstrap("/Kb");
-	bootstrap("/Shell");
+pid_t bootstrap(const char *filename);
 
-	return 0;
-}
+#endif
 

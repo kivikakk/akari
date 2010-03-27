@@ -33,16 +33,25 @@ static void init() {
 		vfs = processIdByName("system.io.vfs");
 
 	if (!root) {
-		VFSOpRoot op = { VFS_OP_ROOT };
-		u32 msg = sendQueue(vfs, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpRoot));
-		struct queue_item_info *info = probeQueueFor(msg);
-		if (info->data_len == 0) {
-			printf("fs.cpp: no root!?\n");
-			panic("oh no!");
+		{
+			VFSOpAwaitRoot op = { VFS_OP_AWAIT_ROOT };
+			u32 msg_id = sendQueue(vfs, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpAwaitRoot));
+			struct queue_item_info *info = probeQueueFor(msg_id);
+			shiftQueue(info);
 		}
-		root = new VFSNode;
-		readQueue(info, reinterpret_cast<u8 *>(root), 0, info->data_len);
-		shiftQueue(info);
+
+		{
+			VFSOpRoot op = { VFS_OP_ROOT };
+			u32 msg = sendQueue(vfs, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpRoot));
+			struct queue_item_info *info = probeQueueFor(msg);
+			if (info->data_len == 0) {
+				printf("fs.cpp: no root!?\n");
+				panic("oh no!");
+			}
+			root = new VFSNode;
+			readQueue(info, reinterpret_cast<u8 *>(root), 0, info->data_len);
+			shiftQueue(info);
+		}
 	}
 }
 

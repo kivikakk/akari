@@ -14,17 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <proc.hpp>
 #include <stdio.hpp>
 #include <fs.hpp>
+#include <UserProcess.hpp>
 #include <UserCalls.hpp>
-#include <arch.hpp>
-#include <proc.hpp>
 
-extern "C" int main() {
-	bootstrap("/PCI");
-	bootstrap("/Kb");
-	bootstrap("/Shell");
+pid_t bootstrap(const char *filename) {
+	FILE *prog = fopen(filename, "r");
+	if (!prog) {
+		printf("couldn't open %s\n", filename);
+		panic("!prog");
+	}
 
-	return 0;
+	u32 image_len = flen(prog);
+	u8 *image = new u8[image_len];
+	fread(image, image_len, 1, prog);
+	fclose(prog);
+
+	pid_t pid = spawn(filename, image, image_len);
+	delete [] image;
+	return pid;
 }
 
