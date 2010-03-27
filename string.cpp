@@ -241,21 +241,39 @@ char *strdup(const char *src) {
 	return result;
 }
 
+char *rasprintf(const char *format, ...) {
+	va_list ap;
+	va_start(ap, format);
+	char *ret;
+	if (!vasprintf(&ret, format, ap)) {
+		return 0;
+	}
+	va_end(ap);
+	return ret;
+}
+
 int vasprintf(char **ret, const char *format, va_list ap) {
 	std::string s;
 
 	bool is_escape = false;
+	u32 lenmod = 0;
 	char c;
 	while ((c = *format++)) {
 		if (c == '%') {
 			if (!is_escape) {
 				is_escape = true;
+				lenmod = 0;
 				continue;
 			} else {
 				s += c;
 				is_escape = false;
 			}
 		} else if (is_escape) {
+			if (c >= '0' && c <= '9') {
+				lenmod = (lenmod * 10) + (c - '0');
+				continue;
+			}
+
 			switch (c) {
 				case 's': {
 					s += va_arg(ap, const char *);
@@ -265,6 +283,7 @@ int vasprintf(char **ret, const char *format, va_list ap) {
 				case 'x': {
 					u32 n = va_arg(ap, u32);
 					u32 base = (c == 'd') ? 10 : 16;
+
 					u32 index = 1, digits = 1;
 					u32 separator = 0;
 
@@ -273,7 +292,7 @@ int vasprintf(char **ret, const char *format, va_list ap) {
 						case 2: case 8: case 16: separator = 4; break;
 					}
 
-					while (n / index >= base)
+					while (n / index >= base || digits < lenmod)
 						index *= base, ++digits;
 
 					do {

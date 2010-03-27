@@ -15,7 +15,8 @@
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 TARGET = 80867010
-COPYDEST = C:/Drivers/80867010
+#COPYDEST = C:/Drivers/80867010
+COPYDEST = C:/80867010
 
 include ../PackageMakefile.inc
 

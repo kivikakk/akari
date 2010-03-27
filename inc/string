@@ -63,6 +63,7 @@ extern "C" char toupper(char c);
 extern "C" s32 stricmp(const char *s1, const char *s2);
 extern "C" char *strcpy(char *dest, const char *src);
 extern "C" char *strdup(const char *src);
+extern "C" char *rasprintf(const char *format, ...);
 extern "C" int vasprintf(char **ret, const char *format, va_list ap);
 
 #endif

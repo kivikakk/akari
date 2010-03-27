@@ -55,6 +55,13 @@ static void init() {
 	}
 }
 
+bool fexists(const char *filename) {
+	init();
+
+	VFSNode *node = resolve_path(filename);
+	return node;
+}
+
 FILE *fopen(const char *filename, const char *mode) {
 	init();
 
