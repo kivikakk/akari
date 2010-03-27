@@ -35,7 +35,7 @@ extern "C" int main() {
 
 	// Now we need to wait and listen for commands!
 	if (!registerName("system.bus.pci"))
-		panic("PCI: could not register system.bus.cpi");
+		panic("PCI: could not register system.bus.pci");
 
 	printf("[PCI]\n");
 
