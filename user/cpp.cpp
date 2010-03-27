@@ -44,9 +44,10 @@ extern "C" void exit(int status) {
 	sysexit();
 }
 
-extern "C" int main();
-extern "C" void start() {
-	exit(main());
+extern "C" int main(int argc, char **argv);
+
+extern "C" void start(int argc, char **argv) {
+	exit(main(argc, argv));
 }
 
 void *operator new(size_t n) {

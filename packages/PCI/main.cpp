@@ -21,6 +21,7 @@
 #include <debug.hpp>
 #include <cpp.hpp>
 #include <fs.hpp>
+#include <proc.hpp>
 
 #include "PCIProto.hpp"
 #include "main.hpp"
@@ -116,6 +117,8 @@ u16 check_vendor(u16 bus, u16 slot, u16 fn) {
 			for (u32 i = 0; i < sizeof(pciinfo); i += 4) {
 				*(reinterpret_cast<u32 *>(&pciinfo) + (i / 4)) = read_config_long(bus, slot, fn, i);
 			}
+
+			bootstrap(filename);
 
 			printf("\tbar0: %x, bar1: %x, bar2: %x, bar3: %x, bar4: %x, bar5: %x\n",
 					pciinfo.bar0, pciinfo.bar1, pciinfo.bar2,

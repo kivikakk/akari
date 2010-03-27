@@ -20,7 +20,7 @@
 extern "C" void __cxa_pure_virtual();
 extern "C" int __cxa_atexit(void (*func)(void *), void *arg, void *dso_handle);
 extern "C" void exit(int status);
-extern "C" void start();
+extern "C" void start(int argc, char **argv);
 void *operator new(size_t);
 void *operator new[](size_t);
 void *operator new(size_t, void *);
