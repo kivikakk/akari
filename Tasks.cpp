@@ -19,6 +19,7 @@
 #include <Akari.hpp>
 #include <Descriptor.hpp>
 #include <UserIPC.hpp>
+#include <physmem.hpp>
 
 Tasks::Tasks(): start(0), current(0), priorityStart(0)
 { }
@@ -192,7 +193,40 @@ Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pa
 	return nt;
 }
 
-Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase, const char *name) {
+static u32 load_task_argv(Tasks::Task *nt, const std::list<std::string> &args) {
+	u32 total_args_len = 0;
+	for (std::list<std::string>::iterator it = args.begin(); it != args.end(); ++it)
+		total_args_len += it->length() + 1;	// plus a NUL
+
+	u32 base = total_args_len + 4 * (args.size() + 4);
+
+	u32 start_phys;
+	u8 *start_page = static_cast<u8 *>(Akari->memory->allocAligned(0x1000, &start_phys));
+	*reinterpret_cast<u32 *>(start_page + 0x1000 - base) = 0xDEADBEEF;
+
+	*reinterpret_cast<u32 *>(start_page + 0x1000 - base + 4) = args.size();
+	*reinterpret_cast<u32 *>(start_page + 0x1000 - base + 8) = USER_TASK_BASE - base + 12; // char **argv
+
+	int arr_i = 0, str_i = 0;
+	for (std::list<std::string>::iterator it = args.begin(); it != args.end(); ++it) {
+		*reinterpret_cast<u32 *>(start_page + 0x1000 - base + 12 + (arr_i * 4)) =
+			USER_TASK_BASE - base + 12 + ((args.size() + 1) * 4) + str_i; // char *argv[arr_i]
+
+		strcpy(reinterpret_cast<char *>(start_page + 0x1000 - base + 12 + ((args.size() + 1) * 4) + str_i), it->c_str());
+		
+		++arr_i;
+		str_i += it->length() + 1;
+	}
+	*reinterpret_cast<u32 *>(start_page + 0x1000 - base + 12 + args.size() * 4) = 0;
+
+	AkariCopyFramePhysical(start_phys, nt->pageDir->getPage(USER_TASK_BASE - 0x1000, true)->pageAddress * 0x1000);
+
+	Akari->memory->free(start_page);
+
+	return base;
+}
+
+Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase, const char *name, const std::list<std::string> &args) {
 	Task *nt = new Task(cpl, name);
 
 	nt->pageDir = pageDirBase->clone();
@@ -206,11 +240,16 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 			nt->pageDir->getPage(page, true)->allocAnyFrame(false, true);
 		}
 
-		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE)) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE))
+			+ USER_TASK_KERNEL_STACK_SIZE
+			- sizeof(struct modeswitch_registers);
 		regs = reinterpret_cast<struct modeswitch_registers *>(nt->ks);
 
-		regs->useresp = USER_TASK_BASE;
+		u32 base = load_task_argv(nt, args);
+
+		regs->useresp = USER_TASK_BASE - base;		// argc, argv, and the EIP expected to be there(?)
 		regs->ss = 0x10 + (cpl * 0x11);		// same as ds: ss is set by TSS, ds is manually set by irq_timer_multitask after
+
 	} else {
 		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_STACK_SIZE)) + USER_TASK_STACK_SIZE;
 		nt->ks -= sizeof(struct callback_registers);

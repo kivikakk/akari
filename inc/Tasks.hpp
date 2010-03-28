@@ -121,7 +121,7 @@ public:
 		};
 
 		static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);
-		static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase, const char *name);
+		static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase, const char *name, const std::list<std::string> &args);
 
 		bool getIOMap(u16 port) const;
 		void setIOMap(u16 port, bool enabled);

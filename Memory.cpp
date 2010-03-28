@@ -26,13 +26,9 @@
 #define INDEX_BIT(n)	((n)/(8*4))
 #define OFFSET_BIT(n)	((n)%(8*4))
 
-// where in virtual memory will the kernel heap lie?
 #define KHEAP_START	0xC0000000
-// how big will it start at? (5MiB)
 #define KHEAP_INITIAL_SIZE	0x500000
-// how many elements can exist within the heap?
 #define HEAP_INDEX_SIZE		0x20000
-// minimum size of a heap
 #define HEAP_MIN_SIZE		0x500000
 
 Memory::Memory(u32 upperMemory):
@@ -186,6 +182,7 @@ void Memory::switchPageDirectory(PageDirectory *dir) {
 	.ljd:");
 
 	// XXX do we always necessarily want to use $8 with ljmp here?
+	// depends on the gdt we're using.
 }
 
 void Memory::setFrame(u32 addr) {
@@ -398,11 +395,11 @@ Memory::PageTable *Memory::PageTable::clone(u32 *phys) const {
 			continue;
 		t->pages[i].allocAnyFrame(false, false);
 
-		if (pages[i].present)	t->pages[i].present = true;
-		if (pages[i].readwrite)	t->pages[i].readwrite = true;
-		if (pages[i].user)		t->pages[i].user = true;
-		if (pages[i].accessed)	t->pages[i].accessed = true;
-		if (pages[i].dirty)		t->pages[i].dirty = true;
+		t->pages[i].present = pages[i].present;
+		t->pages[i].readwrite = pages[i].readwrite;
+		t->pages[i].user = pages[i].user;
+		t->pages[i].accessed = pages[i].accessed;
+		t->pages[i].dirty = pages[i].dirty;
 
 		// physically copy data over
 		ASSERT(t->pages[i].pageAddress);

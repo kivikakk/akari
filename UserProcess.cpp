@@ -32,7 +32,11 @@ namespace Process {
 	}
 
 	pid_t spawn(const char *name, const u8 *elf, u32 elf_len) {
-		Tasks::Task *new_task = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, name);
+		std::list<std::string> args;
+		args.push_back("/hello");
+		//args.push_back("world");
+
+		Tasks::Task *new_task = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, name, args);
 
 		Akari->elf->loadImageInto(new_task, elf);
 		

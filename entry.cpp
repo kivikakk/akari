@@ -128,12 +128,12 @@ static void AkariEntryCont() {
 	Akari->descriptor->gdt->setTSSIOMap(base->iomap);
 
 	// Idle task
-	Tasks::Task *idle = Tasks::Task::CreateTask(reinterpret_cast<u32>(&IdleProcess), 0, true, 0, Akari->memory->_kernelDirectory, "idle");
+	Tasks::Task *idle = Tasks::Task::CreateTask(reinterpret_cast<u32>(&IdleProcess), 0, true, 0, Akari->memory->_kernelDirectory, "idle", std::list<std::string>());
 	Akari->tasks->current->next = idle;
 
 	// ATA driver
 	// XXX: IOPL 3
-	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 3, Akari->memory->_kernelDirectory, "ata");
+	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 3, Akari->memory->_kernelDirectory, "ata", std::list<std::string>());
 	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
 	/* ata->setIOMap(0x1F7, true);
 	for (u16 j = 0; j < 8; ++j) {
@@ -145,17 +145,17 @@ static void AkariEntryCont() {
 	idle->next = ata;
 	
 	// FAT driver
-	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "fat");
+	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "fat", std::list<std::string>());
 	Akari->elf->loadImageInto(fat, reinterpret_cast<u8 *>(module_by_name("/fat")->module));
 	ata->next = fat;
 	
 	// VFS driver
-	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "vfs");
+	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "vfs", std::list<std::string>());
 	Akari->elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module_by_name("/vfs")->module));
 	fat->next = vfs;
 	
 	// Booter
-	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "booter");
+	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "booter", std::list<std::string>());
 	Akari->elf->loadImageInto(booter, reinterpret_cast<u8 *>(module_by_name("/booter")->module));
 	vfs->next = booter;
 	
