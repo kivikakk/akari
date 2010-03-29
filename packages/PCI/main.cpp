@@ -118,7 +118,13 @@ u16 check_vendor(u16 bus, u16 slot, u16 fn) {
 				*(reinterpret_cast<u32 *>(&pciinfo) + (i / 4)) = read_config_long(bus, slot, fn, i);
 			}
 
-			bootstrap(filename);
+			const char *x[] = {
+				"abc",
+				"def",
+				0
+			};
+
+			bootstrap(filename, x);
 
 			printf("\tbar0: %x, bar1: %x, bar2: %x, bar3: %x, bar4: %x, bar5: %x\n",
 					pciinfo.bar0, pciinfo.bar1, pciinfo.bar2,

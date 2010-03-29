@@ -31,7 +31,7 @@ namespace Process {
 		return 0;
 	}
 
-	pid_t spawn(const char *name, const u8 *elf, u32 elf_len, char **args) {
+	pid_t spawn(const char *name, const u8 *elf, u32 elf_len, const char **args) {
 		std::list<std::string> argl;
 
 		while (args && *args) 

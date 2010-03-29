@@ -20,7 +20,7 @@
 #include <UserProcess.hpp>
 #include <UserCalls.hpp>
 
-pid_t bootstrap(const char *filename) {
+pid_t bootstrap(const char *filename, const char **args) {
 	FILE *prog = fopen(filename, "r");
 	if (!prog) {
 		printf("couldn't open %s\n", filename);
@@ -32,7 +32,7 @@ pid_t bootstrap(const char *filename) {
 	fread(image, image_len, 1, prog);
 	fclose(prog);
 
-	pid_t pid = spawn(filename, image, image_len, 0);
+	pid_t pid = spawn(filename, image, image_len, args);
 	delete [] image;
 	return pid;
 }

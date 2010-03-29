@@ -21,7 +21,7 @@
 #include <proc.hpp>
 
 extern "C" int main() {
-	bootstrap("/PCI");
+	bootstrap("/PCI", 0);
 	// We should really wait for PCI to finish?
 	
 	// bootstrap("/Kb");

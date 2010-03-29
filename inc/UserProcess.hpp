@@ -25,19 +25,19 @@
 namespace User {
 namespace Process {
 	pid_t fork();
-	pid_t spawn(const char *name, const u8 *elf, u32 elf_len, char **args);
+	pid_t spawn(const char *name, const u8 *elf, u32 elf_len, const char **args);
 }
 }
 
 #elif defined(__AKARI_LINKAGE)
 
 DEFN_SYSCALL0(fork, 35, pid_t);
-DEFN_SYSCALL4(spawn, 36, pid_t, const char *, const u8 *, u32, char **);
+DEFN_SYSCALL4(spawn, 36, pid_t, const char *, const u8 *, u32, const char **);
 
 #else
 
 DECL_SYSCALL0(fork, pid_t);
-DECL_SYSCALL4(spawn, pid_t, const char *, const u8 *, u32, char **);
+DECL_SYSCALL4(spawn, pid_t, const char *, const u8 *, u32, const char **);
 
 #endif
 

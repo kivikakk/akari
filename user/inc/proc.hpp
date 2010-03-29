@@ -19,7 +19,7 @@
 
 #include <arch.hpp>
 
-pid_t bootstrap(const char *filename);
+pid_t bootstrap(const char *filename, const char **args);
 
 #endif
 
