@@ -32,7 +32,7 @@ pid_t bootstrap(const char *filename) {
 	fread(image, image_len, 1, prog);
 	fclose(prog);
 
-	pid_t pid = spawn(filename, image, image_len);
+	pid_t pid = spawn(filename, image, image_len, 0);
 	delete [] image;
 	return pid;
 }

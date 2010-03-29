@@ -31,12 +31,13 @@ namespace Process {
 		return 0;
 	}
 
-	pid_t spawn(const char *name, const u8 *elf, u32 elf_len) {
-		std::list<std::string> args;
-		args.push_back("/hello");
-		//args.push_back("world");
+	pid_t spawn(const char *name, const u8 *elf, u32 elf_len, char **args) {
+		std::list<std::string> argl;
 
-		Tasks::Task *new_task = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, name, args);
+		while (args && *args) 
+			argl.push_back(*args++);
+
+		Tasks::Task *new_task = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, name, argl);
 
 		Akari->elf->loadImageInto(new_task, elf);
 		
