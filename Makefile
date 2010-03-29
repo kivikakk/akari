@@ -35,6 +35,7 @@ $(TARGET)-copy: $(TARGET) menu.lst
 
 $(TARGET): $(OBJS) $(LDFILE) user packages test
 	$(LD) $(LDOPTS) -T$(LDFILE) $(OBJS) -o $(TARGET)
+	$(STRIP) $(TARGET)
 
 test: force_subdir
 	cd test; $(MAKE) $(MFLAGS) all

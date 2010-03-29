@@ -33,6 +33,7 @@ $(TARGET)-copy: $(TARGET)
 
 $(TARGET): $(OBJS) ../../$(LINKAGE_TARGET) obj
 	$(LD) $(OBJS) ../../$(LINKAGE_TARGET) -o $(TARGET)
+	$(STRIP) $(TARGET)
 
 include $(CXXDEPS)
 
