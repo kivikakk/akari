@@ -21,8 +21,6 @@
 
 typedef struct {
 	u8 cmd;
-	u16 vendor, device;
-	u16 bus; u8 slot, fn;
 } PCIOpDeviceConfig;
 
 #endif

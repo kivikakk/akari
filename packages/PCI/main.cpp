@@ -29,9 +29,9 @@
 #include "PCIProto.hpp"
 #include "main.hpp"
 
-#define VENDOR_DEVICE(vendor, device) (((u32)((u16)(vendor)) << 16) | (u16)(device))
-
-typedef u32 device_t;
+typedef struct {
+   u16 bus; u8 slot, fn;
+} device_t;
 typedef std::list<device_t> device_list_t;
 typedef std::map<pid_t, device_list_t> auth_map;
 static auth_map auths;
@@ -41,8 +41,8 @@ static u16 check_vendor(u16 bus, u8 slot, u8 fn);
 static void check_device(u16 bus, u8 slot, u8 fn, u16 vendor);
 static u16 read_config_word(u16 bus, u8 slot, u8 fn, u16 offset);
 static u32 read_config_long(u16 bus, u8 slot, u8 fn, u16 offset);
-static void add_auth(pid_t pid, u16 vendor, u16 device);
-static bool is_authed(pid_t pid, u16 vendor, u16 device);
+static void add_auth(pid_t pid, u16 bus, u8 slot, u8 fn);
+static device_list_t &authed(pid_t pid);
 
 extern "C" int main() {
 	if (!init()) {
@@ -62,19 +62,20 @@ extern "C" int main() {
 		shiftQueue(&info);
 
 		if (request[0] == PCI_OP_DEVICE_CONFIG) {
-			PCIOpDeviceConfig *op = reinterpret_cast<PCIOpDeviceConfig *>(request);
+			device_list_t &l = authed(info.from);
 
-			if (!is_authed(info.from, op->vendor, op->device)) {
-				printf("PCI: unauth'd request?\n");
-				sendQueue(info.from, info.id, 0, 0);
-			} else {
-				pci_device_regular pciinfo;
+			pci_device_regular pciinfo[l.size()];
+
+			u32 offset = 0;
+			for (device_list_t::iterator it = l.begin(); it != l.end(); ++it) {
 				for (u32 i = 0; i < sizeof(pciinfo); i += 4) {
-					*(reinterpret_cast<u32 *>(&pciinfo) + (i / 4)) = read_config_long(op->bus, op->slot, op->fn, i);
+					*reinterpret_cast<u32 *>(reinterpret_cast<u8 *>(&pciinfo) + i + offset) =
+						read_config_long(it->bus, it->slot, it->fn, i);
 				}
-
-				sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&pciinfo), sizeof(pciinfo));
+				offset += sizeof(pci_device_regular);
 			}
+
+			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&pciinfo), offset);
 		} else {
 			panic("PCI: confused");
 		}
@@ -115,31 +116,8 @@ void check_device(u16 bus, u8 slot, u8 fn, u16 vendor) {
 	char *filename = rasprintf("/%4x%4x", vendor, device);
 
 	if (fexists(filename)) {
-		// pci_device_regular pciinfo;
-		// for (u32 i = 0; i < sizeof(pciinfo); i += 4) {
-			// *(reinterpret_cast<u32 *>(&pciinfo) + (i / 4)) = read_config_long(bus, slot, fn, i);
-		// }
-		//
-		const char *x[] = {
-			filename,
-			rasprintf("%d", getProcessId()),
-			rasprintf("%d", bus),
-			rasprintf("%d", slot),
-			rasprintf("%d", fn),
-			0
-		};
-
-		pid_t r = bootstrap(filename, x);
-		add_auth(r, vendor, device);
-
-		delete [] x[0];
-		delete [] x[1];
-		delete [] x[2];
-		delete [] x[3];
-
-		// printf("\tbar0: %x, bar1: %x, bar2: %x, bar3: %x, bar4: %x, bar5: %x\n",
-				// pciinfo.bar0, pciinfo.bar1, pciinfo.bar2,
-				// pciinfo.bar3, pciinfo.bar4, pciinfo.bar5);
+		pid_t r = bootstrap(filename, 0);
+		add_auth(r, bus, slot, fn);
 	}
 
 	delete [] filename;
@@ -155,8 +133,9 @@ u32 read_config_long(u16 bus, u8 slot, u8 fn, u16 offset) {
 	return read_config_word(bus, slot, fn, offset) | (read_config_word(bus, slot, fn, offset + 2) << 16);
 }
 
-void add_auth(pid_t pid, u16 vendor, u16 device) {
-	u32 vendor_device = VENDOR_DEVICE(vendor, device);
+void add_auth(pid_t pid, u16 bus, u8 slot, u8 fn) {
+	device_t vendor_device = { bus, slot, fn };
+
 	auth_map::iterator it = auths.find(pid);
 	if (it == auths.end()) {
 		auths[pid] = device_list_t();
@@ -167,13 +146,13 @@ void add_auth(pid_t pid, u16 vendor, u16 device) {
 		it->second.push_back(vendor_device);
 }
 
-bool is_authed(pid_t pid, u16 vendor, u16 device) {
-	u32 vendor_device = VENDOR_DEVICE(vendor, device);
+device_list_t &authed(pid_t pid) {
 	auth_map::iterator it = auths.find(pid);
 	if (it == auths.end()) {
-		return false;
+		auths[pid] = device_list_t();
+		return auths[pid];
 	}
 
-	return std::find(it->second.begin(), it->second.end(), vendor_device) != it->second.end();
+	return it->second;
 }
 
