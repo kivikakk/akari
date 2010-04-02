@@ -36,7 +36,9 @@ protected:
 	void _willBlock();
 
 private:
-	bool _shallBlock;
+	enum {
+		UNSET, WILL, WONT
+	} _shallBlock;
 };
 
 #endif

@@ -17,11 +17,13 @@
 #include <BlockingCall.hpp>
 #include <debug.hpp>
 
-BlockingCall::BlockingCall(): _shallBlock(false) { }
+BlockingCall::BlockingCall(): _shallBlock(UNSET) { }
 BlockingCall::~BlockingCall() { }
 
 bool BlockingCall::shallBlock() const {
-	return _shallBlock;
+	if (_shallBlock == UNSET)
+		AkariPanic("_shallBlock UNSET");
+	return _shallBlock == WILL;
 }
 
 bool BlockingCall::unblockWith(u32 data) const {
@@ -30,10 +32,10 @@ bool BlockingCall::unblockWith(u32 data) const {
 }
 
 void BlockingCall::_wontBlock() {
-	_shallBlock = false;
+	_shallBlock = WONT;
 }
 
 void BlockingCall::_willBlock() {
-	_shallBlock = true;
+	_shallBlock = WILL;
 }
 
