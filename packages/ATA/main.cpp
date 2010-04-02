@@ -35,6 +35,8 @@ void ata_write_sectors(u32 start, u32 number, u8 *buffer);
 
 master_boot_record_t hdd_mbr;
 
+bool dma_enabled = false;
+
 extern "C" int main() {
 	int devices_found = reg_config();
 
@@ -80,6 +82,8 @@ extern "C" int main() {
 			ATAOpSetBAR4 *op = reinterpret_cast<ATAOpSetBAR4 *>(request);
 
 			pio_bmide_base_addr = reinterpret_cast<u8 *>(op->bar4);
+			dma_pci_config();
+			dma_enabled = true;
 
 			printf("ATA: bar4 set to %x", op->bar4);
 		} else {
@@ -129,7 +133,11 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 		number -= 256;
 	}
 
-	reg_pio_data_in_lba28(0, CMD_READ_SECTORS, 0, number, start, buffer, number, 0);
+	if (!dma_enabled) {
+		reg_pio_data_in_lba28(0, CMD_READ_SECTORS, 0, number, start, buffer, number, 0);
+	} else {
+		dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, buffer, number);
+	}
 }
 
 void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer) {
