@@ -88,11 +88,24 @@ static long tmr_cmd_start_time;     // command start time
 static void tmr_set_timeout();
 static int tmr_chk_timeout();
 
+#include <stdio.hpp>
+
 int SYSTEM_WAIT_INTR_OR_TIMEOUT() {
 	int ret = irqWaitTimeout(TMR_TIME_OUT * 1000) ? 0 : 1;
 	// Do we just do it here? Or is this meant for someone else to be doing?
 	// Oh well ...
-	int_ata_status = pio_inbyte(CB_STAT);
+	if (pio_bmide_base_addr) {
+		int_bmide_status = pio_readBusMstrStatus();
+
+		if (int_bmide_status & BM_SR_MASK_INT) {
+			int_ata_status = pio_inbyte(CB_STAT);
+			pio_writeBusMstrStatus(BM_SR_MASK_INT);
+		}
+
+		printf("hai %x %s\n", int_bmide_status, int_bmide_status & BM_SR_MASK_INT ? "y" : "n");
+	} else {
+		int_ata_status = pio_inbyte(CB_STAT);
+	}
 	return ret;
 }
 
@@ -1408,6 +1421,10 @@ static int exec_pci_ata_cmd(u8 dev, u8 *bufAddr, long numSect) {
    // the device and dma channel transfer the data here while we start
    // checking for command completion...
    // wait for the PCI BM Interrupt=1 (see ATAIOINT.C)...
+   if (SYSTEM_WAIT_INTR_OR_TIMEOUT()) {       // time out ?
+      reg_cmd_info.to = 1;
+      reg_cmd_info.ec = 73;
+   }
    if (SYSTEM_WAIT_INTR_OR_TIMEOUT()) {       // time out ?
       reg_cmd_info.to = 1;
       reg_cmd_info.ec = 73;
