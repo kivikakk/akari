@@ -29,9 +29,16 @@
 #include "PCIProto.hpp"
 #include "main.hpp"
 
-typedef struct {
-   u16 bus; u8 slot, fn;
-} device_t;
+#define DEVICE(bus, slot, fn) \
+	((u32)((u16)(bus)) << 16) | \
+	((u32)((u8)(slot)) << 8) | \
+	(u32)((u8)(fn))
+
+#define D_BUS(device)	(u16)((device) >> 16)
+#define D_SLOT(device)	(u8)((device) >> 8)
+#define D_FN(device)	(u8)(device)
+
+typedef u32 device_t;
 typedef std::list<device_t> device_list_t;
 typedef std::map<pid_t, device_list_t> auth_map;
 static auth_map auths;
@@ -45,12 +52,12 @@ static void add_auth(pid_t pid, u16 bus, u8 slot, u8 fn);
 static device_list_t &authed(pid_t pid);
 
 extern "C" int main() {
+	// XXX: registering name after causes death.
+
 	if (!init()) {
 		printf("PCI: failed init\n");
 		return 1;
 	}
-
-	// Now we need to wait and listen for commands!
 	if (!registerName("system.bus.pci"))
 		panic("PCI: could not register system.bus.pci");
 
@@ -70,7 +77,7 @@ extern "C" int main() {
 			for (device_list_t::iterator it = l.begin(); it != l.end(); ++it) {
 				for (u32 i = 0; i < sizeof(pciinfo); i += 4) {
 					*reinterpret_cast<u32 *>(reinterpret_cast<u8 *>(&pciinfo) + i + offset) =
-						read_config_long(it->bus, it->slot, it->fn, i);
+						read_config_long(D_BUS(*it), D_SLOT(*it), D_FN(*it), i);
 				}
 				offset += sizeof(pci_device_regular);
 			}
@@ -134,7 +141,7 @@ u32 read_config_long(u16 bus, u8 slot, u8 fn, u16 offset) {
 }
 
 void add_auth(pid_t pid, u16 bus, u8 slot, u8 fn) {
-	device_t vendor_device = { bus, slot, fn };
+	device_t vendor_device = DEVICE(bus, slot, fn);
 
 	auth_map::iterator it = auths.find(pid);
 	if (it == auths.end()) {

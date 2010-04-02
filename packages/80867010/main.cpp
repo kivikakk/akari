@@ -22,14 +22,14 @@
 #include <cpp.hpp>
 
 #include "main.hpp"
+#include "../PCI/PCIProto.hpp"
+
+pid_t pci = 0;
 
 extern "C" int main(int argc, char **argv) {
-	if (argc != 5)
-		panic("80867010: argc != 5");
+	pci = processIdByNameBlock("system.bus.pci");
 
-	printf("[80867010] argc %x\n", argc);
-	for (int i = 0; i < argc; ++i)
-		printf("[80867010] argv[%d]: \"%s\"\n", i, argv[i]);
+	printf("[80867010]\n");
 
 	return 0;
 }

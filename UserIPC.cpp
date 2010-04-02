@@ -41,6 +41,7 @@ namespace IPC {
 				return 0;
 			}
 
+			_wontBlock();
 			return static_cast<u32>(Akari->tasks->registeredTasks[name]->id);
 		}
 
