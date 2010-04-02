@@ -18,6 +18,7 @@
 
 #if defined(__AKARI_KERNEL)
 #include <Akari.hpp>
+#include <Console.hpp>
 #include <Symbol.hpp>
 #include <debug.hpp>
 #include <Syscall.hpp>

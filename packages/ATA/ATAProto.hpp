@@ -20,6 +20,7 @@
 #define ATA_OP_READ 		0x1
 #define ATA_OP_WRITE		0x2
 #define ATA_OP_MBR_READ		0x3
+#define ATA_OP_SET_BAR4		0x4
 
 typedef struct {
 	u8 cmd;
@@ -43,5 +44,10 @@ typedef struct {
 	u16 offset;
 	u32 length;
 } ATAOpMBRRead;
+
+typedef struct {
+	u8 cmd;
+	u32 bar4;
+} ATAOpSetBAR4;
 
 #endif

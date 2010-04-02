@@ -76,6 +76,12 @@ extern "C" int main() {
 			partition_read_data(op->partition_id, op->sector, op->offset, op->length, buffer);
 			sendQueue(info.from, info.id, buffer, op->length);
 			delete [] buffer;
+		} else if (request[0] == ATA_OP_SET_BAR4) {
+			ATAOpSetBAR4 *op = reinterpret_cast<ATAOpSetBAR4 *>(request);
+
+			pio_bmide_base_addr = reinterpret_cast<u8 *>(op->bar4);
+
+			printf("ATA: bar4 set to %x", op->bar4);
 		} else {
 			panic("ATA: confused");
 		}

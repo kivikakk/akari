@@ -20,14 +20,50 @@
 #include <UserIPCQueue.hpp>
 #include <debug.hpp>
 #include <cpp.hpp>
+#include <list>
 
 #include "main.hpp"
 #include "../PCI/PCIProto.hpp"
+#include "../ATA/ATAProto.hpp"
 
-pid_t pci = 0;
+pid_t pci = 0, ata = 0;
 
 extern "C" int main(int argc, char **argv) {
 	pci = processIdByNameBlock("system.bus.pci");
+
+	pci_device_regular *configs;
+
+	{
+		PCIOpDeviceConfig op = { PCI_OP_DEVICE_CONFIG };
+		u32 msg_id = sendQueue(pci, 0, reinterpret_cast<u8 *>(&op), sizeof(PCIOpDeviceConfig));
+
+		struct queue_item_info *info = probeQueueFor(msg_id);
+
+		printf("80867010: msg id %d, %d config(s) (%d bytes leftover)\n",
+				info->id,
+				info->data_len / sizeof(pci_device_regular),
+				info->data_len % sizeof(pci_device_regular));
+
+		if (!info->data_len || info->data_len % sizeof(pci_device_regular)) {
+			return 1;
+		}
+
+		if (info->data_len / sizeof(pci_device_regular) > 1) {
+			printf("80867010: dunno what to do with many?\n");
+			return 1;
+		}
+
+		configs = new pci_device_regular[info->data_len / sizeof(pci_device_regular)];
+		readQueue(info, reinterpret_cast<u8 *>(configs), 0, info->data_len);
+		shiftQueue(info);
+	}
+
+	ata = processIdByNameBlock("system.io.ata");
+	
+	{
+		ATAOpSetBAR4 op = { ATA_OP_SET_BAR4, configs[0].bar4 & ~3 };
+		sendQueue(ata, 0, reinterpret_cast<u8 *>(&op), sizeof(ATAOpSetBAR4));
+	}
 
 	printf("[80867010]\n");
 

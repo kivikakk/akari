@@ -37,7 +37,7 @@ struct REG_CMD_INFO reg_cmd_info;
 
 int reg_config_info[2];
 
-u8 *pio_bmide_base_addr = PIO_BMIDE_BASE_ADDR;
+u8 *pio_bmide_base_addr = 0;
 
 u8 *pio_reg_addrs[9] = {
    PIO_BASE_ADDR1 + 0,  // [0] CB_DATA
@@ -1332,8 +1332,10 @@ static int set_up_xfer(int dir, s32 bc, u8 *bufAddr) {
    // write into BMIDE PRD address registers.
 
    dma_pci_num_prd = numPrd;
-   *(u32 *)(pio_bmide_base_addr + BM_PRD_ADDR_LOW)
-      = (u32) prdBufPtr;
+   // *(u32 *)(pio_bmide_base_addr + BM_PRD_ADDR_LOW)
+      // = (u32) prdBufPtr;
+   AkariOutL(reinterpret_cast<u32>(pio_bmide_base_addr) + BM_PRD_ADDR_LOW,
+		   reinterpret_cast<u32>(prdBufPtr));
 
    // set the read/write control:
    // PCI reads for ATA Write DMA commands,
@@ -1900,31 +1902,27 @@ static void sub_wait_poll(u8 we, u8 pe) {
 //***********************************************************
 
 static u8 pio_readBusMstrCmd() {
-   u8 x;
    if (!pio_bmide_base_addr)
       return 0;
-   x = *(pio_bmide_base_addr + BM_COMMAND_REG);
-   return x;
+   return AkariInB(reinterpret_cast<u32>(pio_bmide_base_addr) + BM_COMMAND_REG);
 }
 
 static u8 pio_readBusMstrStatus() {
-   u8 x;
    if (!pio_bmide_base_addr)
       return 0;
-   x = *(pio_bmide_base_addr + BM_STATUS_REG);
-   return x;
+   return AkariInB(reinterpret_cast<u32>(pio_bmide_base_addr) + BM_STATUS_REG);
 }
 
 static void pio_writeBusMstrCmd(u8 x) { 
    if (!pio_bmide_base_addr)
       return;
-   *(pio_bmide_base_addr + BM_COMMAND_REG) = x;
+   AkariOutB(reinterpret_cast<u32>(pio_bmide_base_addr) + BM_COMMAND_REG, x);
 }
 
 static void pio_writeBusMstrStatus(u8 x) {
    if (!pio_bmide_base_addr)
       return;
-   *(pio_bmide_base_addr + BM_STATUS_REG) = x;
+   AkariOutB(reinterpret_cast<u32>(pio_bmide_base_addr) + BM_STATUS_REG, x);
 }
 
 //*************************************************************
