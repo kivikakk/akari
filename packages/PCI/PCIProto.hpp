@@ -17,33 +17,12 @@
 #ifndef PCI_PROTO_HPP
 #define PCI_PROTO_HPP
 
-/*
-#define ATA_OP_READ 		0x1
-#define ATA_OP_WRITE		0x2
-#define ATA_OP_MBR_READ		0x3
+#define PCI_OP_DEVICE_CONFIG 		0x1
 
 typedef struct {
 	u8 cmd;
-	u32 sector;
-	u16 offset;
-	u32 length;
-} ATAOpRead;
-
-typedef struct {
-	u8 cmd;
-	u32 sector;
-	u16 offset;
-	u32 length;
-	u8 data[];
-} ATAOpWrite;
-
-typedef struct {
-	u8 cmd;
-	u8 partition_id;
-	u32 sector;
-	u16 offset;
-	u32 length;
-} ATAOpMBRRead;
-*/
+	u16 vendor, device;
+	u16 bus; u8 slot, fn;
+} PCIOpDeviceConfig;
 
 #endif

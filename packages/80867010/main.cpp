@@ -24,6 +24,9 @@
 #include "main.hpp"
 
 extern "C" int main(int argc, char **argv) {
+	if (argc != 5)
+		panic("80867010: argc != 5");
+
 	printf("[80867010] argc %x\n", argc);
 	for (int i = 0; i < argc; ++i)
 		printf("[80867010] argv[%d]: \"%s\"\n", i, argv[i]);

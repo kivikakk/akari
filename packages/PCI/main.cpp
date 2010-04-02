@@ -22,12 +22,27 @@
 #include <cpp.hpp>
 #include <fs.hpp>
 #include <proc.hpp>
+#include <list>
+#include <map>
+#include <algorithm>
 
 #include "PCIProto.hpp"
 #include "main.hpp"
 
-bool init();
-u16 check_vendor(u16 bus, u16 slot, u16 fn);
+#define VENDOR_DEVICE(vendor, device) (((u32)((u16)(vendor)) << 16) | (u16)(device))
+
+typedef u32 device_t;
+typedef std::list<device_t> device_list_t;
+typedef std::map<pid_t, device_list_t> auth_map;
+static auth_map auths;
+
+static bool init();
+static u16 check_vendor(u16 bus, u8 slot, u8 fn);
+static void check_device(u16 bus, u8 slot, u8 fn, u16 vendor);
+static u16 read_config_word(u16 bus, u8 slot, u8 fn, u16 offset);
+static u32 read_config_long(u16 bus, u8 slot, u8 fn, u16 offset);
+static void add_auth(pid_t pid, u16 vendor, u16 device);
+static bool is_authed(pid_t pid, u16 vendor, u16 device);
 
 extern "C" int main() {
 	if (!init()) {
@@ -41,49 +56,28 @@ extern "C" int main() {
 
 	printf("[PCI]\n");
 
-	for (u32 bus = 0; bus < 256; ++bus) {
-		for (u32 device = 0; device < 32; ++device) {
-			for (u32 fn = 0; fn < 8; ++fn) {
-				u16 cv = check_vendor(bus, device, fn);
-
-				if (fn == 0 && cv == 0xFFFF) {
-					break;
-				}
-			}
-		}
-	}
-
-	printf("enumeration complete\n");
-
 	while (true) {
 		struct queue_item_info info = *probeQueue();
 		u8 *request = grabQueue(&info);
 		shiftQueue(&info);
 
-		/*
-		if (request[0] == ATA_OP_READ) {
-			ATAOpRead *op = reinterpret_cast<ATAOpRead *>(request);
+		if (request[0] == PCI_OP_DEVICE_CONFIG) {
+			PCIOpDeviceConfig *op = reinterpret_cast<PCIOpDeviceConfig *>(request);
 
-			u8 *buffer = new u8[op->length];
-			ata_read_data(op->sector, op->offset, op->length, buffer);
-			sendQueue(info.from, info.id, buffer, op->length);
-			delete [] buffer;
-		} else if (request[0] == ATA_OP_WRITE) {
-			ATAOpWrite *op = reinterpret_cast<ATAOpWrite *>(request);
+			if (!is_authed(info.from, op->vendor, op->device)) {
+				printf("PCI: unauth'd request?\n");
+				sendQueue(info.from, info.id, 0, 0);
+			} else {
+				pci_device_regular pciinfo;
+				for (u32 i = 0; i < sizeof(pciinfo); i += 4) {
+					*(reinterpret_cast<u32 *>(&pciinfo) + (i / 4)) = read_config_long(op->bus, op->slot, op->fn, i);
+				}
 
-			ata_write_data(op->sector, op->offset, op->length, op->data);
-			sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
-		} else if (request[0] == ATA_OP_MBR_READ) {
-			ATAOpMBRRead *op = reinterpret_cast<ATAOpMBRRead *>(request);
-
-			u8 *buffer = new u8[op->length];
-			partition_read_data(op->partition_id, op->sector, op->offset, op->length, buffer);
-			sendQueue(info.from, info.id, buffer, op->length);
-			delete [] buffer;
+				sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&pciinfo), sizeof(pciinfo));
+			}
 		} else {
-			panic("ATA: confused");
+			panic("PCI: confused");
 		}
-		*/
 
 		delete [] request;
 	}
@@ -92,53 +86,94 @@ extern "C" int main() {
 	return 1;
 }
 
-u16 read_config_word(u16 bus, u16 slot, u16 fn, u16 offset) {
+bool init() {
+	for (u16 bus = 0; bus < 256; ++bus) {
+		for (u8 slot = 0; slot < 32; ++slot) {
+			for (u8 fn = 0; fn < 8; ++fn) {
+				u16 vendor = check_vendor(bus, slot, fn);
+
+				if (fn == 0 && vendor == 0xFFFF) {
+					break;
+				} else if (vendor != 0xFFFF) {
+					check_device(bus, slot, fn, vendor);
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
+u16 check_vendor(u16 bus, u8 slot, u8 fn) {
+	return read_config_word(bus, slot, fn, 0);
+}
+
+void check_device(u16 bus, u8 slot, u8 fn, u16 vendor) {
+	u16 device = read_config_word(bus, slot, fn, 2);
+	printf("%x/%x/%x: vendor %x, device %x\n", bus, slot, fn, vendor, device);
+
+	char *filename = rasprintf("/%4x%4x", vendor, device);
+
+	if (fexists(filename)) {
+		// pci_device_regular pciinfo;
+		// for (u32 i = 0; i < sizeof(pciinfo); i += 4) {
+			// *(reinterpret_cast<u32 *>(&pciinfo) + (i / 4)) = read_config_long(bus, slot, fn, i);
+		// }
+		//
+		const char *x[] = {
+			filename,
+			rasprintf("%d", getProcessId()),
+			rasprintf("%d", bus),
+			rasprintf("%d", slot),
+			rasprintf("%d", fn),
+			0
+		};
+
+		pid_t r = bootstrap(filename, x);
+		add_auth(r, vendor, device);
+
+		delete [] x[0];
+		delete [] x[1];
+		delete [] x[2];
+		delete [] x[3];
+
+		// printf("\tbar0: %x, bar1: %x, bar2: %x, bar3: %x, bar4: %x, bar5: %x\n",
+				// pciinfo.bar0, pciinfo.bar1, pciinfo.bar2,
+				// pciinfo.bar3, pciinfo.bar4, pciinfo.bar5);
+	}
+
+	delete [] filename;
+}
+
+u16 read_config_word(u16 bus, u8 slot, u8 fn, u16 offset) {
 	pci_config_cycle pcc = { 0, (offset & 0xFC) >> 2, fn, slot, bus, 0, 1 };
 	AkariOutL(CONFIG_ADDRESS, *(reinterpret_cast<u32 *>(&pcc)));
 	return ((AkariInL(CONFIG_DATA) >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
-u32 read_config_long(u16 bus, u16 slot, u16 fn, u16 offset) {
+u32 read_config_long(u16 bus, u8 slot, u8 fn, u16 offset) {
 	return read_config_word(bus, slot, fn, offset) | (read_config_word(bus, slot, fn, offset + 2) << 16);
 }
 
-u16 check_vendor(u16 bus, u16 slot, u16 fn) {
-	u16 vendor = read_config_word(bus, slot, fn, 0);
-	u16 device;
-
-	if (vendor != 0xFFFF) {
-		device = read_config_word(bus, slot, fn, 2);
-		printf("%x/%x/%x: vendor %x, device %x\n", bus, slot, fn, vendor, device);
-
-		char *filename = rasprintf("/%4x%4x", vendor, device);
-
-		if (fexists(filename)) {
-			pci_device_regular pciinfo;
-			for (u32 i = 0; i < sizeof(pciinfo); i += 4) {
-				*(reinterpret_cast<u32 *>(&pciinfo) + (i / 4)) = read_config_long(bus, slot, fn, i);
-			}
-
-			const char *x[] = {
-				"abc",
-				"def",
-				0
-			};
-
-			bootstrap(filename, x);
-
-			printf("\tbar0: %x, bar1: %x, bar2: %x, bar3: %x, bar4: %x, bar5: %x\n",
-					pciinfo.bar0, pciinfo.bar1, pciinfo.bar2,
-					pciinfo.bar3, pciinfo.bar4, pciinfo.bar5);
-		}
-		
-		delete [] filename;
-
+void add_auth(pid_t pid, u16 vendor, u16 device) {
+	u32 vendor_device = VENDOR_DEVICE(vendor, device);
+	auth_map::iterator it = auths.find(pid);
+	if (it == auths.end()) {
+		auths[pid] = device_list_t();
+		it = auths.find(pid);
 	}
 
-	return vendor;
+	if (std::find(it->second.begin(), it->second.end(), vendor_device) == it->second.end())
+		it->second.push_back(vendor_device);
 }
 
-bool init() {
-	return true;
+bool is_authed(pid_t pid, u16 vendor, u16 device) {
+	u32 vendor_device = VENDOR_DEVICE(vendor, device);
+	auth_map::iterator it = auths.find(pid);
+	if (it == auths.end()) {
+		return false;
+	}
+
+	return std::find(it->second.begin(), it->second.end(), vendor_device) != it->second.end();
 }
 
