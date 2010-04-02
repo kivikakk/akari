@@ -136,7 +136,7 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 	if (!dma_enabled) {
 		reg_pio_data_in_lba28(0, CMD_READ_SECTORS, 0, number, start, buffer, number, 0);
 	} else {
-		dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, buffer, number);
+		printf("dma pci lba28: num %d, start %d, buf %x, result: %d\n", number, start, buffer, dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, buffer, number));
 	}
 }
 

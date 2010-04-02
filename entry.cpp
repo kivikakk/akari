@@ -132,16 +132,21 @@ static void AkariEntryCont() {
 	Akari->tasks->current->next = idle;
 
 	// ATA driver
-	// XXX: IOPL 3
-	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 3, Akari->memory->_kernelDirectory, "ata", std::list<std::string>());
+	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "ata", std::list<std::string>());
 	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
-	/* ata->setIOMap(0x1F7, true);
+
 	for (u16 j = 0; j < 8; ++j) {
 		ata->setIOMap(0x1F0 + j, true);
 		ata->setIOMap(0x170 + j, true);
 	}
+
 	ata->setIOMap(0x3F6, true);
-	ata->setIOMap(0x376, true); */
+	ata->setIOMap(0x376, true);
+
+	// DMA busmastering. (assuming it'll be at c000. Need to do this later properly. XXX
+	
+	for (u16 j = 0; j < 16; ++j)
+		ata->setIOMap(0xC000 + j, true);
 	idle->next = ata;
 	
 	// FAT driver

@@ -23,9 +23,14 @@
 extern "C" int main() {
 	bootstrap("/PCI", 0);
 	// We should really wait for PCI to finish?
+	//
 	
-	// bootstrap("/Kb");
-	// bootstrap("/Shell");
+	printf("timeout start\n");
+	irqWaitTimeout(3000);
+	printf("timeout\n");
+	
+	bootstrap("/Kb", 0);
+	bootstrap("/Shell", 0);
 
 	return 0;
 }
