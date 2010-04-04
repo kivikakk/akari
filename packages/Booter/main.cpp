@@ -26,11 +26,11 @@ extern "C" int main() {
 	//
 	
 	printf("timeout start\n");
-	irqWaitTimeout(3000);
-	printf("timeout\n");
+	//irqWaitTimeout(3000);
+	//printf("timeout\n");
 	
-	bootstrap("/Kb", 0);
-	bootstrap("/Shell", 0);
+	//bootstrap("/Kb", 0);
+	//bootstrap("/Shell", 0);
 
 	return 0;
 }

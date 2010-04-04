@@ -84,9 +84,9 @@ static u8 pio_readBusMstrStatus();
 static void pio_writeBusMstrCmd(u8 x);
 static void pio_writeBusMstrStatus(u8 x);
 
-static long tmr_cmd_start_time;     // command start time
-static void tmr_set_timeout();
-static int tmr_chk_timeout();
+long tmr_cmd_start_time;     // command start time
+void tmr_set_timeout();
+int tmr_chk_timeout();
 
 #include <stdio.hpp>
 
@@ -1224,7 +1224,7 @@ static u8 rwControl;           // read/write control bit setting
 #define PRD_BUF_SIZE (48+(2*MAX_PRD*8))         // size of PRD list buffer
 
 static u8 prdBuf[PRD_BUF_SIZE];      // PRD buffer
-static u32 *prdBufPtr;               // first PRD addr
+static u32 *prdBufPtr = 0;               // first PRD addr
 
 //***********************************************************
 //
@@ -1421,10 +1421,6 @@ static int exec_pci_ata_cmd(u8 dev, u8 *bufAddr, long numSect) {
    // the device and dma channel transfer the data here while we start
    // checking for command completion...
    // wait for the PCI BM Interrupt=1 (see ATAIOINT.C)...
-   if (SYSTEM_WAIT_INTR_OR_TIMEOUT()) {       // time out ?
-      reg_cmd_info.to = 1;
-      reg_cmd_info.ec = 73;
-   }
    if (SYSTEM_WAIT_INTR_OR_TIMEOUT()) {       // time out ?
       reg_cmd_info.to = 1;
       reg_cmd_info.ec = 73;
@@ -2227,7 +2223,7 @@ static void pio_rep_outdword(u8 addrDataReg, u8 *bufAddr, s32 dwordCnt) {
 //
 //**************************************************************
 
-static void tmr_set_timeout() {
+void tmr_set_timeout() {
    // get the command start time
    tmr_cmd_start_time = ticks();
 }
@@ -2240,7 +2236,7 @@ static void tmr_set_timeout() {
 //
 //**************************************************************
 
-static int tmr_chk_timeout() {
+int tmr_chk_timeout() {
    long curTime;
 
    // get current time

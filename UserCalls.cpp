@@ -162,6 +162,10 @@ namespace User {
 		return Akari->tasks->current->heap->alloc(n);
 	}
 
+	void *mallocap(u32 n, void **p) {
+		return Akari->memory->allocAligned(n, reinterpret_cast<u32 *>(p));
+	}
+
 	void free(void *p) {
 		ASSERT(Akari->tasks->current->heap);
 		Akari->tasks->current->heap->free(p);

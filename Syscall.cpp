@@ -37,6 +37,7 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(7, reinterpret_cast<void *>(&User::sysexit));		// Don't change my number from 7 without changing entry.cpp.
 	addSyscall(8, reinterpret_cast<void *>(&User::defer));
 	addSyscall(9, reinterpret_cast<void *>(&User::malloc));
+	addSyscall(40, reinterpret_cast<void *>(&User::mallocap));
 	addSyscall(10, reinterpret_cast<void *>(&User::free));
 
 	addSyscall(24, reinterpret_cast<void *>(&User::IPC::processId));
