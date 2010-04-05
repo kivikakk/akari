@@ -1347,7 +1347,7 @@ static int set_up_xfer(int dir, s32 bc, phptr bufAddr) {
    dma_pci_num_prd = numPrd;
    // *(u32 *)(pio_bmide_base_addr + BM_PRD_ADDR_LOW)
       // = (u32) prdBufPtr;
-   AkariOutL(pio_bmide_base_addr + BM_PRD_ADDR_LOW, reinterpret_cast<u32>(prdBufPtr));
+   AkariOutL(pio_bmide_base_addr + BM_PRD_ADDR_LOW, static_cast<u32>(physAddr(prdBufPtr)));
 
    // set the read/write control:
    // PCI reads for ATA Write DMA commands,
