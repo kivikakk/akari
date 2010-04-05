@@ -54,14 +54,14 @@ extern int SYSTEM_WAIT_INTR_OR_TIMEOUT();
 
 // ATA Command Block base address
 // (the address of the ATA Data register)
-#define PIO_BASE_ADDR1 ((u8 *)0x1F0)
+#define PIO_BASE_ADDR1 0x1F0
 
 // ATA Control Block base address
 // (the address of the ATA DevCtrl
 //  and AltStatus registers)
-#define PIO_BASE_ADDR2 ((u8 *)0x3F6)
+#define PIO_BASE_ADDR2 0x3F6
 
-extern u8 *pio_bmide_base_addr;
+extern u32 pio_bmide_base_addr;
 
 // Size of the ATA Data register - allowed values are 8, 16 and 32
 #define PIO_DEFAULT_XFER_WIDTH 16
@@ -339,15 +339,15 @@ extern int reg_packet(u8 dev, u32 cpbc, u8 *cdbBufAddr, int dir, long dpbc, u8 *
 extern int dma_pci_config();
 
 // ATA DMA functions
-extern int dma_pci_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, u8 *bufAddr, long numSect); 
-extern int dma_pci_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo, u8 *bufAddr, long numSect);
+extern int dma_pci_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, phptr bufAddr, long numSect); 
+extern int dma_pci_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo, phptr bufAddr, long numSect);
 
 #endif   // INCLUDE_ATA_DMA or INCLUDE_ATAPI_DMA
 
 #if INCLUDE_ATAPI_DMA
 
 // ATA DMA function
-extern int dma_pci_packet(u8 dev, u32 cpbc, u8 *cdbBufAddr, int dir, long dpbc, u8 *dataBufAddr);
+extern int dma_pci_packet(u8 dev, u32 cpbc, u8 *cdbBufAddr, int dir, long dpbc, phptr dataBufAddr);
 
 #endif   // INCLUDE_ATAPI_DMA
 

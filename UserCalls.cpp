@@ -162,14 +162,18 @@ namespace User {
 		return Akari->tasks->current->heap->alloc(n);
 	}
 
-	void *mallocap(u32 n, void **p) {
+	void *mallocap(u32 n, phptr *p) {
 		void *mem = Akari->tasks->current->heap->allocAligned(n);
-		Memory::Page *page = Akari->tasks->current->pageDir->getPage(reinterpret_cast<u32>(mem), false);
-		ASSERT(page);
-		*reinterpret_cast<u32 *>(p) = page->pageAddress * 0x1000 + (reinterpret_cast<u32>(mem) & 0xFFF);
+		*p = physAddr(mem);
 		return mem;
 
 		// return Akari->memory->allocAligned(n, reinterpret_cast<u32 *>(p));
+	}
+
+	phptr physAddr(void *ptr) {
+		Memory::Page *page = Akari->tasks->current->pageDir->getPage(reinterpret_cast<u32>(ptr), false);
+		if (!page) return 0;
+		return page->pageAddress * 0x1000 + (reinterpret_cast<u32>(ptr) & 0xFFF);
 	}
 
 	void free(void *p) {

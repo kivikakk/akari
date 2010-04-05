@@ -38,6 +38,7 @@ Syscall::Syscall(): _syscalls_assigned(0) {
 	addSyscall(8, reinterpret_cast<void *>(&User::defer));
 	addSyscall(9, reinterpret_cast<void *>(&User::malloc));
 	addSyscall(40, reinterpret_cast<void *>(&User::mallocap));
+	addSyscall(42, reinterpret_cast<void *>(&User::physAddr));
 	addSyscall(10, reinterpret_cast<void *>(&User::free));
 	addSyscall(41, reinterpret_cast<void *>(&User::flushTLB));
 

@@ -38,7 +38,8 @@ namespace User {
 	void sysexit();
 	void defer();
 	void *malloc(u32 n);
-	void *mallocap(u32 n, void **phys);
+	void *mallocap(u32 n, phptr *phys);
+	phptr physAddr(void *ptr);
 	void free(void *p);
 	void flushTLB();
 
@@ -71,7 +72,8 @@ DEFN_SYSCALL1(panic, 6, void, const char *);
 DEFN_SYSCALL0(sysexit, 7, void);
 DEFN_SYSCALL0(defer, 8, void);
 DEFN_SYSCALL1(malloc, 9, void *, u32);
-DEFN_SYSCALL2(mallocap, 40, void *, u32, void **);
+DEFN_SYSCALL2(mallocap, 40, void *, u32, phptr *);
+DEFN_SYSCALL1(physAddr, 42, phptr, void *);
 DEFN_SYSCALL1(free, 10, void, void *);
 DEFN_SYSCALL0(flushTLB, 41, void);
 
@@ -88,7 +90,8 @@ DECL_SYSCALL1(panic, void, const char *);
 DECL_SYSCALL0(sysexit, void);
 DECL_SYSCALL0(defer, void);
 DECL_SYSCALL1(malloc, void *, u32);
-DECL_SYSCALL2(mallocap, void *, u32, void **);
+DECL_SYSCALL2(mallocap, void *, u32, phptr *);
+DECL_SYSCALL1(physAddr, phptr, void *);
 DECL_SYSCALL1(free, void, void *);
 DECL_SYSCALL0(flushTLB, void);
 

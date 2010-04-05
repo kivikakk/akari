@@ -37,9 +37,9 @@ struct REG_CMD_INFO reg_cmd_info;
 
 int reg_config_info[2];
 
-u8 *pio_bmide_base_addr = 0;
+u32 pio_bmide_base_addr = 0;
 
-u8 *pio_reg_addrs[9] = {
+u32 pio_reg_addrs[9] = {
    PIO_BASE_ADDR1 + 0,  // [0] CB_DATA
    PIO_BASE_ADDR1 + 1,  // [1] CB_FR & CB_ER
    PIO_BASE_ADDR1 + 2,  // [2] CB_SC
@@ -1284,9 +1284,9 @@ int dma_pci_config() {
 //
 //***********************************************************
 
-static int set_up_xfer(int dir, s32 bc, u8 *bufAddr);
+static int set_up_xfer(int dir, s32 bc, phptr bufAddr);
 
-static int set_up_xfer(int dir, s32 bc, u8 *bufAddr) {
+static int set_up_xfer(int dir, s32 bc, phptr bufAddr) {
    int numPrd;                      // number of PRD required
    int maxPrd;                      // max number of PRD allowed
    s32 temp;
@@ -1347,8 +1347,7 @@ static int set_up_xfer(int dir, s32 bc, u8 *bufAddr) {
    dma_pci_num_prd = numPrd;
    // *(u32 *)(pio_bmide_base_addr + BM_PRD_ADDR_LOW)
       // = (u32) prdBufPtr;
-   AkariOutL(reinterpret_cast<u32>(pio_bmide_base_addr) + BM_PRD_ADDR_LOW,
-		   reinterpret_cast<u32>(prdBufPtr));
+   AkariOutL(pio_bmide_base_addr + BM_PRD_ADDR_LOW, reinterpret_cast<u32>(prdBufPtr));
 
    // set the read/write control:
    // PCI reads for ATA Write DMA commands,
@@ -1371,9 +1370,9 @@ static int set_up_xfer(int dir, s32 bc, u8 *bufAddr) {
 //
 //***********************************************************
 
-static int exec_pci_ata_cmd(u8 dev, u8 *bufAddr, long numSect); 
+static int exec_pci_ata_cmd(u8 dev, phptr bufAddr, long numSect); 
 
-static int exec_pci_ata_cmd(u8 dev, u8 *bufAddr, long numSect) {
+static int exec_pci_ata_cmd(u8 dev, phptr bufAddr, long numSect) {
    // Quit now if the command is incorrect.
 
    if ((reg_cmd_info.cmd != CMD_READ_DMA)
@@ -1487,7 +1486,7 @@ static int exec_pci_ata_cmd(u8 dev, u8 *bufAddr, long numSect) {
 //
 //***********************************************************
 
-int dma_pci_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, u8 *bufAddr, long numSect) {
+int dma_pci_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, phptr bufAddr, long numSect) {
    // Setup current command information.
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
@@ -1508,7 +1507,7 @@ int dma_pci_lba28(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lba, u8 *bufAddr, long num
 // dma_pci_lba48() - DMA in PCI Multiword for ATA R/W DMA
 //
 //***********************************************************
-int dma_pci_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo, u8 *bufAddr, long numSect) {
+int dma_pci_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo, phptr bufAddr, long numSect) {
    // Setup current command information.
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
@@ -1534,7 +1533,7 @@ int dma_pci_lba48(u8 dev, u8 cmd, u32 fr, u32 sc, u32 lbahi, u32 lbalo, u8 *bufA
 //
 //***********************************************************
 
-int dma_pci_packet(u8 dev, u32 cpbc, u8 *cdbBufAddr, int dir, s32 dpbc, u8 *dataBufAddr) {
+int dma_pci_packet(u8 dev, u32 cpbc, u8 *cdbBufAddr, int dir, s32 dpbc, phptr dataBufAddr) {
    // Make sure the command packet size is either 12 or 16
    // and save the command packet size and data.
 
@@ -1920,25 +1919,25 @@ static void sub_wait_poll(u8 we, u8 pe) {
 static u8 pio_readBusMstrCmd() {
    if (!pio_bmide_base_addr)
       return 0;
-   return AkariInB(reinterpret_cast<u32>(pio_bmide_base_addr) + BM_COMMAND_REG);
+   return AkariInB(pio_bmide_base_addr + BM_COMMAND_REG);
 }
 
 static u8 pio_readBusMstrStatus() {
    if (!pio_bmide_base_addr)
       return 0;
-   return AkariInB(reinterpret_cast<u32>(pio_bmide_base_addr) + BM_STATUS_REG);
+   return AkariInB(pio_bmide_base_addr + BM_STATUS_REG);
 }
 
 static void pio_writeBusMstrCmd(u8 x) { 
    if (!pio_bmide_base_addr)
       return;
-   AkariOutB(reinterpret_cast<u32>(pio_bmide_base_addr) + BM_COMMAND_REG, x);
+   AkariOutB(pio_bmide_base_addr + BM_COMMAND_REG, x);
 }
 
 static void pio_writeBusMstrStatus(u8 x) {
    if (!pio_bmide_base_addr)
       return;
-   AkariOutB(reinterpret_cast<u32>(pio_bmide_base_addr) + BM_STATUS_REG, x);
+   AkariOutB(pio_bmide_base_addr + BM_STATUS_REG, x);
 }
 
 //*************************************************************
@@ -1954,42 +1953,42 @@ static void pio_writeBusMstrStatus(u8 x) {
 
 static u8 pio_inbyte(u8 addr) {
    //!!! read an 8-bit ATA register
-   return AkariInB(reinterpret_cast<u32>(pio_reg_addrs[addr]));
+   return AkariInB(pio_reg_addrs[addr]);
 }
 
 //*************************************************************
 
 static void pio_outbyte(int addr, u8 data) {
    //!!! write an 8-bit ATA register
-   AkariOutB(reinterpret_cast<u32>(pio_reg_addrs[addr]), data);
+   AkariOutB(pio_reg_addrs[addr], data);
 }
 
 //*************************************************************
 
 static u32 pio_inword(u8 addr) {
    //!!! read an 8-bit ATA register (usually the ATA Data register)
-   return AkariInW(reinterpret_cast<u32>(pio_reg_addrs[addr]));
+   return AkariInW(pio_reg_addrs[addr]);
 }
 
 //*************************************************************
 
 static void pio_outword(int addr, u32 data) {
    //!!! Write an 8-bit ATA register (usually the ATA Data register)
-   AkariOutW(reinterpret_cast<u32>(pio_reg_addrs[addr]), data);
+   AkariOutW(pio_reg_addrs[addr], data);
 }
 
 //*************************************************************
 
 static u32 pio_indword(u8 addr) { 
    //!!! read an 8-bit ATA register (usually the ATA Data register)
-   return AkariInL(reinterpret_cast<u32>(pio_reg_addrs[addr]));
+   return AkariInL(pio_reg_addrs[addr]);
 }
 
 //*************************************************************
 
 static void pio_outdword(int addr, u32 data) { 
    //!!! Write an 8-bit ATA register (usually the ATA Data register)
-   AkariOutL(reinterpret_cast<u32>(pio_reg_addrs[addr]), data);
+   AkariOutL(pio_reg_addrs[addr], data);
 }
 
 //*************************************************************

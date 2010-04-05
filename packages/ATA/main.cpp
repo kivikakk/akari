@@ -86,7 +86,7 @@ extern "C" int main() {
 		} else if (request[0] == ATA_OP_SET_BAR4) {
 			ATAOpSetBAR4 *op = reinterpret_cast<ATAOpSetBAR4 *>(request);
 
-			pio_bmide_base_addr = reinterpret_cast<u8 *>(op->bar4);
+			pio_bmide_base_addr = op->bar4;
 			dma_pci_config();
 			dma_enabled = true;
 
@@ -153,20 +153,19 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 	// printf("ata_read_sectors(start: %d, number: %d, buffer: 0x%x)\n", start, number, buffer);
 		reg_pio_data_in_lba28(0, CMD_READ_SECTORS, 0, number, start, buffer, number, 0);
 	} else {
-		void *phys;
+		phptr phys;
 		u8 *linear = reinterpret_cast<u8 *>(mallocap(number * 512, &phys));
 
-		printf("(i)");
-		u32 dma_result = dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, reinterpret_cast<u8 *>(phys), number);
+		printf("(i:%x)", phys);
+		u32 dma_result = dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, phys, number);
+		//flushTLB();
 		printf(">>> (ii) dma pci lba28: num %d, start %d, buf %x, result: %d\n", number, start, phys, dma_result);
 		printf(">>> (iii) linear is %x, starts %s/%x %x %x %x\n", linear, linear, *linear, linear[1], linear[2], linear[3]);
 		// linear += 0x200;
 		// printf(">>> (iii) linear is %x, starts %s/%x %x %x %x\n", linear, linear, *linear, linear[1], linear[2], linear[3]);
 				
-		// // don't try to EVALUATE buffer, it's a PHYSICAL address for DMA!
-		// or it would be.
-
 		printf("bytesXfer: %d, ec: \n", reg_cmd_info.totalBytesXfer, reg_cmd_info.ec);
+		memcpy(buffer, linear, number * 512);
 	}
 }
 
