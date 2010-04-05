@@ -92,6 +92,9 @@ extern "C" int main() {
 
 			printf("ATA: bar4 set to %x\n", op->bar4);
 
+			// send a confirmation that it's done.
+			sendQueue(info.from, info.id, 0, 0);
+
 			// u8 *buffer = new u8[1024];
 			static u8 buffer[1024];
 			partition_read_data(0, 0, 0, 511, buffer);
@@ -139,30 +142,23 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 	// like CMD_READ_MULTIPLE - i.e. the caller is expected to know ATA.
 	// (otherwise we wouldn't have to pass in a cmd!)
 
-	// printf("ata_read_sectors; initial call num %d buffer %x\n", number, buffer);
 	while (number > 256) {
 		ata_read_sectors(start, 256, buffer);
 		buffer += 512 * 256;
 		start += 256;
 		number -= 256;
 	}
-	// printf("ata_read_sectors; settled on call num %d buffer %x\n", number, buffer);
-
 
 	if (!dma_enabled) {
-	// printf("ata_read_sectors(start: %d, number: %d, buffer: 0x%x)\n", start, number, buffer);
 		reg_pio_data_in_lba28(0, CMD_READ_SECTORS, 0, number, start, buffer, number, 0);
 	} else {
 		phptr phys;
 		u8 *linear = reinterpret_cast<u8 *>(mallocap(number * 512, &phys));
 
-		u32 dma_result = dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, phys, number);
-
-		printf(">>> (ii) dma pci lba28: num %d, start %d, buf %x, result: %d\n", number, start, phys, dma_result);
-		printf(">>> (iii) linear is %x, starts %s/%x %x %x %x\n", linear, linear, *linear, linear[1], linear[2], linear[3]);
-
-		printf("bytesXfer: %d, ec: \n", reg_cmd_info.totalBytesXfer, reg_cmd_info.ec);
+		dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, phys, number);
 		memcpy(buffer, linear, number * 512);
+
+		free(linear);
 	}
 }
 

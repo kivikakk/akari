@@ -17,11 +17,16 @@
 #ifndef PCI_PROTO_HPP
 #define PCI_PROTO_HPP
 
-#define PCI_OP_DEVICE_CONFIG 		0x1
+#define PCI_OP_DEVICE_CONFIG 	0x1
+#define PCI_OP_DMA_UP 			0x2
 
 typedef struct {
 	u8 cmd;
 } PCIOpDeviceConfig;
+
+typedef struct {
+	u8 cmd;
+} PCIOpDMAUp;
 
 typedef struct {
 	u16 vendor_id, device_id;

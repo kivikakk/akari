@@ -62,7 +62,13 @@ extern "C" int main(int argc, char **argv) {
 	
 	{
 		ATAOpSetBAR4 op = { ATA_OP_SET_BAR4, configs[0].bar4 & ~3 };
-		sendQueue(ata, 0, reinterpret_cast<u8 *>(&op), sizeof(ATAOpSetBAR4));
+		u32 msg_id = sendQueue(ata, 0, reinterpret_cast<u8 *>(&op), sizeof(ATAOpSetBAR4));
+		shiftQueue(probeQueueFor(msg_id));
+	}
+
+	{
+		PCIOpDMAUp op = { PCI_OP_DMA_UP };
+		sendQueue(pci, 0, reinterpret_cast<u8 *>(&op), sizeof(PCIOpDMAUp));
 	}
 
 	printf("[80867010]\n");

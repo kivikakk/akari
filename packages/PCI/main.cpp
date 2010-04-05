@@ -43,17 +43,18 @@ typedef std::list<device_t> device_list_t;
 typedef std::map<pid_t, device_list_t> auth_map;
 static auth_map auths;
 
+static void check_all_devices(bool hds);
 static bool init();
 static u16 check_vendor(u16 bus, u8 slot, u8 fn);
-static void check_device(u16 bus, u8 slot, u8 fn, u16 vendor);
+static void check_device(u16 bus, u8 slot, u8 fn, u16 vendor, u16 device);
 static u16 read_config_word(u16 bus, u8 slot, u8 fn, u16 offset);
 static u32 read_config_long(u16 bus, u8 slot, u8 fn, u16 offset);
 static void add_auth(pid_t pid, u16 bus, u8 slot, u8 fn);
 static device_list_t &authed(pid_t pid);
 
-extern "C" int main() {
-	// XXX: registering name after causes death.
+static bool non_hds_brought_up = false;
 
+extern "C" int main() {
 	if (!init()) {
 		printf("PCI: failed init\n");
 		return 1;
@@ -83,6 +84,13 @@ extern "C" int main() {
 			}
 
 			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&pciinfo), offset);
+		} else if (request[0] == PCI_OP_DMA_UP) {
+			// Apparently we have DMA. Bring up other devices if we haven't already.
+
+			if (!non_hds_brought_up) {
+				non_hds_brought_up = true;
+				check_all_devices(false);
+			}	
 		} else {
 			panic("PCI: confused");
 		}
@@ -94,7 +102,12 @@ extern "C" int main() {
 	return 1;
 }
 
-bool init() {
+const u32 known_harddisk_drivers[] = {
+	0x80867010,
+	0
+};
+
+void check_all_devices(bool hds) {
 	for (u16 bus = 0; bus < 256; ++bus) {
 		for (u8 slot = 0; slot < 32; ++slot) {
 			for (u8 fn = 0; fn < 8; ++fn) {
@@ -103,11 +116,25 @@ bool init() {
 				if (fn == 0 && vendor == 0xFFFF) {
 					break;
 				} else if (vendor != 0xFFFF) {
-					check_device(bus, slot, fn, vendor);
+					u16 device = read_config_word(bus, slot, fn, 2);
+
+					bool is_hd = false;
+					const u32 *p = known_harddisk_drivers;
+					while (*p && !is_hd)
+						if (*p++ == ((static_cast<u32>(vendor) << 16) | device))
+							is_hd = true;
+
+					if ((hds && is_hd) || (!hds && !is_hd)) {
+						check_device(bus, slot, fn, vendor, device);
+					}
 				}
 			}
 		}
 	}
+}
+
+bool init() {
+	check_all_devices(true);
 
 	return true;
 }
@@ -116,8 +143,7 @@ u16 check_vendor(u16 bus, u8 slot, u8 fn) {
 	return read_config_word(bus, slot, fn, 0);
 }
 
-void check_device(u16 bus, u8 slot, u8 fn, u16 vendor) {
-	u16 device = read_config_word(bus, slot, fn, 2);
+void check_device(u16 bus, u8 slot, u8 fn, u16 vendor, u16 device) {
 	printf("%x/%x/%x: vendor %x, device %x\n", bus, slot, fn, vendor, device);
 
 	char *filename = rasprintf("/%4x%4x", vendor, device);
