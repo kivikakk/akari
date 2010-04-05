@@ -92,14 +92,12 @@ extern "C" int main() {
 
 			printf("ATA: bar4 set to %x\n", op->bar4);
 
-			printf("now .");
 			// u8 *buffer = new u8[1024];
 			static u8 buffer[1024];
-			printf("!\n");
-			partition_read_data(0, 0, 0, 512, buffer);
-			printf("completed?!\n");
+			partition_read_data(0, 0, 0, 511, buffer);
 
 			printf("read 1024: %x %s/%x %x %x %x %x %x %x %x ...\n", buffer, buffer, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]);
+
 			// delete [] buffer;
 		} else {
 			panic("ATA: confused");
@@ -155,11 +153,19 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 	// printf("ata_read_sectors(start: %d, number: %d, buffer: 0x%x)\n", start, number, buffer);
 		reg_pio_data_in_lba28(0, CMD_READ_SECTORS, 0, number, start, buffer, number, 0);
 	} else {
+		void *phys;
+		u8 *linear = reinterpret_cast<u8 *>(mallocap(number * 512, &phys));
+
 		printf("(i)");
-		u32 dma_result = dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, buffer, number);
-		printf(">>> (ii) dma pci lba28: num %d, start %d, buf %x, result: %d\n", number, start, buffer, dma_result);
+		u32 dma_result = dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, reinterpret_cast<u8 *>(phys), number);
+		printf(">>> (ii) dma pci lba28: num %d, start %d, buf %x, result: %d\n", number, start, phys, dma_result);
+		printf(">>> (iii) linear is %x, starts %s/%x %x %x %x\n", linear, linear, *linear, linear[1], linear[2], linear[3]);
+		// linear += 0x200;
+		// printf(">>> (iii) linear is %x, starts %s/%x %x %x %x\n", linear, linear, *linear, linear[1], linear[2], linear[3]);
 				
-		// don't try to EVALUATE buffer, it's a PHYSICAL address for DMA!
+		// // don't try to EVALUATE buffer, it's a PHYSICAL address for DMA!
+		// or it would be.
+
 		printf("bytesXfer: %d, ec: \n", reg_cmd_info.totalBytesXfer, reg_cmd_info.ec);
 	}
 }
@@ -177,7 +183,6 @@ void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer) {
 		// Since the start of our read isn't on a sector boundary, we need to grab
 		// that whole sector, then just copy starting from the relevant position to
 		// our buffer.
-		printf("(A)");
 		ata_read_sectors(sector_open, 1, static_cast<u8 *>(tempdata));
 		memcpy(buffer, tempdata + offset, min(static_cast<u32>(512 - offset), length));
 		buffer += min(static_cast<u32>(512 - offset), length);
@@ -186,34 +191,22 @@ void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer) {
 	}
 	
 	u32 complete_sectors = length / 512;
+	printf("length: %d\n", length);
 	if (complete_sectors > 0) {
 		// We have some number of complete sectors which we can read out wholesale.
-		printf("(B:%d)", complete_sectors);
-		if (dma_enabled && complete_sectors == 1) {
 
-			void *td2phys;
-			u8 *td2linear = static_cast<u8 *>(mallocap(512, &td2phys));
+		// ata_read_sectors(sector_open + sectors_read, complete_sectors, buffer);
 
-			printf("DMA target: %x, linear: %x, our target: %x (static %x)\n", td2phys, td2linear, buffer, tempdata);
-			printf("(1)");
-
-			// ata_read_sectors(sector_open + sectors_read, 1, static_cast<u8 *>(td2phys));
-			ata_read_sectors(sector_open + sectors_read, 1, static_cast<u8 *>(tempdata));
-			
-			printf("(2)");
-
-			// memcpy(buffer, td2linear, 512);
+		while (complete_sectors > 0) {
+			ata_read_sectors(sector_open + sectors_read, 1, tempdata);
 			memcpy(buffer, tempdata, 512);
-			
-			printf("(iii) buffer start after: %x %x %x %x %x %x %x %x\n", buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]);
-			printf("(3)");
-
-			// delete [] td2linear;
-		} else {
-			ata_read_sectors(sector_open + sectors_read, complete_sectors, buffer);
+			++sectors_read;
+			buffer += 512;
+			--complete_sectors;
 		}
-		sectors_read += complete_sectors;
-		buffer += complete_sectors * 512;
+		
+		// sectors_read += complete_sectors;
+		// buffer += complete_sectors * 512;
 	}
 	length %= 512;
 
@@ -222,7 +215,6 @@ void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer) {
 		// last sector in, then copy over the appropriate portion to our buffer.
 		// We don't update our counters (as we do in the start-case) as we don't
 		// need them again.
-		printf("(C)");
 		ata_read_sectors(sector_open + sectors_read, 1, static_cast<u8 *>(tempdata));
 		memcpy(buffer, tempdata, length);
 		// buffer, sectors_read, length stale

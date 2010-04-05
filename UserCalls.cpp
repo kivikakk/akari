@@ -163,12 +163,22 @@ namespace User {
 	}
 
 	void *mallocap(u32 n, void **p) {
-		return Akari->memory->allocAligned(n, reinterpret_cast<u32 *>(p));
+		void *mem = Akari->tasks->current->heap->allocAligned(n);
+		Memory::Page *page = Akari->tasks->current->pageDir->getPage(reinterpret_cast<u32>(mem), false);
+		ASSERT(page);
+		*reinterpret_cast<u32 *>(p) = page->pageAddress * 0x1000 + (reinterpret_cast<u32>(mem) & 0xFFF);
+		return mem;
+
+		// return Akari->memory->allocAligned(n, reinterpret_cast<u32 *>(p));
 	}
 
 	void free(void *p) {
 		ASSERT(Akari->tasks->current->heap);
 		Akari->tasks->current->heap->free(p);
+	}
+
+	void flushTLB() {
+		__asm__ __volatile__("mov %%cr3, %%eax; mov %%eax, %%cr3" : : : "%eax");
 	}
 }
 #endif

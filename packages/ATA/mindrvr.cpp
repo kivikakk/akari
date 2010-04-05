@@ -1359,6 +1359,9 @@ static int set_up_xfer(int dir, s32 bc, u8 *bufAddr) {
    else
       rwControl = BM_CR_MASK_WRITE;    // ATA Read DMA
    pio_writeBusMstrCmd(rwControl);
+
+   printf("[[set_up_xfer: phyAddr %x]]", phyAddr);
+
    return 0;
 }
 
