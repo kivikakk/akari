@@ -19,6 +19,7 @@
 
 #define PCI_OP_DEVICE_CONFIG 	0x1
 #define PCI_OP_DMA_UP 			0x2
+#define PCI_OP_AWAIT_DRIVERS_UP	0x3
 
 typedef struct {
 	u8 cmd;
@@ -27,6 +28,10 @@ typedef struct {
 typedef struct {
 	u8 cmd;
 } PCIOpDMAUp;
+
+typedef struct {
+	u8 cmd;
+} PCIOpAwaitDriversUp;
 
 typedef struct {
 	u16 vendor_id, device_id;

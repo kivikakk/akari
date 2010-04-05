@@ -23,6 +23,7 @@
 #include <fs.hpp>
 #include <proc.hpp>
 #include <list>
+#include <slist>
 #include <map>
 #include <algorithm>
 
@@ -39,7 +40,7 @@
 #define D_FN(device)	(u8)(device)
 
 typedef u32 device_t;
-typedef std::list<device_t> device_list_t;
+typedef std::slist<device_t> device_list_t;
 typedef std::map<pid_t, device_list_t> auth_map;
 static auth_map auths;
 
@@ -53,6 +54,13 @@ static void add_auth(pid_t pid, u16 bus, u8 slot, u8 fn);
 static device_list_t &authed(pid_t pid);
 
 static bool non_hds_brought_up = false;
+
+typedef struct {
+	pid_t pid;
+	u32 msg_id;
+} AwaitingDriversUp;
+
+static std::slist<AwaitingDriversUp> awaiting_drivers_up;
 
 extern "C" int main() {
 	if (!init()) {
@@ -90,7 +98,19 @@ extern "C" int main() {
 			if (!non_hds_brought_up) {
 				non_hds_brought_up = true;
 				check_all_devices(false);
+
+				for (std::slist<AwaitingDriversUp>::iterator it = awaiting_drivers_up.begin(); it != awaiting_drivers_up.end(); ++it)
+					sendQueue(it->pid, it->msg_id, 0, 0);
+
+				awaiting_drivers_up.clear();
 			}	
+		} else if (request[0] == PCI_OP_AWAIT_DRIVERS_UP) {
+			if (non_hds_brought_up) {
+				sendQueue(info.from, info.id, 0, 0);
+			} else {
+				AwaitingDriversUp adu = { info.from, info.id };
+				awaiting_drivers_up.push_back(adu);
+			}
 		} else {
 			panic("PCI: confused");
 		}
