@@ -101,8 +101,6 @@ int SYSTEM_WAIT_INTR_OR_TIMEOUT() {
 			int_ata_status = pio_inbyte(CB_STAT);
 			pio_writeBusMstrStatus(BM_SR_MASK_INT);
 		}
-
-		printf("hai %x %s\n", int_bmide_status, int_bmide_status & BM_SR_MASK_INT ? "y" : "n");
 	} else {
 		int_ata_status = pio_inbyte(CB_STAT);
 	}
@@ -1358,8 +1356,6 @@ static int set_up_xfer(int dir, s32 bc, phptr bufAddr) {
    else
       rwControl = BM_CR_MASK_WRITE;    // ATA Read DMA
    pio_writeBusMstrCmd(rwControl);
-
-   printf("[[set_up_xfer: phyAddr %x]]", phyAddr);
 
    return 0;
 }

@@ -156,14 +156,11 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 		phptr phys;
 		u8 *linear = reinterpret_cast<u8 *>(mallocap(number * 512, &phys));
 
-		printf("(i:%x)", phys);
 		u32 dma_result = dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, phys, number);
-		//flushTLB();
+
 		printf(">>> (ii) dma pci lba28: num %d, start %d, buf %x, result: %d\n", number, start, phys, dma_result);
 		printf(">>> (iii) linear is %x, starts %s/%x %x %x %x\n", linear, linear, *linear, linear[1], linear[2], linear[3]);
-		// linear += 0x200;
-		// printf(">>> (iii) linear is %x, starts %s/%x %x %x %x\n", linear, linear, *linear, linear[1], linear[2], linear[3]);
-				
+
 		printf("bytesXfer: %d, ec: \n", reg_cmd_info.totalBytesXfer, reg_cmd_info.ec);
 		memcpy(buffer, linear, number * 512);
 	}
@@ -190,22 +187,12 @@ void ata_read_data(u32 sector_offset, u16 offset, u32 length, u8 *buffer) {
 	}
 	
 	u32 complete_sectors = length / 512;
-	printf("length: %d\n", length);
 	if (complete_sectors > 0) {
 		// We have some number of complete sectors which we can read out wholesale.
+		ata_read_sectors(sector_open + sectors_read, complete_sectors, buffer);
 
-		// ata_read_sectors(sector_open + sectors_read, complete_sectors, buffer);
-
-		while (complete_sectors > 0) {
-			ata_read_sectors(sector_open + sectors_read, 1, tempdata);
-			memcpy(buffer, tempdata, 512);
-			++sectors_read;
-			buffer += 512;
-			--complete_sectors;
-		}
-		
-		// sectors_read += complete_sectors;
-		// buffer += complete_sectors * 512;
+		sectors_read += complete_sectors;
+		buffer += complete_sectors * 512;
 	}
 	length %= 512;
 

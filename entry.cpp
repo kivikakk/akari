@@ -132,8 +132,7 @@ static void AkariEntryCont() {
 	Akari->tasks->current->next = idle;
 
 	// ATA driver
-	// XXX RING 0 is faster.
-	Tasks::Task *ata = Tasks::Task::CreateTask(0, 0, true, 0, Akari->memory->_kernelDirectory, "ata", std::list<std::string>());
+	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "ata", std::list<std::string>());
 	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
 
 	for (u16 j = 0; j < 8; ++j) {
