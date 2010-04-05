@@ -166,8 +166,6 @@ namespace User {
 		void *mem = Akari->tasks->current->heap->allocAligned(n);
 		*p = physAddr(mem);
 		return mem;
-
-		// return Akari->memory->allocAligned(n, reinterpret_cast<u32 *>(p));
 	}
 
 	phptr physAddr(void *ptr) {
