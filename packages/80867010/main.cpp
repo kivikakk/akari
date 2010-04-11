@@ -39,8 +39,7 @@ extern "C" int main(int argc, char **argv) {
 
 		struct queue_item_info *info = probeQueueFor(msg_id);
 
-		printf("80867010: msg id %d, %d config(s) (%d bytes leftover)\n",
-				info->id,
+		printf("80867010: %d config(s) (%d bytes leftover)\n",
 				info->data_len / sizeof(pci_device_regular),
 				info->data_len % sizeof(pci_device_regular));
 
@@ -70,8 +69,6 @@ extern "C" int main(int argc, char **argv) {
 		PCIOpDMAUp op = { PCI_OP_DMA_UP };
 		sendQueue(pci, 0, reinterpret_cast<u8 *>(&op), sizeof(PCIOpDMAUp));
 	}
-
-	printf("[80867010]\n");
 
 	return 0;
 }

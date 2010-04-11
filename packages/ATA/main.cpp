@@ -52,7 +52,7 @@ extern "C" int main() {
 	if (!registerName("system.io.ata"))
 		panic("ATA: could not register system.io.ata");
 
-	printf("[ATA]\n");
+	printf("[ATA] ");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();
@@ -94,23 +94,12 @@ extern "C" int main() {
 
 			// send a confirmation that it's done.
 			sendQueue(info.from, info.id, 0, 0);
-
-			// u8 *buffer = new u8[1024];
-			static u8 buffer[1024];
-			partition_read_data(0, 0, 0, 511, buffer);
-
-			printf("read 1024: %x %s/%x %x %x %x %x %x %x %x ...\n", buffer, buffer, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]);
-
-			// delete [] buffer;
 		} else {
 			panic("ATA: confused");
 		}
 
 		delete [] request;
 	}
-
-	panic("ATA: ran off the end of the infinite loop");
-	return 1;
 }
 
 void partition_read_data(u8 partition_id, u32 sector, u16 offset, u32 length, u8 *buffer) {

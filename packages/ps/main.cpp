@@ -17,26 +17,11 @@
 #include <stdio.hpp>
 #include <fs.hpp>
 #include <UserCalls.hpp>
+#include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
-#include <arch.hpp>
-#include <proc.hpp>
 
-#include "../PCI/PCIProto.hpp"
-
-extern "C" int main() {
-	pid_t pci = bootstrap("/PCI", 0);
-	
-	{
-		PCIOpAwaitDriversUp op = { PCI_OP_AWAIT_DRIVERS_UP };
-		u32 msg_id = sendQueue(pci, 0, reinterpret_cast<u8 *>(&op), sizeof(PCIOpAwaitDriversUp));
-		shiftQueue(probeQueueFor(msg_id));
-	}
-
-	printf("booter continuing\n");
-
-	bootstrap("/Kb", 0);
-	bootstrap("/Shell", 0);
-
+extern "C" int main(int argc, char **argv) {
+	printf("hello\n");
 	return 0;
 }
 

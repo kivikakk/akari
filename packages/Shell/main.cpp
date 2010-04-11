@@ -28,7 +28,7 @@ extern "C" int main() {
 	const char *cwd = "/";
 	
 	while (true) {
-		printf("(Akari) %s$ ", cwd);
+		printf("%s$ ", cwd);
 
 		std::vector<std::string> line = getline().split();
 
@@ -38,22 +38,17 @@ extern "C" int main() {
 
 			DIR *dirp = opendir(cwd);
 			VFSDirent *dirent;
-			u32 i = 0; bool started = false;
+
+			int entries = 0;
+
 			while ((dirent = readdir(dirp))) {
-				if (i == 0) {
-					if (!started)
-						started = true;
-					else
-						printf("\n");
-				}
-				printf("%s", dirent->name);
-				i = (i + 1) % 6;
-				if (i != 0) printf("\t");
+				printf("%x\t%s\n", dirent->inode, dirent->name);
+				++entries;
 			}
 
-			printf("\n");
-
 			closedir(dirp);
+
+			printf("%d %s\n", entries, entries == 1 ? "entry" : "entries");
 
 		} else if (line[0] == "lobster") {
 			lobster();
@@ -61,9 +56,6 @@ extern "C" int main() {
 			printf("%s: command not found\n", line[0].c_str());
 		}
 	}
-
-	panic("shell exited?");
-	return 1;
 }
 
 void lobster() {

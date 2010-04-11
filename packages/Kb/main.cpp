@@ -100,7 +100,7 @@ extern "C" int main() {
 
 	irqListen(1);
 
-	printf("[Kb]\n");
+	printf("[Kb] ");
 
 	u8 scancode = AkariInB(0x60);
 	bool mustUpdateLEDs = false;
@@ -160,8 +160,5 @@ extern "C" int main() {
 		irqWait();
 		scancode = AkariInB(0x60);
 	}
-
-	panic("kb driver exited?");
-	return 1;
 }
 

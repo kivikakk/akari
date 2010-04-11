@@ -70,7 +70,7 @@ extern "C" int main() {
 	if (!registerName("system.bus.pci"))
 		panic("PCI: could not register system.bus.pci");
 
-	printf("[PCI]\n");
+	printf("[PCI] ");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();
@@ -117,9 +117,6 @@ extern "C" int main() {
 
 		delete [] request;
 	}
-
-	panic("PCI: ran off the end of the infinite loop");
-	return 1;
 }
 
 const u32 known_harddisk_drivers[] = {
@@ -164,7 +161,7 @@ u16 check_vendor(u16 bus, u8 slot, u8 fn) {
 }
 
 void check_device(u16 bus, u8 slot, u8 fn, u16 vendor, u16 device) {
-	printf("%x/%x/%x: vendor %x, device %x\n", bus, slot, fn, vendor, device);
+	printf("%x/%x/%x: %x/%x\n", bus, slot, fn, vendor, device);
 
 	char *filename = rasprintf("/%4x%4x", vendor, device);
 

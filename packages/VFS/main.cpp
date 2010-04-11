@@ -52,7 +52,7 @@ extern "C" int main() {
 	if (!registerName("system.io.vfs"))
 		panic("VFS: could not register system.io.vfs");
 
-	printf("[VFS]\n");
+	printf("[VFS] ");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();
@@ -134,9 +134,6 @@ extern "C" int main() {
 			panic("VFS: confused");
 		}
 	}
-
-	panic("VFS: went off the edge");
-	return 1;
 }
 
 pid_t pidForDriver(u32 driver) {

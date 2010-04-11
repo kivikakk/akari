@@ -102,7 +102,7 @@ extern "C" int main() {
 	}
 
 	// All done.
-	printf("[FAT]\n");
+	printf("[FAT] ");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();
@@ -142,9 +142,6 @@ extern "C" int main() {
 
 		delete [] request;
 	}
-
-	panic("FAT: went off the edge");
-	return 1;
 }
 
 bool init() {
