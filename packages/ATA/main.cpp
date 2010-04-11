@@ -152,13 +152,15 @@ void ata_read_sectors(u32 start, u32 number, u8 *buffer) {
 	if (!dma_enabled) {
 		reg_pio_data_in_lba28(0, CMD_READ_SECTORS, 0, number, start, buffer, number, 0);
 	} else {
-		phptr phys;
-		u8 *linear = reinterpret_cast<u8 *>(mallocap(number * 512, &phys));
+		// NOTE XXX: this assumes buffer is contiguous in physical memory. Hope to god it is.
+		//
+		phptr phys = physAddr(buffer);
+		// u8 *linear = reinterpret_cast<u8 *>(mallocap(number * 512, &phys));
 
 		dma_pci_lba28(0, CMD_READ_DMA, 0, number, start, phys, number);
-		memcpy(buffer, linear, number * 512);
+		// memcpy(buffer, linear, number * 512);
 
-		free(linear);
+		// free(linear);
 	}
 }
 
