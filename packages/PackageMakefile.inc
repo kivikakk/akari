@@ -32,23 +32,27 @@ $(TARGET)-copy: $(TARGET)
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
 
 $(TARGET): $(OBJS) ../../$(LINKAGE_TARGET) obj
-	$(LD) $(OBJS) ../../$(LINKAGE_TARGET) -o $(TARGET)
+	$(LD) -melf_i386 $(OBJS) ../../$(LINKAGE_TARGET) -o $(TARGET)
 	$(STRIP) $(TARGET)
 
 include $(CXXDEPS)
 
-obj/%.cpp.d: %.cpp obj
+obj/%.cpp.d: %.cpp
+	if [ ! -e obj ]; then mkdir obj; fi
+
 	$(CXX) -M $(CXXOPTS) -D__CPLUSPLUS $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
-obj/%.s.o: %.s obj
-	$(AS) $(ASOPTS) -o $@ $<
-obj/%.cpp.o: %.cpp obj
-	$(CXX) $(CXXOPTS) -D__CPLUSPLUS -c -o $@ $<
-
-obj:
+obj/%.s.o: %.s
 	if [ ! -e obj ]; then mkdir obj; fi
+
+	$(AS) $(ASOPTS) -o $@ $<
+
+obj/%.cpp.o: %.cpp
+	if [ ! -e obj ]; then mkdir obj; fi
+
+	$(CXX) $(CXXOPTS) -D__CPLUSPLUS -c -o $@ $<
 
 clean:
 	-rm $(TARGET) $(OBJS) $(CXXDEPS)
