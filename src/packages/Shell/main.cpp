@@ -22,8 +22,6 @@
 
 #include "../VFS/VFSProto.hpp"
 
-void lobster();
-
 extern "C" int main() {
 	std::string cwd = "/";
 	
