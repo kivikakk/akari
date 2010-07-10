@@ -355,7 +355,6 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 
 		u32 current = 0;
 		for (u32 position = 0; position < (512 / 32) * 1; ++position, ++fd) {
-			printf("entry: %s.\n", fd->filename);
 			if (fd->filename[0] == 0)
 				break;
 			else if (fd->filename[0] == 0xe5)
