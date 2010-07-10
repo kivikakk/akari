@@ -84,11 +84,19 @@ extern "C" int main() {
 			}
 		} else {
 			std::string path = join(cwd, line[0]);
-			printf("path %s\n", path.c_str());
+
 			if (fexists(path.c_str())) {
-				printf("ok (%s)\n", path.c_str());
+				FILE *f = fopen(path.c_str(), "r");
+				bool is_empty = !flen(f);
+				fclose(f);
+
+				if (is_empty) {
+					printf("%s: är tom (kanske är en katalog)\n", line[0].c_str());
+				} else {
+					bootstrap(path.c_str(), 0);
+				}
 			} else {
-				printf("%s: command not found\n", line[0].c_str());
+				printf("%s: Filen eller katalogen finns inte\n", line[0].c_str());
 			}
 		}
 	}
