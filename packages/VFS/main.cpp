@@ -167,6 +167,8 @@ VFSDirent *fs_readdir(pid_t pid, u32 inode, u32 index) {
 		index
 	};
 
+	printf("readdir to pid %d, inode %d, index %d\n", pid, inode, index);
+
 	u32 msg_id = sendQueue(pid, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpReaddir));
 
 	struct queue_item_info *info = probeQueueFor(msg_id);

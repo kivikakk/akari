@@ -28,7 +28,7 @@ extern "C" int main() {
 	const char *cwd = "/";
 	
 	while (true) {
-		printf("%s$ ", cwd);
+		printf("%s@%s:%s%s ", "celtic", "akari", cwd, "#");
 
 		std::vector<std::string> line = getline().split();
 

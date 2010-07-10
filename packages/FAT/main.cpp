@@ -85,7 +85,6 @@ extern "C" int main() {
 		}
 
 		vfs_driver_no = reply.driver;
-		// printf("FAT: registered as 0x%x\n", vfs_driver_no);
 	}
 	
 	// Mount ourselves as root
@@ -159,6 +158,7 @@ bool init() {
 	}
 
 	if (!fat32esque) {
+		panic("no !FAT32");
 		// root_dir_sectors = ((boot_record.directory_entries * 32) + (boot_record.bytes_per_sector - 1)) / boot_record.bytes_per_sector;
 		fat_sectors = boot_record.sectors_per_fat;
 		first_data_sector = boot_record.reserved_sectors + fat_sectors * boot_record.fats;
@@ -225,6 +225,7 @@ u8 *fat_read_fat_cluster(u32 cluster) {
 void fat_read_cluster(u32 cluster, u8 *buffer) {
 	if (!fat32esque) {
 		// partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
+		panic("FAT not impl for !FAT32");
 	} else {
 		partition_read_data(0, first_data_sector + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
 	}
@@ -306,6 +307,7 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer) {
 					current_cluster = fat_entry;
 				}
 			} else {
+				panic("not !FAT32");
 				if (fat_entry == 0) panic("FAT: lead to a free cluster!");
 				else if (fat_entry == 1) panic("FAT: lead to a reserved cluster!");
 				else if (fat_entry >= 0xFFF0 && fat_entry <= 0xFFF7) panic("FAT: lead to an end-reserved cluster!");
@@ -337,12 +339,15 @@ u32 fat_entry_for(u32 for_cluster) {
 		fat_entry &= 0x0FFFFFFF;
 		return fat_entry;
 	} else {
+		panic("no !FAT32");
 		u16 fat_entry = reinterpret_cast<u16 *>(cluster)[cluster_index];
 		return fat_entry;
 	}
 }
 
 VFSDirent *fat_readdir(u32 inode, u32 index) {
+	printf("got readdir for inode %d, index %d\n", inode, index);
+
 	if (inode == 0) {
 		// root
 		u8 *cluster = new u8[512 * 1];
@@ -377,6 +382,7 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 			}
 		}
 
+		printf("FAT end\n");
 		delete [] cluster;
 		return 0;
 	}
