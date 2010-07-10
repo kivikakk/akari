@@ -346,89 +346,78 @@ u32 fat_entry_for(u32 for_cluster) {
 }
 
 VFSDirent *fat_readdir(u32 inode, u32 index) {
-	if (inode == 0) {
-		// root
-		u8 *cluster = new u8[512 * 1];
-		fat_read_cluster(root_cluster, cluster);
-		
-		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
+	u8 *cluster = new u8[512 * 1];
+	fat_read_cluster(inode == 0 ? root_cluster : inode, cluster);
+	
+	fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
 
-		u32 current = 0;
-		for (u32 position = 0; position < (512 / 32) * 1; ++position, ++fd) {
-			if (fd->filename[0] == 0)
-				break;
-			else if (fd->filename[0] == 0xe5)
-				continue;
-			else if (fd->filename[11] == 0x0f)
-				continue;	// TODO LFN
-			else if (fd->attributes & FAT_VOLUME_ID)
-				continue;	// fd->filename is vol ID
+	u32 current = 0;
+	for (u32 position = 0; position < (512 / 32) * 1; ++position, ++fd) {
+		if (fd->filename[0] == 0)
+			break;
+		else if (fd->filename[0] == 0xe5)
+			continue;
+		else if (fd->filename[11] == 0x0f)
+			continue;	// TODO LFN
+		else if (fd->attributes & FAT_VOLUME_ID)
+			continue;	// fd->filename is vol ID
 
-			// dir or file now!
-			else if (current++ == index) {
-				// bingo!
-				VFSDirent *dirent = new VFSDirent;
+		// dir or file now!
+		else if (current++ == index) {
+			// bingo!
+			VFSDirent *dirent = new VFSDirent;
 
-				u8 *filename = get_filename(fd);
-				strcpy(dirent->name, reinterpret_cast<char *>(filename));
-				delete [] filename;
+			u8 *filename = get_filename(fd);
+			strcpy(dirent->name, reinterpret_cast<char *>(filename));
+			delete [] filename;
 
-				dirent->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
+			dirent->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
 
-				delete [] cluster;
-				return dirent;
-			}
+			delete [] cluster;
+			return dirent;
 		}
-
-		delete [] cluster;
-		return 0;
 	}
 
-	panic("FAT: oops. can't readdir not-0 now.");
+	delete [] cluster;
 	return 0;
 }
 
 VFSNode *fat_finddir(u32 inode, const char *name) {
-	if (inode == 0) {
-		// root
-		u8 *cluster = new u8[512 * 1];
-		fat_read_cluster(root_cluster, cluster);
+	// root
+	u8 *cluster = new u8[512 * 1];
+	fat_read_cluster(inode == 0 ? root_cluster : inode, cluster);
 
-		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
-		for (u32 position = 0; position < (512 / 32) * 1; ++position, ++fd) {
-			if (fd->filename[0] == 0)
-				break;
-			else if (fd->filename[0] == 0xe5)
-				continue;
-			else if (fd->filename[11] == 0x0f)
-				continue;	// TODO LFN
-			else if (fd->attributes & FAT_VOLUME_ID)
-				continue;
+	fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
+	for (u32 position = 0; position < (512 / 32) * 1; ++position, ++fd) {
+		if (fd->filename[0] == 0)
+			break;
+		else if (fd->filename[0] == 0xe5)
+			continue;
+		else if (fd->filename[11] == 0x0f)
+			continue;	// TODO LFN
+		else if (fd->attributes & FAT_VOLUME_ID)
+			continue;
 
-			u8 *filename = get_filename(fd);
-			if (stricmp(reinterpret_cast<char *>(filename), name) == 0) {
-				delete [] filename;
-
-				VFSNode *node = new VFSNode;
-				strcpy(node->name, name);
-				node->flags = (fd->attributes & FAT_DIRECTORY) ? VFS_DIRECTORY : VFS_FILE;
-				node->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
-				node->length = fd->size;
-				node->impl = 0;
-				node->driver = vfs_driver_no;
-
-				// TODO: set node fs to FAT
-				delete [] cluster;
-				return node;
-			}
+		u8 *filename = get_filename(fd);
+		if (stricmp(reinterpret_cast<char *>(filename), name) == 0) {
 			delete [] filename;
-		}
 
-		delete [] cluster;
-		return 0;
+			VFSNode *node = new VFSNode;
+			strcpy(node->name, name);
+			node->flags = (fd->attributes & FAT_DIRECTORY) ? VFS_DIRECTORY : VFS_FILE;
+			node->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
+			node->length = fd->size;
+			node->impl = 0;
+			node->driver = vfs_driver_no;
+
+			// TODO: set node fs to FAT
+			delete [] cluster;
+			return node;
+		}
+		delete [] filename;
 	}
 
-	panic("FAT: oops. can't finddir not-0");
+	delete [] cluster;
 	return 0;
 }
 
