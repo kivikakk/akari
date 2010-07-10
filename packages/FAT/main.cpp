@@ -346,24 +346,16 @@ u32 fat_entry_for(u32 for_cluster) {
 }
 
 VFSDirent *fat_readdir(u32 inode, u32 index) {
-	printf("got readdir for inode %d, index %d\n", inode, index);
-
 	if (inode == 0) {
 		// root
 		u8 *cluster = new u8[512 * 1];
-		partition_read_data(0, root_cluster, 0, 512 * 1, cluster);
-		printf("read root cluster %d\n", root_cluster);
+		fat_read_cluster(root_cluster, cluster);
 		
 		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
 
-		for (u32 i = 0; i < 512; ++i) {
-			putc(cluster[i]);
-		}
-
 		u32 current = 0;
 		for (u32 position = 0; position < (512 / 32) * 1; ++position, ++fd) {
-			printf("entry: %s\n", fd->filename);
-
+			printf("entry: %s.\n", fd->filename);
 			if (fd->filename[0] == 0)
 				break;
 			else if (fd->filename[0] == 0xe5)
@@ -389,7 +381,6 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 			}
 		}
 
-		printf("FAT end\n");
 		delete [] cluster;
 		return 0;
 	}

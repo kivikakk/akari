@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-TARGET = ps
-COPYDEST = C:/ps
+TARGET = PS
+COPYDEST = C:/PS
 
 include ../PackageMakefile.inc
 

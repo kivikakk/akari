@@ -113,9 +113,7 @@ DIR *opendir(const char *dirname) {
 	init();
 
 	VFSNode *node = resolve_path(dirname);
-	printf("dirname is \"%s\", node is %x\n", dirname, node);
 	if (!node) return 0;
-	printf("success ...\n");
 
 	DIR *dirp = new DIR;
 	dirp->dir = node;
@@ -130,10 +128,8 @@ VFSDirent *readdir(DIR *dirp) {
 	if (!dirp || !dirp->dir) return 0;
 
 	VFSDirent *dirent = readdir_fs(dirp->dir, dirp->index++);
-	if (!dirent) {
-		printf("no dirent at %x[%d]\n", dirp->dir, dirp->index - 1);
+	if (!dirent)
 		return 0;
-	}
 
 	memcpy(&static_dirent, dirent, sizeof(VFSDirent));
 	delete dirent;

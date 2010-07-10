@@ -103,8 +103,6 @@ extern "C" int main() {
 
 			drivers.push_back(driver);
 
-			// printf("VFS: registered '%s' driver\n", driver.name);
-
 			VFSReplyRegisterDriver reply = { true, drivers.size() - 1 };
 			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&reply), sizeof(reply));
 		} else if (request[0] == VFS_OP_MOUNT_ROOT) {
@@ -166,8 +164,6 @@ VFSDirent *fs_readdir(pid_t pid, u32 inode, u32 index) {
 		inode,
 		index
 	};
-
-	printf("readdir to pid %d, inode %d, index %d\n", pid, inode, index);
 
 	u32 msg_id = sendQueue(pid, 0, reinterpret_cast<u8 *>(&op), sizeof(VFSOpReaddir));
 
