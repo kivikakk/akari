@@ -28,15 +28,19 @@ namespace std {
 		string(const string &r);
 		string(const char *s);
 		string(const char *s, u32 n);
+		string(char c);
 		~string();
 
 		static const u32 npos = -1;
 
-		bool operator ==(const char *c) const;
+		bool operator ==(const string &r) const; 
+		bool operator ==(const char *s) const;
 
-		string &operator +=(const char *c);
 		string &operator +=(const string &s);
+		string &operator +=(const char *s);
 		string &operator +=(char c);
+		string operator +(const string &s) const;
+		string operator +(char c) const;
 
 		const char &operator[](u32 pos) const;
 		char &operator[](u32 pos);

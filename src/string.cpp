@@ -38,10 +38,21 @@ std::string::string(const char *s, u32 n): _length(n) {
 	_str[_length] = 0;
 }
 
+std::string::string(char c) {
+	_length = 1;
+	_str = new char[2];
+	_str[0] = c;
+	_str[1] = 0;
+}
+
 std::string::~string() {
 	if (_str) {
 		delete [] _str;
 	}
+}
+
+bool std::string::operator ==(const std::string &r) const {
+	return *this == r.c_str();
 }
 
 bool std::string::operator ==(const char *c) const {
@@ -81,6 +92,18 @@ std::string &std::string::operator +=(char c) {
 	delete [] _str;
 	_str = newstr;
 	return *this;
+}
+
+std::string std::string::operator +(const string &s) const {
+	string l = *this;
+	l += s;
+	return l;
+}
+
+std::string std::string::operator +(char c) const {
+	string l = *this;
+	l += c;
+	return l;
 }
 
 const char &std::string::operator[](u32 pos) const {
