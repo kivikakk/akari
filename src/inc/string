@@ -30,9 +30,12 @@ namespace std {
 		string(const char *s, u32 n);
 		~string();
 
+		static const u32 npos = -1;
+
 		bool operator ==(const char *c) const;
 
 		string &operator +=(const char *c);
+		string &operator +=(const string &s);
 		string &operator +=(char c);
 
 		const char &operator[](u32 pos) const;
@@ -41,7 +44,9 @@ namespace std {
 		u32 length() const;
 		const char *c_str() const;
 
-		string substr(u32 pos, u32 n=(u32)-1) const;
+		u32 rfind(char c, u32 pos=npos) const;
+
+		string substr(u32 pos, u32 n=npos) const;
 		string trim() const;
 		vector<string> split() const;
 

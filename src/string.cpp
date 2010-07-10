@@ -57,6 +57,10 @@ bool std::string::operator ==(const char *c) const {
 	return (strcmp(_str, c) == 0);
 }
 
+std::string &std::string::operator +=(const std::string &s) {
+	return this->operator +=(s.c_str());
+}
+
 std::string &std::string::operator +=(const char *c) {
 	u32 rlen = strlen(c);
 	char *newstr = new char[_length + rlen + 1];
@@ -95,13 +99,22 @@ const char *std::string::c_str() const {
 	return _str;
 }
 
+u32 std::string::rfind(char c, u32 pos) const {
+	pos = min(pos, _length);
+	while (pos-- > 0) {
+		if (_str[pos] == c)
+			return pos;
+	}
+	return npos;
+}
+
 std::string std::string::substr(u32 pos, u32 n) const {
 	if (pos > _length) {
 		// TODO: panic("out_of_range exception (according to STL)");
 		return std::string();
 	}
-	if (pos + n > _length) n = _length - pos;
 
+	if (n > _length - pos) n = _length - pos;
 	return std::string(_str + pos, n);
 }
 
@@ -198,7 +211,7 @@ s32 strpos(const char *haystack, const char *needle) {
 			return i;
 		++i, ++haystack;
 	}
-	return -1;
+	return std::string::npos;
 }
 
 bool isspace(char c) {
