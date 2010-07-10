@@ -15,12 +15,21 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.hpp>
+#include <proc.hpp>
 #include <fs.hpp>
 #include <UserCalls.hpp>
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
 
 #include "../VFS/VFSProto.hpp"
+
+std::string join(const std::string &a, const std::string &b) {
+	if (a.length() == 0)
+		return b;
+	if (a[a.length() - 1] == '/')
+		return a + b;
+	return a + '/' + b;
+}
 
 extern "C" int main() {
 	std::string cwd = "/";
@@ -47,33 +56,40 @@ extern "C" int main() {
 
 			printf("%d %s\n", entries, entries == 1 ? "entry" : "entries");
 		} else if (line[0] == "cd") {
-			std::string new_cwd = cwd;
+			std::string path;
 
 			if (line[1] == ".")
 				continue;
 			else if (line[1] == "..") {
 				if (cwd == "/") continue;
 
-				new_cwd = new_cwd.substr(0, new_cwd.rfind('/'));
-				if (new_cwd.length() == 0)
-					new_cwd = "/";
+				path = cwd.substr(0, cwd.rfind('/'));
 			} else if (line[1][0] == '/') {
-				new_cwd = line[1];
+				path = line[1];
 			} else {
-				if (cwd.length() != 1)
-					new_cwd += '/';
-				new_cwd += line[1];
+				path = join(cwd, line[1]);
 			}
 
-			DIR *dirp = opendir(new_cwd.c_str());
+			if (path.length() == 0)
+				path = '/';
+			else if (path.length() > 1 && path[path.length() - 1] == '/')
+				path = path.substr(0, path.length() - 1);
+
+			DIR *dirp = opendir(path.c_str());
 			if (!dirp) {
 				printf("cd: %s: Filen eller katalogen finns inte\n", line[1].c_str());
 			} else {
 				closedir(dirp);
-				cwd = new_cwd;
+				cwd = path;
 			}
 		} else {
-			printf("%s: command not found\n", line[0].c_str());
+			std::string path = join(cwd, line[0]);
+			printf("path %s\n", path.c_str());
+			if (fexists(path.c_str())) {
+				printf("ok (%s)\n", path.c_str());
+			} else {
+				printf("%s: command not found\n", line[0].c_str());
+			}
 		}
 	}
 }
