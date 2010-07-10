@@ -16,7 +16,7 @@
 
 include ../Makefile.inc
 
-PACKAGES = ATA FAT VFS Booter PCI Kb Shell 80867010 ps
+PACKAGES = ATA FAT VFS Booter PCI Kb Shell 80867010 PS
 
 all: $(PACKAGES)
 
