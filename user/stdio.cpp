@@ -35,18 +35,25 @@ std::string getline() {
 
 	while (true) {
 		u32 incoming = readStream(keyboard_pid, "input", keyboard_hook, kbbuf + n, 1);
-		putc(kbbuf[n]);
-		if (kbbuf[n] == '\n') break;
 
-		n += incoming;	// 1
+		if (kbbuf[n] == 8) {
+			if (n > 0) {
+				puts("\010 \010");
+				--n;
+			}
+		} else {
+			putc(kbbuf[n]);
+			if (kbbuf[n] == '\n') break;
+			++n;
 
-		if (n == cs) {
-			cs *= 2;
+			if (n == cs) {
+				cs *= 2;
 
-			char *new_buf = new char[cs];
-			memcpy(new_buf, kbbuf, n);
-			delete [] kbbuf;
-			kbbuf = new_buf;
+				char *new_buf = new char[cs];
+				memcpy(new_buf, kbbuf, n);
+				delete [] kbbuf;
+				kbbuf = new_buf;
+			}
 		}
 	}
 

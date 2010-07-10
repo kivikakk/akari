@@ -50,6 +50,7 @@ void Console::putChar(s8 c) {
 	switch (c) {
 		case '\n':	_shiftCursorNewline(); break;
 		case '\t':	_shiftCursorTab(); break;
+		case 8:		_shiftCursorBackward(); break;
 		default:
 			*reinterpret_cast<s8 *>(SCREEN_VMEM + (_cursorY * 80 + _cursorX) * 2) = c;
 			_shiftCursor();
@@ -94,8 +95,24 @@ void Console::_shiftCursor() {
 		_cursorX = 0;
 		++_cursorY;
 		_scroll();
-	} else
-		_updateCursor();
+	}
+
+	_updateCursor();
+}
+
+void Console::_shiftCursorBackward() {
+	if (_cursorX == 0) {
+		_cursorX = 79;
+		if (_cursorY == 0) {
+			// ?? No-op?
+		} else {
+			--_cursorY;
+		}
+	} else {
+		--_cursorX;
+	}
+
+	_updateCursor();
 }
 
 void Console::_shiftCursorTab() {

@@ -135,10 +135,13 @@ extern "C" int main() {
 				mustUpdateLEDs = true;
 			} else {
 				scancode = keyboard_us[scancode];
+
 				if (pressed_shift)
 					scancode = shiftCharacter(scancode);
+
 				if (capslock_down)
 					scancode = capslockInvert(scancode);
+
 				if (echo_mode)
 					putc(scancode);
 

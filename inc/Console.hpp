@@ -41,6 +41,7 @@ protected:
 	void _scroll();
 
 	void _shiftCursor();
+	void _shiftCursorBackward();
 	void _shiftCursorTab();
 	void _shiftCursorNewline();
 
