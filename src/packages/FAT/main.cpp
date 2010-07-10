@@ -354,7 +354,16 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 		cluster_buffer = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
 
 	u32 current_cluster = cluster_for_inode(inode);
-	u32 current = 0;
+
+	if (index <= 1 && inode == 0) {
+		// Root dir. Add mythical . (0) and .. (1) entries.
+		VFSDirent *dirent = new VFSDirent;
+		strcpy(dirent->name, index == 0 ? "." : "..");
+		dirent->inode = 0;
+		return dirent;
+	}
+
+	u32 current = 2;
 
 	while (true) {
 		fat_read_cluster(current_cluster, cluster_buffer);
@@ -405,6 +414,18 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 		cluster_buffer = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
 
 	u32 current_cluster = cluster_for_inode(inode);
+
+	// Root . and .. entries
+	if (inode == 0 && (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)) {
+		VFSNode *node = new VFSNode;
+		strcpy(node->name, name);
+		node->flags = VFS_DIRECTORY;
+		node->inode = 0;
+		node->length = node->impl = 0;
+		node->driver = vfs_driver_no;
+
+		return node;
+	}
 
 	while (true) {
 		fat_read_cluster(current_cluster, cluster_buffer);
