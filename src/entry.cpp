@@ -80,6 +80,8 @@ void AkariEntry() {
 	Akari->syscall = new Syscall(); Akari->subsystems.push_back(Akari->syscall);
 	Akari->elf = new ELF(); Akari->subsystems.push_back(Akari->elf);
 
+	Akari->console->putString("Akari " __AKARI_VERSION " börjar ...\n");
+
 	// This is done before paging is turned on (otherwise the memory where the
 	// modules reside is protected), but after memory is initialised.
 	module_t *module_ptr = (module_t *)AkariMultiboot->mods_addr;

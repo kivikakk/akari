@@ -18,6 +18,10 @@ include Makefile.inc
 
 TARGET = Akari
 
+AKARI_MAJOR = 0
+AKARI_MINOR = 1
+AKARI_VERSION = \"$(AKARI_MAJOR).$(AKARI_MINOR)\"
+
 LDFILE = akari.lnk
 COPYDEST = c:/Akari
 MENUDEST = c:/boot/grub/menu.lst
@@ -56,7 +60,7 @@ obj/%.cpp.d: %.cpp
 obj/%.s.o: %.s
 	$(AS) $(ASOPTS) -o $@ $<
 obj/%.cpp.o: %.cpp
-	$(CXX) $(CXXOPTS) -D__AKARI_KERNEL -D__CPLUSPLUS -c -o $@ $<
+	$(CXX) $(CXXOPTS) -D__AKARI_VERSION=$(AKARI_VERSION) -D__AKARI_KERNEL -D__CPLUSPLUS -c -o $@ $<
 
 clean:
 	-rm $(TARGET) $(OBJS) $(CXXDEPS)
