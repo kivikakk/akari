@@ -214,7 +214,6 @@ u8 *fat_read_fat_cluster(u32 cluster) {
 		return it->second;
 
 	u8 *cluster_data = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
-	// ??
 	partition_read_data(0, first_fat_sector + cluster * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, cluster_data);
 
 	fat_clusters[cluster] = cluster_data;
@@ -345,84 +344,113 @@ u32 fat_entry_for(u32 for_cluster) {
 	}
 }
 
+static u32 inline cluster_for_inode(u32 inode) {
+	return inode == 0 ? root_cluster : inode;
+}
+
 VFSDirent *fat_readdir(u32 inode, u32 index) {
-	u8 *cluster = new u8[512 * 1];
-	fat_read_cluster(inode == 0 ? root_cluster : inode, cluster);
-	
-	fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
+	static u8 *cluster_buffer = 0;
+	if (!cluster_buffer)
+		cluster_buffer = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
 
+	u32 current_cluster = cluster_for_inode(inode);
 	u32 current = 0;
-	for (u32 position = 0; position < (512 / 32) * 1; ++position, ++fd) {
-		if (fd->filename[0] == 0)
-			break;
-		else if (fd->filename[0] == 0xe5)
-			continue;
-		else if (fd->filename[11] == 0x0f)
-			continue;	// TODO LFN
-		else if (fd->attributes & FAT_VOLUME_ID)
-			continue;	// fd->filename is vol ID
 
-		// dir or file now!
-		else if (current++ == index) {
-			// bingo!
-			VFSDirent *dirent = new VFSDirent;
+	while (true) {
+		fat_read_cluster(current_cluster, cluster_buffer);
+		
+		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster_buffer);
 
-			u8 *filename = get_filename(fd);
-			strcpy(dirent->name, reinterpret_cast<char *>(filename));
-			delete [] filename;
+		for (u32 position = 0; position < (4096 / 32) * 1; ++position, ++fd) {
+			if (fd->filename[0] == 0)
+				break;
+			else if (fd->filename[0] == 0xe5)
+				continue;
+			else if (fd->filename[11] == 0x0f)
+				continue;	// TODO LFN
+			else if (fd->attributes & FAT_VOLUME_ID)
+				continue;	// fd->filename is vol ID
 
-			dirent->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
+			// dir or file now!
+			else if (current++ == index) {
+				// bingo!
+				VFSDirent *dirent = new VFSDirent;
 
-			delete [] cluster;
-			return dirent;
+				u8 *filename = get_filename(fd);
+				strcpy(dirent->name, reinterpret_cast<char *>(filename));
+
+				dirent->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
+
+				return dirent;
+			}
 		}
+
+		// Didn't find it here.
+		current_cluster = fat_entry_for(current_cluster);
+		if (current_cluster == 0) panic("FAT: lead to a free cluster!");
+		else if (current_cluster == 1) panic("FAT: lead to a reserved cluster!");
+		else if (current_cluster >= 0x0FFFFFF0 && current_cluster <= 0x0FFFFFF7) panic("FAT: lead to an end-reserved cluster!");
+		else if (current_cluster >= 0x0FFFFFF8) {
+			// EOF
+			return 0;
+		} 
 	}
 
-	delete [] cluster;
 	return 0;
 }
 
 VFSNode *fat_finddir(u32 inode, const char *name) {
-	// root
-	u8 *cluster = new u8[512 * 1];
-	fat_read_cluster(inode == 0 ? root_cluster : inode, cluster);
+	static u8 *cluster_buffer = 0;
+	if (!cluster_buffer)
+		cluster_buffer = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
 
-	fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster);
-	for (u32 position = 0; position < (512 / 32) * 1; ++position, ++fd) {
-		if (fd->filename[0] == 0)
-			break;
-		else if (fd->filename[0] == 0xe5)
-			continue;
-		else if (fd->filename[11] == 0x0f)
-			continue;	// TODO LFN
-		else if (fd->attributes & FAT_VOLUME_ID)
-			continue;
+	u32 current_cluster = cluster_for_inode(inode);
 
-		u8 *filename = get_filename(fd);
-		if (stricmp(reinterpret_cast<char *>(filename), name) == 0) {
-			delete [] filename;
+	while (true) {
+		fat_read_cluster(current_cluster, cluster_buffer);
 
-			VFSNode *node = new VFSNode;
-			strcpy(node->name, name);
-			node->flags = (fd->attributes & FAT_DIRECTORY) ? VFS_DIRECTORY : VFS_FILE;
-			node->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
-			node->length = fd->size;
-			node->impl = 0;
-			node->driver = vfs_driver_no;
+		fat_dirent_t *fd = reinterpret_cast<fat_dirent_t *>(cluster_buffer);
 
-			// TODO: set node fs to FAT
-			delete [] cluster;
-			return node;
+		for (u32 position = 0; position < (4096 / 32) * 1; ++position, ++fd) {
+			if (fd->filename[0] == 0)
+				break;
+			else if (fd->filename[0] == 0xe5)
+				continue;
+			else if (fd->filename[11] == 0x0f)
+				continue;	// TODO LFN
+			else if (fd->attributes & FAT_VOLUME_ID)
+				continue;
+
+			u8 *filename = get_filename(fd);
+			if (stricmp(reinterpret_cast<char *>(filename), name) == 0) {
+				VFSNode *node = new VFSNode;
+				strcpy(node->name, name);
+				node->flags = (fd->attributes & FAT_DIRECTORY) ? VFS_DIRECTORY : VFS_FILE;
+				node->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
+				node->length = fd->size;
+				node->impl = 0;
+				node->driver = vfs_driver_no;
+
+				// TODO: set node fs to FAT
+				return node;
+			}
 		}
-		delete [] filename;
+
+		current_cluster = fat_entry_for(current_cluster);
+		if (current_cluster == 0) panic("FAT: lead to a free cluster!");
+		else if (current_cluster == 1) panic("FAT: lead to a reserved cluster!");
+		else if (current_cluster >= 0x0FFFFFF0 && current_cluster <= 0x0FFFFFF7) panic("FAT: lead to an end-reserved cluster!");
+		else if (current_cluster >= 0x0FFFFFF8) {
+			// EOF
+			return 0;
+		} 
 	}
 
-	delete [] cluster;
 	return 0;
 }
 
 static u8 *get_filename(const fat_dirent_t *fd) {
-	u8 *filename_return = new u8[13];
+	static u8 filename_return[13];
 
 	u8 *write = filename_return;
 	const u8 *read = fd->filename;
