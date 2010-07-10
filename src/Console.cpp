@@ -46,14 +46,44 @@ void Console::clear() {
 	_updateCursor();
 }
 
+static const char *unicodeTable[] = {
+	"Ç", "ü", "é", "â", "ä", "à", "å", "ç",	// 0x80-0x87
+	"ê", "ë", "è", "ï", "î", "ì", "Ä", "Å",	// 0x88-0x8f
+	"É", "æ", "Æ", "ô", "ö", "ò", "û", "ù",	// 0x90-0x97
+	"ÿ", "Ö", "Ü", "¢", "₤", "¥", "₧", "ƒ",	// 0x98-0x9f
+	"á", "í", "ó", "ú", "ñ", "Ñ", "ª", "°",	// 0xa0-0xa7
+	"¿",	// 0xa8
+	0,
+};
+
 void Console::putChar(s8 c) {
+	static s8 lastHighChar = 0;
+
 	switch (c) {
-		case '\n':	_shiftCursorNewline(); break;
-		case '\t':	_shiftCursorTab(); break;
-		case 8:		_shiftCursorBackward(); break;
-		default:
+	case '\n':	_shiftCursorNewline(); break;
+	case '\t':	_shiftCursorTab(); break;
+	case 8:		_shiftCursorBackward(); break;
+	default:
+		if ((u8)c >= 0x7f) {
+			if (lastHighChar) {
+				const char **search = unicodeTable;
+				u8 code = 0x80;
+				while (*search) {
+					if ((*search)[0] == lastHighChar && (*search)[1] == c) {
+						*reinterpret_cast<s8 *>(SCREEN_VMEM + (_cursorY * 80 + _cursorX) * 2) = code;
+						_shiftCursor();
+						break;
+					}
+					++search, ++code;
+				}
+				lastHighChar = 0;
+			} else {
+				lastHighChar = c;
+			}
+		} else {
 			*reinterpret_cast<s8 *>(SCREEN_VMEM + (_cursorY * 80 + _cursorX) * 2) = c;
 			_shiftCursor();
+		}
 	}
 }
 
