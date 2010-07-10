@@ -25,18 +25,17 @@
 void lobster();
 
 extern "C" int main() {
-	const char *cwd = "/";
+	std::string cwd = "/";
 	
 	while (true) {
-		printf("%s@%s:%s%s ", "celtic", "akari", cwd, "#");
+		printf("%s@%s:%s%s ", "celtic", "akari", cwd.c_str(), "#");
 
 		std::vector<std::string> line = getline().split();
 
 		if (line.size() == 0) continue;
 
 		if (line[0] == "ls") {
-
-			DIR *dirp = opendir(cwd);
+			DIR *dirp = opendir(cwd.c_str());
 			VFSDirent *dirent;
 
 			int entries = 0;
@@ -49,7 +48,32 @@ extern "C" int main() {
 			closedir(dirp);
 
 			printf("%d %s\n", entries, entries == 1 ? "entry" : "entries");
+		} else if (line[0] == "cd") {
+			std::string new_cwd = cwd;
 
+			if (line[1] == ".")
+				continue;
+			else if (line[1] == "..") {
+				if (cwd == "/") continue;
+
+				new_cwd = new_cwd.substr(0, new_cwd.rfind('/'));
+				if (new_cwd.length() == 0)
+					new_cwd = "/";
+			} else if (line[1][0] == '/') {
+				new_cwd = line[1];
+			} else {
+				if (cwd.length() != 1)
+					new_cwd += '/';
+				new_cwd += line[1];
+			}
+
+			DIR *dirp = opendir(new_cwd.c_str());
+			if (!dirp) {
+				printf("cd: %s: Filen eller katalogen finns inte\n", line[1].c_str());
+			} else {
+				closedir(dirp);
+				cwd = new_cwd;
+			}
 		} else {
 			printf("%s: command not found\n", line[0].c_str());
 		}
