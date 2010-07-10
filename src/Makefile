@@ -33,12 +33,12 @@ $(TARGET)-copy: $(TARGET) menu.lst
 	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
 	$(MTOOLS_BIN)/mcopy -D o menu.lst $(MENUDEST)
 
-$(TARGET): $(OBJS) $(LDFILE) user packages test
+$(TARGET): $(OBJS) $(LDFILE) user packages ../test
 	$(LD) $(LDOPTS) -T$(LDFILE) $(OBJS) -o $(TARGET)
 	$(STRIP) $(TARGET)
 
-test: force_subdir
-	cd test; $(MAKE) $(MFLAGS) all
+../test: force_subdir
+	cd ../test; $(MAKE) $(MFLAGS) all
 
 packages: force_subdir user
 	cd packages; $(MAKE) $(MFLAGS) all
