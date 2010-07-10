@@ -3,7 +3,7 @@
 
 ## introduction
 
-Totally going to write more here later. For now: _akari_, a microkernel, and its associated operating system services.
+Totally going to write more here later. For now: _akari_, a microkernel, and its associated operating system services. Light and fun.
 
 ## see also
 
