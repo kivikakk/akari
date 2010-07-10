@@ -32,7 +32,7 @@ extern "C" int main() {
 		shiftQueue(probeQueueFor(msg_id));
 	}
 
-	printf("booter continuing\n");
+	printf("Booter: started\n");
 
 	bootstrap("/Kb", 0);
 	bootstrap("/Shell", 0);

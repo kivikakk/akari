@@ -39,7 +39,7 @@ extern "C" int main() {
 			int entries = 0;
 
 			while ((dirent = readdir(dirp))) {
-				printf("%x\t%s\n", dirent->inode, dirent->name);
+				printf("%d\t%s\n", dirent->inode, dirent->name);
 				++entries;
 			}
 

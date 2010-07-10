@@ -52,7 +52,7 @@ extern "C" int main() {
 	if (!registerName("system.io.ata"))
 		panic("ATA: could not register system.io.ata");
 
-	printf("[ATA] ");
+	printf("ATA: started\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();

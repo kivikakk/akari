@@ -101,7 +101,7 @@ extern "C" int main() {
 	}
 
 	// All done.
-	printf("[FAT] ");
+	printf("FAT: started\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();

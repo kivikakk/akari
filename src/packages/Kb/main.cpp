@@ -100,7 +100,7 @@ extern "C" int main() {
 
 	irqListen(1);
 
-	printf("[Kb] ");
+	printf("Kb: started\n");
 
 	u8 scancode = AkariInB(0x60);
 	bool mustUpdateLEDs = false;
