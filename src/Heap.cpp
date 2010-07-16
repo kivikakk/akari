@@ -154,7 +154,6 @@ start(start), size(size), isHole(isHole)
 { }
 
 bool Heap::IndexSort(const Entry &a, const Entry &b) {
-	return a.start < b.start;
 	return a.size < b.size;
 }
 
