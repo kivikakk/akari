@@ -147,7 +147,7 @@ void *Tasks::assignInternalTask(Task *task) {
 	Akari->memory->switchPageDirectory(task->pageDir);
 
 	if (!task->heap && task->heapStart != task->heapMax) {
-		task->heap = new Memory::Heap(task->heapStart, task->heapEnd, task->heapMax, false, false);	// false false? XXX Always?
+		task->heap = new Heap(task->heapStart, task->heapEnd, task->heapMax, PROC_HEAP_SIZE, false, false);	// false false? XXX Always?
 	}
 
 	if (task->cpl > 0) {

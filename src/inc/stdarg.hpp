@@ -20,7 +20,7 @@
 // This is probably GCC specific.
 
 typedef struct {
-	u32 *ptr;
+	ptr_t *ptr;
 } va_list;
 
 #define va_start(ap, place) \

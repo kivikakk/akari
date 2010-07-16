@@ -20,6 +20,11 @@
 // These are specific to my architecture, and will need to be expanded
 // to a proper system later.
 
+#ifndef __PTR_TYPE_DEFINED__
+	typedef unsigned long ptr_t;
+	#define __PTR_TYPE_DEFINED__
+#endif
+
 typedef __SIZE_TYPE__ size_t;
 typedef unsigned long u32, pid_t, phptr;
 typedef unsigned short u16;

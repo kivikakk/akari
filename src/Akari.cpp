@@ -29,7 +29,7 @@ Kernel::Kernel():
 /**
  * Constructs an Kernel, using the given address as the current placement address.
  */
-Kernel *Kernel::Construct(u32 addr, u32 upperMemory) {
+Kernel *Kernel::Construct(ptr_t addr, ptr_t upperMemory) {
 	Kernel *kernel = new (reinterpret_cast<void *>(addr)) Kernel();
 	addr += sizeof(Kernel);
 	kernel->memory = new (reinterpret_cast<void *>(addr)) Memory(upperMemory);

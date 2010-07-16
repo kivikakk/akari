@@ -54,7 +54,7 @@ Descriptor::GDT::GDT(u32 n): _entryCount(n), _entries(0) {
 	setGate(0, 0, 0, 0, 0);
 }
 
-void Descriptor::GDT::setGateFields(s32 num, u32 base, u32 limit, u8 access, u8 granularity) {
+void Descriptor::GDT::setGateFields(s32 num, ptr_t base, ptr_t limit, u8 access, u8 granularity) {
 	ASSERT(num >= 0 && num < static_cast<s32>(_entryCount));
 
 	_entries[num].base_low		= (base & 0xFFFF);
@@ -67,7 +67,7 @@ void Descriptor::GDT::setGateFields(s32 num, u32 base, u32 limit, u8 access, u8 
 	_entries[num].access		= access;
 }
 
-void Descriptor::GDT::setGate(s32 num, u32 base, u32 limit, u8 dpl, bool code) {
+void Descriptor::GDT::setGate(s32 num, ptr_t base, ptr_t limit, u8 dpl, bool code) {
 	// access flag is like 0b1xx1yyyy, where yyyy = code?0xA:0x2 (just 'cause), and xx=DPL.
 	setGateFields(num, base, limit, (code ? 0xA : 0x2) | (dpl << 5) | (0x9 << 4), 0xCF);
 }
@@ -114,7 +114,7 @@ void Descriptor::GDT::flushTSS(s32 num) {
 	__asm__ __volatile__("ltr %%ax" : : "a" ((num * 8) + 0x3));
 }
 
-void Descriptor::GDT::setTSSStack(u32 addr) {
+void Descriptor::GDT::setTSSStack(ptr_t addr) {
 	_tssEntry.esp0 = addr;
 }
 

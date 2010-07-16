@@ -24,7 +24,7 @@ clean:
 	@-rm *.o
 
 %_test.o: %_test.cpp %_test.expected
-	@g++ -I../src/inc $< -o $@
+	@g++ -g -I../src/inc $< test_helper.cpp -o $@
 	@# Do nothing in case of segfaultry - we want to pick that up early.
 	@./$@ > /dev/null
 	@./$@ | diff - $(patsubst %.cpp,%.expected,$<)

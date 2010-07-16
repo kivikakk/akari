@@ -14,43 +14,43 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef __AKARI_HPP__
-#define __AKARI_HPP__
+#ifndef __HEAP_HPP__
+#define __HEAP_HPP__
 
 #include <arch.hpp>
-#include <list>
+#include <OrderedArray.hpp>
 
-class Subsystem;
-class Memory;
-class Console;
-class Descriptor;
-class Timer;
-class Tasks;
-class Syscall;
-class ELF;
-
-/**
- * The base class for the kernel services.
- */
-class Kernel {
+class Heap {
+public:
+	class Entry {
 	public:
-		static Kernel *Construct(ptr_t, ptr_t);
+		Entry(ptr_t, u32, bool);
 
-		std::list<Subsystem *> subsystems;
+		ptr_t start; u32 size;
+		bool isHole;
+	};
 
-		Memory *memory;
-		Console *console;
-		Descriptor *descriptor;
-		Timer *timer;
-		Tasks *tasks;
-		Syscall *syscall;
-		ELF *elf;
-	
-	protected:
-		Kernel();
+	Heap(ptr_t start, ptr_t end, ptr_t max, u32 index_size, bool supervisor, bool readonly);
+
+	void *alloc(u32);
+	void *allocAligned(u32);
+	void free(void *);
+
+	ptr_t start() const;
+	const OrderedArray<Entry> &index() const;
+
+protected:
+	static bool IndexSort(const Entry &, const Entry &);
+
+	s32 indexOfEntryStarting(ptr_t start) const;
+	s32 indexOfEntryEnding(ptr_t end) const;
+	s32 smallestHole(u32) const;
+	s32 smallestAlignedHole(u32) const;
+
+	OrderedArray<Entry> _index;
+	ptr_t _start, _end, _max;
+	bool _supervisor, _readonly;
 };
-
-extern Kernel *Akari;
 
 #endif
 

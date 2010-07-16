@@ -28,10 +28,9 @@
 
 #define KHEAP_START	0xC0000000
 #define KHEAP_INITIAL_SIZE	0x500000
-#define HEAP_INDEX_SIZE		0x20000
-#define HEAP_MIN_SIZE		0x500000
+#define KHEAP_INDEX_SIZE	0x20000
 
-Memory::Memory(u32 upperMemory):
+Memory::Memory(ptr_t upperMemory):
 _upperMemory(upperMemory), _placementAddress(0), _frames(0), _frameCount(0), _heap(0),
 _kernelDirectory(0), _activeDirectory(0)
 { }
@@ -41,7 +40,7 @@ u8 Memory::versionMinor() const { return 1; }
 const char *Memory::versionManufacturer() const { return "Akari"; }
 const char *Memory::versionProduct() const { return "Akari Memory Heap"; }
 
-void Memory::setPlacementMode(u32 addr) {
+void Memory::setPlacementMode(ptr_t addr) {
 	ASSERT(!_placementAddress);
 
 	_placementAddress = addr;
@@ -61,38 +60,38 @@ void Memory::setPaging(bool mode) {
 	ASSERT(mode);		// TODO support turning paging off [if ever required?! who knows! :)]
 
 	_frameCount = (0x100000 + _upperMemory * 1024) / 0x1000;
-	_frames = static_cast<u32 *>(alloc(INDEX_BIT(_frameCount) + 1));
+	_frames = static_cast<ptr_t *>(alloc(INDEX_BIT(_frameCount) + 1));
 	memset(_frames, 0, INDEX_BIT(_frameCount) + 1);
 
 	_kernelDirectory = PageDirectory::Allocate();
 
-	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
+	for (ptr_t i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
 		_kernelDirectory->getPage(i, true);
 	
-	u32 base = 0;
+	ptr_t base = 0;
 	while (base < (_placementAddress + sizeof(Heap))) {
 		_kernelDirectory->getPage(base, true)->allocFrame(base, false, KERNEL_HEAP_PROMISC);
 		base += 0x1000;
 	}
 
-	for (u32 i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
+	for (ptr_t i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
 		_kernelDirectory->getPage(i, true)->allocAnyFrame(false, KERNEL_HEAP_PROMISC);
 
 	Akari->descriptor->idt->installHandler(14, this->PageFault);
 
 	switchPageDirectory(_kernelDirectory);
-	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, false, !(KERNEL_HEAP_PROMISC));
+	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, KHEAP_INDEX_SIZE, false, !(KERNEL_HEAP_PROMISC));
 	_placementAddress = 0;
 }
 
-void *Memory::alloc(u32 n, u32 *phys) {
+void *Memory::alloc(u32 n, ptr_t *phys) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
 		void *addr = _heap->alloc(n);
 		if (phys) {
-			Page *page = _kernelDirectory->getPage(reinterpret_cast<u32>(addr), false);
+			Page *page = _kernelDirectory->getPage(reinterpret_cast<ptr_t>(addr), false);
 			ASSERT(page);
-			*phys = page->pageAddress * 0x1000 + (reinterpret_cast<u32>(addr) & 0xFFF);
+			*phys = page->pageAddress * 0x1000 + (reinterpret_cast<ptr_t>(addr) & 0xFFF);
 		}
 		return addr;
 	}
@@ -102,19 +101,19 @@ void *Memory::alloc(u32 n, u32 *phys) {
 	if (phys)
 		*phys = _placementAddress;
 
-	u32 addr = _placementAddress;
+	ptr_t addr = _placementAddress;
 	_placementAddress += n;
 	return reinterpret_cast<void *>(addr);
 }
 
-void *Memory::allocAligned(u32 n, u32 *phys) {
+void *Memory::allocAligned(u32 n, ptr_t *phys) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
 		void *addr = _heap->allocAligned(n);
 		if (phys) {
-			Page *page = _kernelDirectory->getPage(reinterpret_cast<u32>(addr), false);
+			Page *page = _kernelDirectory->getPage(reinterpret_cast<ptr_t>(addr), false);
 			ASSERT(page);
-			*phys = page->pageAddress * 0x1000 + (reinterpret_cast<u32>(addr) & 0xFFF);
+			*phys = page->pageAddress * 0x1000 + (reinterpret_cast<ptr_t>(addr) & 0xFFF);
 		}
 		return addr;
 	}
@@ -127,7 +126,7 @@ void *Memory::allocAligned(u32 n, u32 *phys) {
 	if (phys)
 		*phys = _placementAddress;
 
-	u32 addr = _placementAddress;
+	ptr_t addr = _placementAddress;
 	_placementAddress += n;
 	return reinterpret_cast<void *>(addr);
 }
@@ -138,7 +137,7 @@ void Memory::free(void *p) {
 
 		*static_cast<char *>(p) = 0x88;		// Just something of a marker in the meantime.
 
-		// TODO: AkariPanic("implement free() for heaps");
+		//AkariPanic("implement free() for heaps");
 		return;
 	}
 	
@@ -146,7 +145,7 @@ void Memory::free(void *p) {
 }
 
 void *Memory::PageFault(struct modeswitch_registers *r) {
-	u32 faultingAddress;
+	ptr_t faultingAddress;
 	__asm__ __volatile__("mov %%cr2, %0" : "=r" (faultingAddress));
 
 	bool notPresent =	!(r->callback.err_code & 0x1);
@@ -169,7 +168,7 @@ void *Memory::PageFault(struct modeswitch_registers *r) {
 }
 
 void Memory::switchPageDirectory(PageDirectory *dir) {
-	u32 phys = dir->physicalAddr;
+	ptr_t phys = dir->physicalAddr;
 	_activeDirectory = dir;
 
 	__asm__ __volatile__("mov %0, %%cr3" : : "r" (phys));
@@ -185,31 +184,31 @@ void Memory::switchPageDirectory(PageDirectory *dir) {
 	// depends on the gdt we're using.
 }
 
-void Memory::setFrame(u32 addr) {
-	u32 frame = addr / 0x1000;
-	u32 idx = INDEX_BIT(frame), off = OFFSET_BIT(frame);
+void Memory::setFrame(ptr_t addr) {
+	ptr_t frame = addr / 0x1000;
+	ptr_t idx = INDEX_BIT(frame), off = OFFSET_BIT(frame);
 	ASSERT(idx < INDEX_BIT(_frameCount));
 	_frames[idx] |= (1 << off);
 }
 
-void Memory::clearFrame(u32 addr) {
-	u32 frame = addr / 0x1000;
-	u32 idx = INDEX_BIT(frame), off = OFFSET_BIT(frame);
+void Memory::clearFrame(ptr_t addr) {
+	ptr_t frame = addr / 0x1000;
+	ptr_t idx = INDEX_BIT(frame), off = OFFSET_BIT(frame);
 	ASSERT(idx < INDEX_BIT(_frameCount));
 	_frames[idx] &= ~(1 << off);
 }
 
-bool Memory::testFrame(u32 addr) const {
-	u32 frame = addr / 0x1000;
-	u32 idx = INDEX_BIT(frame), off = OFFSET_BIT(frame);
+bool Memory::testFrame(ptr_t addr) const {
+	ptr_t frame = addr / 0x1000;
+	ptr_t idx = INDEX_BIT(frame), off = OFFSET_BIT(frame);
 	ASSERT(idx < INDEX_BIT(_frameCount));
 	return (_frames[idx] & (1 << off));
 }
 
-u32 Memory::freeFrame() const {
-	for (u32 i = 0; i < INDEX_BIT(_frameCount); ++i)
+ptr_t Memory::freeFrame() const {
+	for (ptr_t i = 0; i < INDEX_BIT(_frameCount); ++i)
 		if (_frames[i] != 0xFFFFFFFF) {
-			for (u32 j = 0; j < 32; ++j)
+			for (ptr_t j = 0; j < 32; ++j)
 				if (!(_frames[i] & (1 << j)))
 					return (i * 32 + j) * 0x1000;
 			AkariPanic("freeFrame thought it found a free frame, but didn't find one?");
@@ -218,149 +217,12 @@ u32 Memory::freeFrame() const {
 	AkariPanic("no frames free! Time to panic. :)");
 }
 
-// Heap
-
-Memory::Heap::Heap(u32 start, u32 end, u32 max, bool supervisor, bool readonly):
-_index(reinterpret_cast<Entry *>(start), HEAP_INDEX_SIZE, IndexSort),
-_start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly)
-{
-	ASSERT(start % 0x1000 == 0);
-	ASSERT(end % 0x1000 == 0);
-	ASSERT(max % 0x1000 == 0);
-
-	start += sizeof(Entry) * HEAP_INDEX_SIZE;
-	
-	if (start & 0xFFFF)
-		start = (start & 0xFFFFF000) + 0x1000;
-
-	ASSERT(_index.size() == 0);
-	_index.insert(Entry(start, end - start, true));
-	ASSERT(_index.size() == 1);
-	ASSERT(_index[0].start == start);
-	ASSERT(_index[0].size == end - start);
-	ASSERT(_index[0].isHole);
-}
-
-void *Memory::Heap::alloc(u32 n) {
-	s32 it = smallestHole(n);
-	ASSERT(it >= 0);		// TODO: resize instead
-
-	Entry hole = _index[it];
-	_index.remove(it);
-
-	u32 dataStart = hole.start;
-	if (n < hole.size) {
-		// the hole is now forward by `n', and less by `n'
-		hole.size -= n;
-		hole.start += n;
-		_index.insert(hole);
-	} else {
-		// nothing: it was exactly the right size
-	}
-
-	Entry data(dataStart, n, false);
-	_index.insert(data);
-	return reinterpret_cast<void *>(dataStart);
-}
-
-void *Memory::Heap::allocAligned(u32 n) {
-	s32 it = smallestAlignedHole(n);
-	ASSERT(it >= 0);		// TODO: resize instead
-
-	Entry hole = _index[it];
-	_index.remove(it);
-
-	u32 dataStart = hole.start;
-
-	if (dataStart & 0xFFF) {
-		// this isn't aligned! 
-		u32 oldSize = hole.size;
-
-		dataStart = (dataStart & 0xFFFFF000) + 0x1000;
-		hole.size = 0x1000 - (hole.start & 0xFFF);
-		_index.insert(hole);
-
-		hole.start = dataStart;
-		hole.size = oldSize - hole.size;
-	}
-
-	// by here, `hole' is an un-inserted hole, up to the end of
-	// the hole we originally had, but starting where our data
-	// wants to start.
-
-	if (n < hole.size) {
-		hole.size -= n;
-		hole.start += n;
-		_index.insert(hole);
-	} else {
-		// right size (as in Alloc())
-	}
-
-	Entry data(dataStart, n, false);
-	_index.insert(data);
-	return reinterpret_cast<void *>(dataStart);
-}
-
-void Memory::Heap::free(void *p) {
-	// TODO.
-}
-
-Memory::Heap::Entry::Entry(u32 start, u32 size, bool isHole):
-start(start), size(size), isHole(isHole)
-{ }
-
-bool Memory::Heap::IndexSort(const Entry &a, const Entry &b) {
-	return a.size < b.size;
-}
-
-s32 Memory::Heap::smallestHole(u32 n) const {
-	u32 it = 0;
-	ASSERT(_index.size() > 0);
-
-	while (it < _index.size()) {
-		const Entry &entry = _index[it];
-		if (!entry.isHole) {
-			++it; continue;
-		}
-		if (entry.size >= n) {
-			return it;
-		}
-		++it;
-	}
-	AkariPanic("no smallest hole in SmallestHole!");
-	return -1;
-}
-
-s32 Memory::Heap::smallestAlignedHole(u32 n) const {
-	u32 it = 0;
-	while (it < _index.size()) {
-		const Entry &entry = _index[it];
-		if (!entry.isHole) {
-			++it; continue;
-		}
-
-		// calculate how far we have to travel from the start to get to a page-align
-		s32 off = 0;
-		if (entry.start & 0xFFF)
-			off = 0x1000 - (entry.start & 0xFFF);
-
-		// if the size of this hole is large enough for our needs, considering we have
-		// `off' bytes of waste, then it's good
-		if ((static_cast<s32>(entry.size) - off) >= static_cast<s32>(n))
-			return it;
-
-		++it;
-	}
-	AkariPanic("no smallest hole in SmallestAlignedHole!");
-	return -1;
-}
-
 // Page
 
 void Memory::Page::allocAnyFrame(bool kernel, bool writeable) {
 	ASSERT(!pageAddress);
 
-	u32 addr = Akari->memory->freeFrame();
+	ptr_t addr = Akari->memory->freeFrame();
 	Akari->memory->setFrame(addr);
 	present = true;
 	readwrite = writeable;
@@ -368,7 +230,7 @@ void Memory::Page::allocAnyFrame(bool kernel, bool writeable) {
 	pageAddress = addr / 0x1000;
 }
 
-void Memory::Page::allocFrame(u32 addr, bool kernel, bool writeable) {
+void Memory::Page::allocFrame(ptr_t addr, bool kernel, bool writeable) {
 	ASSERT(!pageAddress);
 
 	Akari->memory->setFrame(addr);
@@ -380,13 +242,13 @@ void Memory::Page::allocFrame(u32 addr, bool kernel, bool writeable) {
 
 // PageTable
 
-Memory::PageTable *Memory::PageTable::Allocate(u32 *phys) {
+Memory::PageTable *Memory::PageTable::Allocate(ptr_t *phys) {
 	PageTable *table = static_cast<PageTable *>(Akari->memory->allocAligned(sizeof(PageTable), phys));
 	memset(table, 0, sizeof(PageTable));
 	return table;
 }
 
-Memory::PageTable *Memory::PageTable::clone(u32 *phys) const {
+Memory::PageTable *Memory::PageTable::clone(ptr_t *phys) const {
 	// TODO: review this
 	PageTable *t = PageTable::Allocate(phys);
 
@@ -412,24 +274,24 @@ Memory::PageTable *Memory::PageTable::clone(u32 *phys) const {
 // PageDirectory
 
 Memory::PageDirectory *Memory::PageDirectory::Allocate() {
-	u32 phys;
+	ptr_t phys;
 
 	PageDirectory *dir = static_cast<PageDirectory *>(Akari->memory->allocAligned(sizeof(PageDirectory), &phys));
 	memset(dir, 0, sizeof(PageDirectory));
-	u32 off = reinterpret_cast<u32>(dir->tablePhysicals) - reinterpret_cast<u32>(dir);
+	ptr_t off = reinterpret_cast<ptr_t>(dir->tablePhysicals) - reinterpret_cast<ptr_t>(dir);
 	dir->physicalAddr = phys + off;						// check above
 
 	return dir;
 }
 
-Memory::Page *Memory::PageDirectory::getPage(u32 addr, bool make) {
+Memory::Page *Memory::PageDirectory::getPage(ptr_t addr, bool make) {
 	addr /= 0x1000;
 
-	u32 idx = addr / 1024, entry = addr % 1024;
+	ptr_t idx = addr / 1024, entry = addr % 1024;
 	if (this->tables[idx])
 		return &tables[idx]->pages[entry];
 	else if (make) {
-		u32 phys;
+		ptr_t phys;
 		tables[idx] = PageTable::Allocate(&phys);
 		tablePhysicals[idx] = phys | 0x7;	// present, r/w, user
 		return &tables[idx]->pages[entry];
@@ -451,7 +313,7 @@ Memory::PageDirectory *Memory::PageDirectory::clone() const {
 			d->tablePhysicals[i] = tablePhysicals[i];
 		} else {
 			// copy it
-			u32 phys;
+			ptr_t phys;
 			d->tables[i] = tables[i]->clone(&phys);
 			d->tablePhysicals[i] = phys | 0x7;		// present, r/w, user
 		}

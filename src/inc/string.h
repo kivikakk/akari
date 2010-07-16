@@ -1,3 +1,4 @@
+
 // This file is part of Akari.
 // Copyright 2010 Arlen Cuss
 //
@@ -14,43 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef __AKARI_HPP__
-#define __AKARI_HPP__
+#ifndef __STRING_H
+#define __STRING_H
 
-#include <arch.hpp>
-#include <list>
-
-class Subsystem;
-class Memory;
-class Console;
-class Descriptor;
-class Timer;
-class Tasks;
-class Syscall;
-class ELF;
-
-/**
- * The base class for the kernel services.
- */
-class Kernel {
-	public:
-		static Kernel *Construct(ptr_t, ptr_t);
-
-		std::list<Subsystem *> subsystems;
-
-		Memory *memory;
-		Console *console;
-		Descriptor *descriptor;
-		Timer *timer;
-		Tasks *tasks;
-		Syscall *syscall;
-		ELF *elf;
-	
-	protected:
-		Kernel();
-};
-
-extern Kernel *Akari;
+#include <string>
 
 #endif
-

@@ -14,43 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef __AKARI_HPP__
-#define __AKARI_HPP__
+#include "test_helper.hpp"
+#include <cstdio>
+#include <cstdlib>
 
-#include <arch.hpp>
-#include <list>
+void *memset(void *s, int c, int n) {
+	char *w = (char *)s;
+	while (n--)
+		*w = c;
+	return s;
+}
 
-class Subsystem;
-class Memory;
-class Console;
-class Descriptor;
-class Timer;
-class Tasks;
-class Syscall;
-class ELF;
-
-/**
- * The base class for the kernel services.
- */
-class Kernel {
-	public:
-		static Kernel *Construct(ptr_t, ptr_t);
-
-		std::list<Subsystem *> subsystems;
-
-		Memory *memory;
-		Console *console;
-		Descriptor *descriptor;
-		Timer *timer;
-		Tasks *tasks;
-		Syscall *syscall;
-		ELF *elf;
-	
-	protected:
-		Kernel();
-};
-
-extern Kernel *Akari;
-
-#endif
-
+void AkariPanic(const char *s) {
+	fprintf(stderr, "PANIC: %s\n", s);
+	exit(1);
+}

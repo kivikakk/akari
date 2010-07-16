@@ -35,16 +35,16 @@ class Descriptor : public Subsystem {
 			public:
 				GDT(u32);
 
-				void setGateFields(s32 num, u32 base, u32 limit, u8 access, u8 granularity);
+				void setGateFields(s32 num, ptr_t base, ptr_t limit, u8 access, u8 granularity);
 
-				void setGate(s32 num, u32 base, u32 limit, u8 dpl, bool code);
+				void setGate(s32 num, ptr_t base, ptr_t limit, u8 dpl, bool code);
 				void clearGate(s32 num);
 				void writeTSS(s32 num, u16 ss0, u32 esp0);
 
 				void flush();
 				void flushTSS(s32);
 
-				void setTSSStack(u32);
+				void setTSSStack(ptr_t);
 				void setTSSIOMap(u8 *const &);
 
 			protected:

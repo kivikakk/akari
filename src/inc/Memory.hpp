@@ -17,23 +17,24 @@
 #ifndef __MEMORY_HPP__
 #define __MEMORY_HPP__
 
+#include <Heap.hpp>
 #include <Subsystem.hpp>
 #include <OrderedArray.hpp>
 
 class Memory : public Subsystem {
 public:
-	Memory(u32);
+	Memory(ptr_t);
 
 	u8 versionMajor() const;
 	u8 versionMinor() const;
 	const char *versionManufacturer() const;
 	const char *versionProduct() const;
 
-	void setPlacementMode(u32);
+	void setPlacementMode(ptr_t);
 	void setPaging(bool);
 
-	void *alloc(u32, u32 *phys=0);
-	void *allocAligned(u32, u32 *phys=0);
+	void *alloc(u32, ptr_t *phys=0);
+	void *allocAligned(u32, ptr_t *phys=0);
 	void free(void *);
 
 // protected:
@@ -43,42 +44,15 @@ public:
 	class PageDirectory;
 	void switchPageDirectory(PageDirectory *);
 
-	void setFrame(u32);
-	void clearFrame(u32);
-	bool testFrame(u32) const;
-	u32 freeFrame() const;
+	void setFrame(ptr_t);
+	void clearFrame(ptr_t);
+	bool testFrame(ptr_t) const;
+	ptr_t freeFrame() const;
 	
-	class Heap {
-	public:
-		Heap(u32, u32, u32, bool, bool);
-
-		void *alloc(u32);
-		void *allocAligned(u32);
-		void free(void *);
-
-	protected:
-		class Entry {
-		public:
-			Entry(u32, u32, bool);
-
-			u32 start, size;
-			bool isHole;
-		};
-
-		static bool IndexSort(const Entry &, const Entry &);
-
-		s32 smallestHole(u32) const;
-		s32 smallestAlignedHole(u32) const;
-
-		OrderedArray<Entry> _index;
-		u32 _start, _end, _max;
-		bool _supervisor, _readonly;
-	};
-
 	class Page {
 	public:
 		void allocAnyFrame(bool kernel, bool writeable);
-		void allocFrame(u32, bool kernel, bool writeable);
+		void allocFrame(ptr_t, bool kernel, bool writeable);
 
 		union {
 			struct {
@@ -98,9 +72,9 @@ public:
 
 	class PageTable {
 	public:
-		static PageTable *Allocate(u32 *);
+		static PageTable *Allocate(ptr_t *);
 
-		PageTable *clone(u32 *) const;
+		PageTable *clone(ptr_t *) const;
 
 		Page pages[1024];
 	} __attribute__((__packed__));
@@ -109,18 +83,18 @@ public:
 	public:
 		static PageDirectory *Allocate();
 
-		Page *getPage(u32, bool);
+		Page *getPage(ptr_t, bool);
 		PageDirectory *clone() const;
 
 		PageTable *tables[1024];
-		u32 tablePhysicals[1024];
-		u32 physicalAddr;
+		ptr_t tablePhysicals[1024];
+		ptr_t physicalAddr;
 	} __attribute__((__packed__));
 
-	u32 _upperMemory;
+	ptr_t _upperMemory;
 
-	u32 _placementAddress;
-	u32 *_frames, _frameCount;
+	ptr_t _placementAddress;
+	ptr_t *_frames, _frameCount;
 	Heap *_heap;
 	PageDirectory *_kernelDirectory, *_activeDirectory;
 };
