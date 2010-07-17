@@ -1,0 +1,39 @@
+offset from start: 1000
+offset from start: 1700
+offset from start: 2000
+offset from start: 1e00
+offset from start: 1f00
+offset from start: 2002
+offset from start: 2102
+offset from start: 2000
+offset from start: 2105
+offset from start: 2107
+Heap with 10 entries
+  0:	2107	+ 1	(data)
+  1:	2105	+ 2	(data)
+  2:	2000	+ 2	(data)
+  3:	2102	+ 3	(data)
+  4:	2002	+ 100	(data)
+  5:	1f00	+ 100	(data)
+  6:	1e00	+ 100	(data)
+  7:	1700	+ 700	(data)
+  8:	1000	+ 700	(data)
+  9:	2108	+ fdef8	(hole)
+Heap with 7 entries
+  0:	2000	+ 2	(data)
+  1:	2102	+ fdefe	(hole)
+  2:	2002	+ 100	(data)
+  3:	1f00	+ 100	(data)
+  4:	1e00	+ 100	(data)
+  5:	1700	+ 700	(data)
+  6:	1000	+ 700	(data)
+offset from start: 2102
+Heap with 8 entries
+  0:	2000	+ 2	(data)
+  1:	2102	+ 6	(data)
+  2:	2002	+ 100	(data)
+  3:	1f00	+ 100	(data)
+  4:	1e00	+ 100	(data)
+  5:	1700	+ 700	(data)
+  6:	1000	+ 700	(data)
+  7:	2108	+ fdef8	(hole)

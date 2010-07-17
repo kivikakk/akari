@@ -42,36 +42,36 @@ int main() {
 	Heap *h = new Heap(aligned, end, end, 128, false, true);
 
 	ptr_t ptr = (ptr_t) h->alloc(0x700);
-	printf("ptr %llx, offset from start: %llx\n", ptr, ptr - aligned);
+	printf("offset from start: %llx\n", ptr - aligned);
 
 	ptr_t ptr2 = (ptr_t) h->alloc(0x700);
-	printf("ptr2 %llx, offset from start: %llx\n", ptr2, ptr2 - aligned);
+	printf("offset from start: %llx\n", ptr2 - aligned);
 
 	ptr_t ptr3 = (ptr_t) h->allocAligned(0x2);
-	printf("ptr3 %llx, offset from start: %llx\n", ptr3, ptr3 - aligned);
+	printf("offset from start: %llx\n", ptr3 - aligned);
 
 	ptr_t ptr4 = (ptr_t) h->alloc(0x100);
-	printf("ptr4 %llx, offset from start: %llx\n", ptr4, ptr4 - aligned);
+	printf("offset from start: %llx\n", ptr4 - aligned);
 
 	ptr_t ptr5 = (ptr_t) h->alloc(0x100);
-	printf("ptr5 %llx, offset from start: %llx\n", ptr5, ptr5 - aligned);
+	printf("offset from start: %llx\n", ptr5 - aligned);
 
 	ptr_t ptr6 = (ptr_t) h->alloc(0x100);
-	printf("ptr6 %llx, offset from start: %llx\n", ptr6, ptr6 - aligned);
+	printf("offset from start: %llx\n", ptr6 - aligned);
 
 	h->free((void *)ptr3);
 
 	ptr_t ptr7 = (ptr_t) h->alloc(0x3);
-	printf("ptr7 %llx, offset from start: %llx\n", ptr7, ptr7 - aligned);
+	printf("offset from start: %llx\n", ptr7 - aligned);
 
 	ptr_t ptr8 = (ptr_t) h->alloc(0x2);
-	printf("ptr8 %llx, offset from start: %llx\n", ptr8, ptr8 - aligned);
+	printf("offset from start: %llx\n", ptr8 - aligned);
 
 	ptr_t ptr9 = (ptr_t) h->alloc(0x2);
-	printf("ptr9 %llx, offset from start: %llx\n", ptr9, ptr9 - aligned);
+	printf("offset from start: %llx\n", ptr9 - aligned);
 
 	ptr_t ptr10 = (ptr_t) h->alloc(0x1);
-	printf("ptr10 %llx, offset from start: %llx\n", ptr10, ptr10 - aligned);
+	printf("offset from start: %llx\n", ptr10 - aligned);
 
 	report(h);
 
@@ -82,7 +82,7 @@ int main() {
 	report(h);
 
 	ptr_t ptr11 = (ptr_t) h->alloc(0x6);
-	printf("ptr11 %llx, offset from start: %llx\n", ptr11, ptr11 - aligned);
+	printf("offset from start: %llx\n", ptr11 - aligned);
 
 	report(h);
 
