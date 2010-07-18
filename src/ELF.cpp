@@ -18,8 +18,9 @@
 #include <ELFInternal.hpp>
 #include <debug.hpp>
 #include <Akari.hpp>
+#include <Console.hpp>
 
-#define ELF_DEBUG false
+#undef ELF_DEBUG
 
 ELF::ELF()
 { }
@@ -32,8 +33,8 @@ const char *ELF::versionProduct() const { return "Akari ELF Loader"; }
 bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	const Elf32_Ehdr *hdr = reinterpret_cast<const Elf32_Ehdr *>(image);
 
-#if ELF_DEBUG
-	Akari->console->putString("image is at 0x%x, entry point apparently 0x%x\n", reinterpret_cast<u32>(image), hdr->e_entry);
+#ifdef ELF_DEBUG
+	Akari->console->printf("image is at 0x%x, entry point apparently 0x%x\n", reinterpret_cast<u32>(image), hdr->e_entry);
 #endif
 
 	if (hdr->e_ident[EI_MAG0] != 0x7f) return false;
@@ -44,14 +45,14 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	// Change the EIP in the registers to our entry point.
 	reinterpret_cast<struct modeswitch_registers *>(task->ks)->callback.eip = hdr->e_entry;
 
-#if ELF_DEBUG
-	Akari->console->putString("type: ");
+#ifdef ELF_DEBUG
+	Akari->console->printf("type: ");
 	switch (hdr->e_type) {
-		case ET_NONE:	Akari->console->putString("none\n"); break;
-		case ET_REL:	Akari->console->putString("relocatable\n"); break;
-		case ET_EXEC:	Akari->console->putString("executable\n"); break;
-		case ET_DYN:	Akari->console->putString("shared object\n"); break;
-		case ET_CORE:	Akari->console->putString("core\n"); break;
+		case ET_NONE:	Akari->console->printf("none\n"); break;
+		case ET_REL:	Akari->console->printf("relocatable\n"); break;
+		case ET_EXEC:	Akari->console->printf("executable\n"); break;
+		case ET_DYN:	Akari->console->printf("shared object\n"); break;
+		case ET_CORE:	Akari->console->printf("core\n"); break;
 	}
 #endif
 	
@@ -67,7 +68,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	Memory::Page *wand_page = Akari->memory->_activeDirectory->getPage(reinterpret_cast<u32>(magic_wand), false);
 	ASSERT(wand_page);
 
-#if ELF_DEBUG
+#ifdef ELF_DEBUG
 	Akari->console->printf("wppA was %x, wp at %x\n", wand_page->pageAddress, (u32)wand_page);
 #endif
 
@@ -78,7 +79,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 		Elf32_Phdr *ph = (Elf32_Phdr *)(image + hdr->e_phoff + hdr->e_phentsize * i);
 
 		if (ph->p_type == PT_LOAD) {
-#if ELF_DEBUG
+#ifdef ELF_DEBUG
 			Akari->console->printf("header at %x mapped to v/p %x/%x f/msz %x/%x align %x\n",
 				ph->p_offset, ph->p_vaddr, ph->p_paddr, ph->p_filesz, ph->p_memsz, ph->p_align);
 #endif
@@ -90,23 +91,25 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 				if (ph->p_memsz - copied < copy)
 					copy = ph->p_memsz - copied;
 
-#if ELF_DEBUG
+#ifdef ELF_DEBUG
 				Akari->console->printf("\tvirt 0x%x", virt + copied);
 #endif
 
 				Memory::Page *page = task->pageDir->getPage((virt + copied) & 0xfffff000, true);
 				ASSERT(page);
 
-				if (!page->pageAddress)
+				if (!page->pageAddress){
+					//Akari->console->printf("alloc\n");
 					page->allocAnyFrame(false, true);
+				}
 
 
-#if ELF_DEBUG
+#ifdef ELF_DEBUG
 				Akari->console->printf(" (wand %x %x", wand_page->pageAddress, *((u8 *)magic_wand));
 #endif
 				wand_page->pageAddress = page->pageAddress;
 				__asm__ __volatile__("mov %%cr3, %%eax; mov %%eax, %%cr3" : : : "%eax");
-#if ELF_DEBUG
+#ifdef ELF_DEBUG
 				Akari->console->printf("->%x %x) len 0x%x phys 0x%x off 0x%x\n",
 						*((u8 *)magic_wand), wand_page->pageAddress,
 						copy, page->pageAddress * 0x1000, (virt + copied) % 0x1000);
@@ -115,7 +118,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 				u8 *dest = magic_wand + ((virt + copied) % 0x1000);
 
 				if (ph->p_filesz == 0) {
-#if ELF_DEBUG
+#ifdef ELF_DEBUG
 					Akari->console->printf("\nblanking %x\n", copy);
 #endif
 					memset(dest, 0, copy);
@@ -139,7 +142,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 				copied += copy;
 			}
 
-#if ELF_DEBUG
+#ifdef ELF_DEBUG
 			Akari->console->putChar('\n');
 #endif
 		} else {
