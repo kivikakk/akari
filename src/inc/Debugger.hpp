@@ -14,45 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef __AKARI_HPP__
-#define __AKARI_HPP__
+#ifndef __DEBUGGER_HPP__
+#define __DEBUGGER_HPP__
 
-#include <arch.hpp>
-#include <list>
+#include <Subsystem.hpp>
+#include <Tasks.hpp>
 
-class Subsystem;
-class Memory;
-class Console;
-class Descriptor;
-class Timer;
-class Tasks;
-class Syscall;
-class ELF;
-class Debugger;
+class Debugger : public Subsystem {
+public:
+	Debugger();
 
-/**
- * The base class for the kernel services.
- */
-class Kernel {
-	public:
-		static Kernel *Construct(ptr_t, ptr_t);
+	u8 versionMajor() const;
+	u8 versionMinor() const;
+	const char *versionManufacturer() const;
+	const char *versionProduct() const;
 
-		std::list<Subsystem *> subsystems;
-
-		Memory *memory;
-		Console *console;
-		Descriptor *descriptor;
-		Timer *timer;
-		Tasks *tasks;
-		Syscall *syscall;
-		ELF *elf;
-		Debugger *debugger;
-	
-	protected:
-		Kernel();
+	void run();
 };
-
-extern Kernel *Akari;
 
 #endif
 

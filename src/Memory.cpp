@@ -18,6 +18,7 @@
 #include <Console.hpp>
 #include <Descriptor.hpp>
 #include <Akari.hpp>
+#include <Debugger.hpp>
 #include <debug.hpp>
 #include <entry.hpp>
 #include <physmem.hpp>
@@ -154,14 +155,16 @@ void *Memory::PageFault(struct modeswitch_registers *r) {
 	bool reserved = 	r->callback.err_code & 0x8;
 	bool insFetch = 	r->callback.err_code & 0x10;
 
-	Akari->console->putString("\nPage fault!\n");
-	if (notPresent) Akari->console->putString(" * Page wasn't present.\n");
-	if (writeOp) 	Akari->console->putString(" * Write operation.\n");
-	if (userMode) 	Akari->console->putString(" * From user-mode.\n");
-	if (reserved) 	Akari->console->putString(" * Clobbered reserved bits in page.\n");
-	if (insFetch) 	Akari->console->putString(" * On instruction fetch.\n");
+	Akari->console->printf("\nPage fault!\n");
+	if (notPresent) Akari->console->printf(" * Page wasn't present.\n");
+	if (writeOp) 	Akari->console->printf(" * Write operation.\n");
+	if (userMode) 	Akari->console->printf(" * From user-mode.\n");
+	if (reserved) 	Akari->console->printf(" * Clobbered reserved bits in page.\n");
+	if (insFetch) 	Akari->console->printf(" * On instruction fetch.\n");
 
 	Akari->console->printf("Address: 0x%x\n", faultingAddress);
+
+	Akari->debugger->run();
 
 	// Return 0, which tells the interrupt handler to kill this process.
 	return 0;

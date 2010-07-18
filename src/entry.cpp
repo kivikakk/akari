@@ -26,6 +26,7 @@
 #include <Timer.hpp>
 #include <Syscall.hpp>
 #include <ELF.hpp>
+#include <Debugger.hpp>
 
 #define UKERNEL_STACK_POS	0xE0000000
 #define UKERNEL_STACK_SIZE	0x2000
@@ -79,6 +80,7 @@ void AkariEntry() {
 	Akari->tasks = new Tasks(); Akari->subsystems.push_back(Akari->tasks);
 	Akari->syscall = new Syscall(); Akari->subsystems.push_back(Akari->syscall);
 	Akari->elf = new ELF(); Akari->subsystems.push_back(Akari->elf);
+	Akari->debugger = new Debugger(); Akari->subsystems.push_back(Akari->debugger);
 
 	Akari->console->putString("Akari " __AKARI_VERSION " börjar ...\n");
 
