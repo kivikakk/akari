@@ -27,8 +27,6 @@ u8 Debugger::versionMinor() const { return 1; }
 const char *Debugger::versionManufacturer() const { return "Akari"; }
 const char *Debugger::versionProduct() const { return "Akari Debugger"; }
 
-#define DEBUGGER_PORT 0x3f8
-
 static bool isReceivedFull() { return AkariInB(DEBUGGER_PORT + 5) & 0x01; }
 static char receiveChar() {
 	while (!isReceivedFull());
@@ -68,18 +66,30 @@ static void transmit(const std::string &s) {
 	transmit(s.c_str());
 }
 
-void Debugger::run() {
-	AkariOutB(DEBUGGER_PORT + 1, 0x00);
-	AkariOutB(DEBUGGER_PORT + 3, 0x80);
-	AkariOutB(DEBUGGER_PORT + 0, 0x03);	// 38,400
-	AkariOutB(DEBUGGER_PORT + 1, 0x00);
-	AkariOutB(DEBUGGER_PORT + 3, 0x03);	// 8 bits, no parity, one stop bit
-	AkariOutB(DEBUGGER_PORT + 2, 0xC7);	// FIFO, clear, 14-byte threshold
-	AkariOutB(DEBUGGER_PORT + 4, 0x0B);	// IRQs enabled, RTS/DSR set
+static bool initCOM(int com) {
+	int port;
 
-	transmit(0x48692e0a);
-	transmit(0x0a2e6948);
-	Akari->console->printf("Receive string\n");
-	Akari->console->printf("%s\n", receiveNewline().c_str());
+	switch (com) {
+	case 1: port = 0x3f8; break;
+	case 2: port = 0x2f8; break;
+	case 3: port = 0x3e8; break;
+	case 4: port = 0x2e8; break;
+	default: return false;
+
+	AkariOutB(port + 1, 0x00);
+	AkariOutB(port + 3, 0x80);
+	AkariOutB(port + 0, 0x03);	// 38,400
+	AkariOutB(port + 1, 0x00);
+	AkariOutB(port + 3, 0x03);	// 8 bits, no parity, one stop bit
+	AkariOutB(port + 2, 0xC7);	// FIFO, clear, 14-byte threshold
+	AkariOutB(port + 4, 0x0B);	// IRQs enabled, RTS/DSR set
+
+	return true;
+}
+
+void Debugger::run() {
+	initCOM(1);
+
+	// TODO
 }
 
