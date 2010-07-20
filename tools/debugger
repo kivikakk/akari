@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+
+require 'socket'
+
+class AkariDebuggerSocket < TCPSocket
+	def getU32; read(4).unpack('V').first; end
+	def getMessage
+		read getU32
+	end
+
+	def putU32 n; write [n].pack('V'); end
+	def putMessage m
+		putU32 m.length
+		write m
+	end
+
+	def sendCommand c, *a
+		putMessage c
+		a.each do |i|
+			if i.is_a? Integer
+				putU32 i
+			elsif i.is_a? String
+				putMessage i
+			else
+				raise "No idea how to write #{i.inspect} (#{i.class})"
+			end
+		end
+
+		code = getU32
+		raise code unless code.zero?
+		code
+	end
+end
+
+s = AkariDebuggerSocket.open 'localhost', 18148
+
+s.sendCommand "version"
+akari_version = s.getMessage
+puts "debugger connected to Akari #{akari_version}"
+
+p s.sendCommand "get", 0, 2048
+puts s.read(2048).inspect
