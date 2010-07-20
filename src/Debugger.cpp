@@ -27,6 +27,33 @@ u8 Debugger::versionMinor() const { return 1; }
 const char *Debugger::versionManufacturer() const { return "Akari"; }
 const char *Debugger::versionProduct() const { return "Akari Debugger"; }
 
+void Debugger::run() {
+	COMPort com1 = COMPort::COM(1);
+	com1.initialize();
+
+	while (true) {
+		std::string command = com1.getMessage();
+
+		if (command == "version") {
+			com1.putU32(0);
+			com1.putMessage(__AKARI_VERSION);
+		} else if (command == "get") {
+			u32 base = com1.getU32(),
+				length = com1.getU32();
+
+			com1.putU32(0);
+			com1.putMemory(reinterpret_cast<char *>(base), length);
+		} else if (command == "break") {
+			com1.putU32(0);
+			com1.putMessage("Bye!");
+			break;
+		} else {
+			com1.putU32(1);
+			com1.putMessage("unknown command");
+		}
+	}
+}
+
 COMPort::COMPort(u32 base): _base(base) { }
 
 COMPort COMPort::COM(int com) {
@@ -46,7 +73,7 @@ COMPort COMPort::COM(int com) {
 void COMPort::initialize() const {
 	AkariOutB(_base + 1, 0x00);
 	AkariOutB(_base + 3, 0x80);
-	AkariOutB(_base + 0, 0x03);	// 38,400
+	AkariOutB(_base + 0, 0x01);	// 115,200 baud
 	AkariOutB(_base + 1, 0x00);
 	AkariOutB(_base + 3, 0x03);	// 8 bits, no parity, one stop bit
 	AkariOutB(_base + 2, 0xC7);	// FIFO, clear, 14-byte threshold
@@ -96,6 +123,10 @@ void COMPort::putU32(u32 n) const {
 		putChar(static_cast<char>((n >> i * 8) & 0xFF));
 	}
 }
+void COMPort::putMemory(const char *s, u32 n) const {
+	while (n--)
+		putChar(*s++);
+}
 void COMPort::putString(const char *s) const {
 	while (*s)
 		putChar(*s++);
@@ -116,13 +147,4 @@ bool COMPort::isTransmitEmpty() const {
 	return AkariInB(_base + 5) & 0x20;
 }
 
-
-void Debugger::run() {
-	COMPort com1 = COMPort::COM(1);
-	com1.initialize();
-
-	while (true) {
-		std::string command = com1.getMessage();
-	}
-}
 

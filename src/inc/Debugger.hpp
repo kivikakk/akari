@@ -41,13 +41,16 @@ public:
 	void initialize() const;
 
 	char getChar() const;
+	u16 getU16() const;
 	u32 getU32() const;
 	std::string getStringNL() const;
 	std::string getString(u32 length) const;
 	std::string getMessage() const;
 
 	void putChar(char c) const;
+	void putU16(u16 n) const;
 	void putU32(u32 n) const;
+	void putMemory(const char *s, u32 n) const;
 	void putString(const char *s) const;
 	void putString(const std::string &s) const;
 	void putMessage(const std::string &s) const;
