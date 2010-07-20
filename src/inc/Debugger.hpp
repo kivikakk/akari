@@ -19,6 +19,7 @@
 
 #include <Subsystem.hpp>
 #include <Tasks.hpp>
+#include <string>
 
 class Debugger : public Subsystem {
 public:
@@ -30,6 +31,32 @@ public:
 	const char *versionProduct() const;
 
 	void run();
+};
+
+class COMPort {
+public:
+	COMPort(u32 base);
+	static COMPort COM(int com);
+
+	void initialize() const;
+
+	char getChar() const;
+	u32 getU32() const;
+	std::string getStringNL() const;
+	std::string getString(u32 length) const;
+	std::string getMessage() const;
+
+	void putChar(char c) const;
+	void putU32(u32 n) const;
+	void putString(const char *s) const;
+	void putString(const std::string &s) const;
+	void putMessage(const std::string &s) const;
+
+protected:
+	u32 _base;
+
+	bool isReceivedFull() const;
+	bool isTransmitEmpty() const;
 };
 
 #endif

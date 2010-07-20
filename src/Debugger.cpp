@@ -27,69 +27,102 @@ u8 Debugger::versionMinor() const { return 1; }
 const char *Debugger::versionManufacturer() const { return "Akari"; }
 const char *Debugger::versionProduct() const { return "Akari Debugger"; }
 
-static bool isReceivedFull() { return AkariInB(DEBUGGER_PORT + 5) & 0x01; }
-static char receiveChar() {
-	while (!isReceivedFull());
-	return (char)AkariInB(DEBUGGER_PORT);
-}
-static u32 receiveU32() {
-	u32 r = 0;
-	for (int i = 0; i < 4; ++i)
-		r |= (u32)((u8)receiveChar()) << i * 8;
-	return r;
-}
-static std::string receiveNewline() {
-	std::string s;
-	while (true) {
-		char c = receiveChar();
-		if (c == '\n')
-			return s;
-		s += c;
-	}
-}
+COMPort::COMPort(u32 base): _base(base) { }
 
-static bool isTransmitEmpty() { return AkariInB(DEBUGGER_PORT + 5) & 0x20; }
-static void transmitChar(char c) {
-	while (!isTransmitEmpty());
-	AkariOutB(DEBUGGER_PORT, c);
-}
-static void transmit(u32 n) {
-	for (int i = 0; i < 4; ++i) {
-		transmitChar((char)((n >> i * 8) & 0xFF));
-	}
-}
-static void transmit(const char *s) {
-	while (*s)
-		transmitChar(*s++);
-}
-static void transmit(const std::string &s) {
-	transmit(s.c_str());
-}
-
-static bool initCOM(int com) {
-	int port;
+COMPort COMPort::COM(int com) {
+	u32 port;
 
 	switch (com) {
 	case 1: port = 0x3f8; break;
 	case 2: port = 0x2f8; break;
 	case 3: port = 0x3e8; break;
 	case 4: port = 0x2e8; break;
-	default: return false;
+	default: port = 0x3f8; break;
+	}
 
-	AkariOutB(port + 1, 0x00);
-	AkariOutB(port + 3, 0x80);
-	AkariOutB(port + 0, 0x03);	// 38,400
-	AkariOutB(port + 1, 0x00);
-	AkariOutB(port + 3, 0x03);	// 8 bits, no parity, one stop bit
-	AkariOutB(port + 2, 0xC7);	// FIFO, clear, 14-byte threshold
-	AkariOutB(port + 4, 0x0B);	// IRQs enabled, RTS/DSR set
-
-	return true;
+	return COMPort(port);
 }
 
-void Debugger::run() {
-	initCOM(1);
+void COMPort::initialize() const {
+	AkariOutB(_base + 1, 0x00);
+	AkariOutB(_base + 3, 0x80);
+	AkariOutB(_base + 0, 0x03);	// 38,400
+	AkariOutB(_base + 1, 0x00);
+	AkariOutB(_base + 3, 0x03);	// 8 bits, no parity, one stop bit
+	AkariOutB(_base + 2, 0xC7);	// FIFO, clear, 14-byte threshold
+	AkariOutB(_base + 4, 0x0B);	// IRQs enabled, RTS/DSR set
+}
 
-	// TODO
+char COMPort::getChar() const {
+	while (!isReceivedFull());
+	return static_cast<char>(AkariInB(_base));
+}
+
+u32 COMPort::getU32() const {
+	u32 r = 0;
+	for (int i = 0; i < 4; ++i)
+		r |= static_cast<u32>(static_cast<u8>(getChar())) << i * 8;
+	return r;
+}
+std::string COMPort::getStringNL() const {
+	std::string s;
+	while (true) {
+		char c = getChar();
+		if (c == '\n')
+			return s;
+		s += c;
+	}
+}
+std::string COMPort::getString(u32 length) const {
+	char *buf = new char[length];
+	for (u32 i = 0; i < length; ++i)
+		buf[i] = getChar();
+	std::string s = std::string(buf, length);
+	delete [] buf;
+	return s;
+}
+std::string COMPort::getMessage() const {
+	std::string s;
+	u32 length = getU32();
+	return getString(length);
+}
+
+void COMPort::putChar(char c) const {
+	while (!isTransmitEmpty());
+	AkariOutB(_base, c);
+}
+void COMPort::putU32(u32 n) const {
+	for (int i = 0; i < 4; ++i) {
+		putChar(static_cast<char>((n >> i * 8) & 0xFF));
+	}
+}
+void COMPort::putString(const char *s) const {
+	while (*s)
+		putChar(*s++);
+}
+void COMPort::putString(const std::string &s) const {
+	putString(s.c_str());
+}
+void COMPort::putMessage(const std::string &s) const {
+	putU32(s.length());
+	putString(s);
+}
+
+bool COMPort::isReceivedFull() const {
+	return AkariInB(_base + 5) & 0x01;
+}
+
+bool COMPort::isTransmitEmpty() const {
+	return AkariInB(_base + 5) & 0x20;
+}
+
+
+void Debugger::run() {
+	COMPort com1 = COMPort::COM(1);
+	com1.initialize();
+
+	while (true) {
+		std::string command = com1.getMessage();
+	}
 }
 
