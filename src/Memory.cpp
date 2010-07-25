@@ -253,6 +253,7 @@ Memory::PageTable *Memory::PageTable::Allocate(ptr_t *phys) {
 
 Memory::PageTable *Memory::PageTable::clone(ptr_t *phys) const {
 	// TODO: review this
+	AkariPanic("PageTable clone not checked");
 	PageTable *t = PageTable::Allocate(phys);
 
 	for (u32 i = 0; i < 1024; ++i) {
