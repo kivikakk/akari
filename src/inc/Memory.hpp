@@ -35,7 +35,7 @@ public:
 
 	void *alloc(u32, ptr_t *phys=0);
 	void *allocAligned(u32, ptr_t *phys=0);
-	void free(void *);
+	bool free(void *);
 
 // protected:
 // XXX _activeDirectory is accessed from outside, as are these classes! Damn! Refactor!

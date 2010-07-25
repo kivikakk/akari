@@ -34,7 +34,7 @@ public:
 
 	void *alloc(u32);
 	void *allocAligned(u32);
-	void free(void *);
+	bool free(void *);
 
 	ptr_t start() const;
 	ptr_t used() const;

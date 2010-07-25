@@ -136,14 +136,10 @@ void *Memory::allocAligned(u32 n, ptr_t *phys) {
 	return reinterpret_cast<void *>(addr);
 }
 
-void Memory::free(void *p) {
+bool Memory::free(void *p) {
 	if (!_placementAddress) {
 		ASSERT(_heap);
-
-		*static_cast<char *>(p) = 0x88;		// Just something of a marker in the meantime.
-
-		//AkariPanic("implement free() for heaps");
-		return;
+		return _heap->free(p);
 	}
 	
 	AkariPanic("Memory: tried to free() in placement mode");

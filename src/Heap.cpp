@@ -119,9 +119,11 @@ s32 Heap::indexOfEntryEnding(ptr_t end) const {
 	return -1;
 }
 
-void Heap::free(void *p) {
+bool Heap::free(void *p) {
 	s32 i = indexOfEntryStarting((ptr_t)p);
-	if (i == -1) return;
+	if (i == -1) {
+		return false;
+	}
 
 	_index[i].isHole = true;
 	
@@ -141,6 +143,8 @@ void Heap::free(void *p) {
 		_index[i].size += _index[e].size;
 		_index.remove(e);
 	}
+
+	return true;
 }
 
 ptr_t Heap::start() const {
