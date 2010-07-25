@@ -17,6 +17,22 @@
 #ifndef __TEST_HELPER_HPP__
 #define __TEST_HELPER_HPP__
 
+#define __AKARI_HPP__
+#define __CONSOLE_HPP__
+
+class Console {
+public:
+	void printf(const char *s, ...);
+};
+
+class Kernel {
+public:
+	Kernel();
+	Console *console;
+};
+
+extern Kernel *Akari;
+
 #define DEBUG
 #define __PTR_TYPE_DEFINED__
 typedef unsigned long long ptr_t;

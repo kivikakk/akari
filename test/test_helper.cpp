@@ -16,7 +16,20 @@
 
 #include "test_helper.hpp"
 #include <cstdio>
+#include <cstdarg>
 #include <cstdlib>
+
+Kernel *Akari = new Kernel();
+
+Kernel::Kernel(): console(new Console())
+{ }
+
+void Console::printf(const char *s, ...) {
+	va_list ap;
+	va_start(ap, s);
+	vprintf(s, ap);
+	va_end(ap);
+}
 
 void *memset(void *s, int c, int n) {
 	char *w = (char *)s;

@@ -44,8 +44,6 @@ while true
 	break if c.nil?
 
 	command, *args = c.split(/\s+/)
-	p command
-	p args
 
 	case command
 	when 'get'
