@@ -61,8 +61,12 @@ void Memory::setPaging(bool mode) {
 	ASSERT(mode);		// TODO support turning paging off [if ever required?! who knows! :)]
 
 	_frameCount = (0x100000 + _upperMemory * 1024) / 0x1000;
-	_frames = static_cast<ptr_t *>(alloc(INDEX_BIT(_frameCount) + 1));
-	memset(_frames, 0, INDEX_BIT(_frameCount) + 1);
+	// NOTE that INDEX_BIT/OFFSET_BIT are giving indices/offsets for arrays
+	// with items of 32-bits, whereas alloc clearly is allocating a multiple
+	// of 8-bits. Hence *4. This has been over A YEAR unsolved and caused
+	// many bugs where _frames intersected with THE PAGE TABLES. (!!!)
+	_frames = static_cast<ptr_t *>(alloc(INDEX_BIT(_frameCount) * 4 + 1));
+	memset(_frames, 0, INDEX_BIT(_frameCount) * 4 + 1);
 
 	_kernelDirectory = PageDirectory::Allocate();
 
