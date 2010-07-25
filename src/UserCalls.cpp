@@ -128,11 +128,9 @@ namespace User {
 		Akari->console->printf("Process 0x%x \"%s\" ", Akari->tasks->current->id, Akari->tasks->current->name.c_str());
 		const char *rn = Akari->tasks->current->registeredName.c_str();
 		if (rn) {
-			Akari->console->putString("(:");
-			Akari->console->putString(rn);
-			Akari->console->putString(") ");
+			Akari->console->printf("(:%s) ", rn);
 		}
-		Akari->console->putString("dying (panic'd)\n");
+		Akari->console->printf("dying (panic'd \"%s\")\n", s);
 
 		// when exit becomes more complicated later we may have to do cleanup
 		// instead of just a sysexit, may not be ideal for a process that's
@@ -176,7 +174,10 @@ namespace User {
 
 	void free(void *p) {
 		ASSERT(Akari->tasks->current->heap);
-		Akari->tasks->current->heap->free(p);
+		bool success = Akari->tasks->current->heap->free(p);
+		if (!success) {
+			panic("free returned false");
+		}
 	}
 
 	void flushTLB() {
