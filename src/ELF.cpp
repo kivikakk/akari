@@ -98,10 +98,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 				Memory::Page *page = task->pageDir->getPage((virt + copied) & 0xfffff000, true);
 				ASSERT(page);
 
-				if (!page->pageAddress){
-					//Akari->console->printf("alloc\n");
-					page->allocAnyFrame(false, true);
-				}
+				page->allocAnyFrame(false, true);
 
 
 #ifdef ELF_DEBUG
