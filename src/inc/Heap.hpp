@@ -37,6 +37,7 @@ public:
 	void free(void *);
 
 	ptr_t start() const;
+	ptr_t used() const;
 	const OrderedArray<Entry> &index() const;
 
 protected:
@@ -49,6 +50,7 @@ protected:
 
 	OrderedArray<Entry> _index;
 	ptr_t _start, _end, _max;
+	ptr_t _used;
 	bool _supervisor, _readonly;
 };
 

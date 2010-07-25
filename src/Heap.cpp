@@ -21,7 +21,7 @@
 
 Heap::Heap(ptr_t start, ptr_t end, ptr_t max, u32 index_size, bool supervisor, bool readonly):
 _index(reinterpret_cast<Entry *>(start), index_size, IndexSort),
-_start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly)
+_start(start), _end(end), _max(max), _used(0), _supervisor(supervisor), _readonly(readonly)
 {
 	ASSERT(start % 0x1000 == 0);
 	ASSERT(end % 0x1000 == 0);
@@ -32,12 +32,8 @@ _start(start), _end(end), _max(max), _supervisor(supervisor), _readonly(readonly
 	if (start & 0xFFFF)
 		start = (start & ~0xFFF) + 0x1000;
 
-	ASSERT(_index.size() == 0);
+	_used += (start - _start);
 	_index.insert(Entry(start, end - start, true));
-	ASSERT(_index.size() == 1);
-	ASSERT(_index[0].start == start);
-	ASSERT(_index[0].size == end - start);
-	ASSERT(_index[0].isHole);
 	ASSERT(start < end);
 }
 
@@ -57,6 +53,8 @@ void *Heap::alloc(u32 n) {
 	} else {
 		// nothing: it was exactly the right size
 	}
+
+	_used += n;
 
 	Entry data(dataStart, n, false);
 	_index.insert(data);
@@ -95,6 +93,8 @@ void *Heap::allocAligned(u32 n) {
 	} else {
 		// right size (as in Alloc())
 	}
+
+	_used += n;
 
 	Entry data(dataStart, n, false);
 	_index.insert(data);
@@ -145,6 +145,10 @@ void Heap::free(void *p) {
 
 ptr_t Heap::start() const {
 	return _start;
+}
+
+ptr_t Heap::used() const {
+	return _used;
 }
 
 const OrderedArray<Heap::Entry> &Heap::index() const {
