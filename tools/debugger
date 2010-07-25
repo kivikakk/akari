@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'socket'
+require 'readline'
 
 class AkariDebuggerSocket < TCPSocket
 	def getU32; read(4).unpack('V').first; end
@@ -38,5 +39,17 @@ s.sendCommand "version"
 akari_version = s.getMessage
 puts "debugger connected to Akari #{akari_version}"
 
-p s.sendCommand "get", 0, 2048
-puts s.read(2048).inspect
+while true
+	c = Readline.readline("> ")
+	break if c.nil?
+
+	command, *args = c.split(/\s+/)
+	p command
+	p args
+
+	case command
+	when 'get'
+		s.sendCommand "get", args[0].to_i(16), args[1].to_i(16)
+		p s.read(args[1].to_i(16))
+	end
+end
