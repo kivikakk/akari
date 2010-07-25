@@ -152,8 +152,6 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	__asm__ __volatile__("mov %%cr3, %%eax; mov %%eax, %%cr3" : : : "%eax");
 	Akari->memory->free(magic_wand);
 
-	Akari->console->printf("Finished loading ELF; heap now %x\n", Akari->memory->_heap->used());
-
 	return true;
 }
 
