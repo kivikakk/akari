@@ -132,6 +132,10 @@ namespace User {
 		}
 		Akari->console->printf("dying (panic'd \"%s\")\n", s);
 
+		struct modeswitch_registers *r = reinterpret_cast<modeswitch_registers *>(Akari->tasks->current->ks);
+		Akari->console->printf("EIP was %x, ESP was %x, EBP was %x, EFLAGS was %x\n",
+			r->callback.eip, r->callback.esp, r->callback.ebp, r->callback.eflags);
+
 		// when exit becomes more complicated later we may have to do cleanup
 		// instead of just a sysexit, may not be ideal for a process that's
 		// dieing because it sucks.
