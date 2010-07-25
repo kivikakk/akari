@@ -177,7 +177,7 @@ s32 Heap::smallestHole(u32 n) const {
 		}
 		++it;
 	}
-	Akari->console->printf("looking for %lx bytes, couldn't find\n", n);
+	Akari->console->printf("looking for %x bytes, couldn't find\n", n);
 	AkariPanic("no smallest hole in SmallestHole!");
 	return -1;
 }
@@ -202,7 +202,7 @@ s32 Heap::smallestAlignedHole(u32 n) const {
 
 		++it;
 	}
-	Akari->console->printf("looking for %lx bytes, couldn't find\n", n);
+	Akari->console->printf("looking for %x bytes, couldn't find\n", n);
 	AkariPanic("no smallest hole in SmallestAlignedHole!");
 	return -1;
 }
