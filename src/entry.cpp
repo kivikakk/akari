@@ -82,7 +82,7 @@ void AkariEntry() {
 	Akari->elf = new ELF(); Akari->subsystems.push_back(Akari->elf);
 	Akari->debugger = new Debugger(); Akari->subsystems.push_back(Akari->debugger);
 
-	Akari->console->putString("Akari " __AKARI_VERSION " börjar ...\n");
+	Akari->console->putString("Akari " __AKARI_VERSION ". Dedicerad till Misty.\nBörjar ...\n");
 
 	// This is done before paging is turned on (otherwise the memory where the
 	// modules reside is protected), but after memory is initialised.
