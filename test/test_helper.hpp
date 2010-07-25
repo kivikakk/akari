@@ -23,6 +23,7 @@
 class Console {
 public:
 	void printf(const char *s, ...);
+	void putString(const char *s);
 };
 
 class Kernel {

@@ -27,8 +27,12 @@ Kernel::Kernel(): console(new Console())
 void Console::printf(const char *s, ...) {
 	va_list ap;
 	va_start(ap, s);
-	vprintf(s, ap);
+	vfprintf(stderr, s, ap);
 	va_end(ap);
+}
+
+void Console::putString(const char *s) {
+	printf("%s", s);
 }
 
 void *memset(void *s, int c, int n) {
