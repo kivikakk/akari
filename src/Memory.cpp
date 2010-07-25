@@ -318,7 +318,7 @@ Memory::PageDirectory *Memory::PageDirectory::clone() const {
 		if (Akari->memory->_kernelDirectory->tables[i] == tables[i]) {
 			// kernel has this table, so just link it
 			d->tables[i] = tables[i];
-			d->tablePhysicals[i] = tablePhysicals[i];
+			d->tablePhysicals[i] = (tablePhysicals[i] & ~0x7) | 0x5;	// present, user
 		} else {
 			// copy it
 			ptr_t phys;
