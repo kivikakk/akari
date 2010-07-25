@@ -95,7 +95,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 				Akari->console->printf("\tvirt 0x%x", virt + copied);
 #endif
 
-				Memory::Page *page = task->pageDir->getPage((virt + copied) & 0xfffff000, true);
+				Memory::Page *page = task->pageDir->getPage((virt + copied) & ~0xfff, true);
 				ASSERT(page);
 
 				page->allocAnyFrame(false, true);
