@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <Akari.hpp>
+#include <Console.hpp>
 #include <Heap.hpp>
 #include <string>
 
@@ -171,6 +173,7 @@ s32 Heap::smallestHole(u32 n) const {
 		}
 		++it;
 	}
+	Akari->console->printf("looking for %lx bytes, couldn't find\n", n);
 	AkariPanic("no smallest hole in SmallestHole!");
 	return -1;
 }
@@ -195,6 +198,7 @@ s32 Heap::smallestAlignedHole(u32 n) const {
 
 		++it;
 	}
+	Akari->console->printf("looking for %lx bytes, couldn't find\n", n);
 	AkariPanic("no smallest hole in SmallestAlignedHole!");
 	return -1;
 }
