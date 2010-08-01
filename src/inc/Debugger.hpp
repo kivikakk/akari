@@ -31,6 +31,11 @@ public:
 	const char *versionProduct() const;
 
 	void run();
+	void setReceiveFile(u8 *file, u32 size);
+
+protected:
+	u8 *_receive;
+	u32 _receiveSize;
 };
 
 class COMPort {

@@ -130,6 +130,8 @@ public:
 		void unblockType(const Symbol &type);
 		void unblockTypeWith(const Symbol &type, u32 data);
 
+		u8 *dumpELFCore(u32 *size) const;
+
 		// Task linked list.
 		Task *next, *priorityNext;
 

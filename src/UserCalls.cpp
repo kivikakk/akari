@@ -25,6 +25,7 @@
 #include <Syscall.hpp>
 #include <BlockingCall.hpp>
 #include <Timer.hpp>
+#include <Debugger.hpp>
 
 namespace User {
 	void putc(char c) {
@@ -125,6 +126,12 @@ namespace User {
 	}
 
 	void panic(const char *s) {
+		u32 coresize;
+		u8 *core = Akari->tasks->current->dumpELFCore(&coresize);
+	
+		Akari->debugger->setReceiveFile(core, coresize);
+		delete [] core;
+
 		Akari->console->printf("Process 0x%x \"%s\" ", Akari->tasks->current->id, Akari->tasks->current->name.c_str());
 		const char *rn = Akari->tasks->current->registeredName.c_str();
 		if (rn) {
@@ -135,6 +142,14 @@ namespace User {
 		struct modeswitch_registers *r = reinterpret_cast<modeswitch_registers *>(Akari->tasks->current->ks);
 		Akari->console->printf("EIP was %x, ESP was %x, EBP was %x, EFLAGS was %x\n",
 			r->callback.eip, r->callback.esp, r->callback.ebp, r->callback.eflags);
+
+		u8 *ra = reinterpret_cast<u8 *>(r);
+		for (int i = 0; i < 128; ++i) {
+			Akari->console->printf("%s%x ", *ra >= 0x10 ? "" : "0", *ra);
+			if (i % 16 == 15) Akari->console->printf("\n");
+			if (i % 16 == 7) Akari->console->printf(" ");
+			++ra;
+		}
 
 		// when exit becomes more complicated later we may have to do cleanup
 		// instead of just a sysexit, may not be ideal for a process that's

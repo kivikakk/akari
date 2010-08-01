@@ -49,5 +49,12 @@ while true
 	when 'get'
 		s.sendCommand "get", args[0].to_i(16), args[1].to_i(16)
 		p s.read(args[1].to_i(16))
+	when 'receive'
+		if args.length != 1
+			puts "Usage: receive FILENAME"
+		else
+			s.sendCommand "receive"
+			File.open(args.first, "w") {|f| f.write(s.getMessage)}
+		end
 	end
 end

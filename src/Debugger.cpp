@@ -19,8 +19,7 @@
 #include <Akari.hpp>
 #include <Console.hpp>
 
-Debugger::Debugger()
-{ }
+Debugger::Debugger(): _receive(0), _receiveSize(0) { }
 
 u8 Debugger::versionMajor() const { return 0; }
 u8 Debugger::versionMinor() const { return 1; }
@@ -28,7 +27,7 @@ const char *Debugger::versionManufacturer() const { return "Akari"; }
 const char *Debugger::versionProduct() const { return "Akari Debugger"; }
 
 void Debugger::run() {
-	Akari->console->printf("debugger disabled\n"); return;
+	// Akari->console->printf("debugger disabled\n"); return;
 
 	COMPort com1 = COMPort::COM(1);
 	com1.initialize();
@@ -45,6 +44,19 @@ void Debugger::run() {
 
 			com1.putU32(0);
 			com1.putMemory(reinterpret_cast<char *>(base), length);
+		} else if (command == "receive") {
+			if (!_receive) {
+				com1.putU32(1);
+			} else {
+				com1.putU32(0);
+
+				com1.putU32(_receiveSize);
+				com1.putMemory(reinterpret_cast<char *>(_receive), _receiveSize);
+
+				delete [] _receive;
+				_receive = 0;
+				_receiveSize = 0;
+			}
 		} else if (command == "break") {
 			com1.putU32(0);
 			com1.putMessage("Bye!");
@@ -54,6 +66,12 @@ void Debugger::run() {
 			com1.putMessage("unknown command");
 		}
 	}
+}
+
+void Debugger::setReceiveFile(u8 *file, u32 size) {
+	_receive = new u8[size];
+	memcpy(_receive, file, size);
+	_receiveSize = size;
 }
 
 COMPort::COMPort(u32 base): _base(base) { }
@@ -91,6 +109,7 @@ u32 COMPort::getU32() const {
 	u32 r = 0;
 	for (int i = 0; i < 4; ++i)
 		r |= static_cast<u32>(static_cast<u8>(getChar())) << i * 8;
+	Akari->console->printf("getU32: %x\n", r);
 	return r;
 }
 std::string COMPort::getStringNL() const {

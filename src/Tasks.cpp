@@ -18,8 +18,10 @@
 #include <Tasks.hpp>
 #include <Akari.hpp>
 #include <Descriptor.hpp>
+#include <Console.hpp>
 #include <UserIPC.hpp>
 #include <physmem.hpp>
+#include <ELFInternal.hpp>
 
 Tasks::Tasks(): start(0), current(0), priorityStart(0)
 { }
@@ -301,6 +303,44 @@ void Tasks::Task::unblockTypeWith(const Symbol &type, u32 data) {
 			userWaiting = false;
 		}
 	}
+}
+
+u8 *Tasks::Task::dumpELFCore(u32 *size) const {
+	u8 *core = new u8[52]; *size = 52;
+
+	Elf32_Ehdr *hdr = reinterpret_cast<Elf32_Ehdr *>(core);
+	hdr->e_ident[EI_MAG0] = 0x7F;
+	hdr->e_ident[EI_MAG1] = 'E';
+	hdr->e_ident[EI_MAG2] = 'L';
+	hdr->e_ident[EI_MAG3] = 'F';
+	hdr->e_ident[EI_CLASS] = ELFCLASS32;
+	hdr->e_ident[EI_DATA] = ELFDATA2LSB;
+	hdr->e_ident[EI_VERSION] = EV_CURRENT;
+	hdr->e_ident[EI_OSABI] = ELFOSABI_NONE;
+	hdr->e_ident[EI_ABIVERSION] = 0;
+	for (int i = EI_PAD; i < EI_NIDENT; ++i)
+		hdr->e_ident[i] = 0;
+
+	hdr->e_type = ET_CORE;
+	hdr->e_machine = EM_386;
+	hdr->e_version = EV_CURRENT;
+	hdr->e_entry = 0;
+
+	hdr->e_phoff = 0;
+	hdr->e_shoff = 0;
+
+	hdr->e_flags = 0;
+	hdr->e_ehsize = sizeof(Elf32_Ehdr);
+
+	hdr->e_phentsize = 0x65;
+	hdr->e_phnum = 0;
+
+	hdr->e_shentsize = 0x65;
+	hdr->e_shnum = 0;
+
+	hdr->e_shstrndx = SHN_UNDEF;
+
+	return core;
 }
 
 Tasks::Task::Stream::Stream(): _wl_id(0) {

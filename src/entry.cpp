@@ -171,7 +171,7 @@ static void AkariEntryCont() {
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);
 
-	Akari->console->putString("Akari: operativsystemkärnainitialiseringen klar.\n");
+	Akari->console->putString("Akari: operativsystemskärnainitialisering klar.\n");
 
 	Tasks::SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 
