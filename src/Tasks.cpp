@@ -357,67 +357,67 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	notes_size += sizeof(Elf32_Nhdr) * 2 + (5 + 3) * 2;
 
 	u8 *notes = new u8[notes_size];
-	u8 *notes_start = notes;
+	u8 *notes_write = notes;
 
 	// PRSTATUS
 	memset(&prstatus, 0, sizeof(struct elf_prstatus));
 	
-	Elf32_Nhdr *nhdr = reinterpret_cast<Elf32_Nhdr *>(notes);
+	Elf32_Nhdr *nhdr = reinterpret_cast<Elf32_Nhdr *>(notes_write);
 	nhdr->n_namesz = 5;		// "CORE" + NUL
 	nhdr->n_descsz = sizeof(struct elf_prstatus);
 	nhdr->n_type = NT_PRSTATUS;
 
-	notes += sizeof(Elf32_Nhdr);
-	memcpy(notes, "CORE", 5);
-	notes += 5;
-	notes = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes + 4 - 1) / 4 * 4);
+	notes_write += sizeof(Elf32_Nhdr);
+	memcpy(notes_write, "CORE", 5);
+	notes_write += 5;
+	notes_write = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes_write + 4 - 1) / 4 * 4);
 	
-	memcpy(notes, &prstatus, sizeof(prstatus));
-	notes += sizeof(prstatus);
-	notes = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes + 4 - 1) / 4 * 4);
+	memcpy(notes_write, &prstatus, sizeof(prstatus));
+	notes_write += sizeof(prstatus);
+	notes_write = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes_write + 4 - 1) / 4 * 4);
 
 	// PRPSINFO
 	memset(&prpsinfo, 0, sizeof(struct elf_prpsinfo));
 	strcpy(prpsinfo.pr_fname, "Core?");
 
-	nhdr = reinterpret_cast<Elf32_Nhdr *>(notes);
+	nhdr = reinterpret_cast<Elf32_Nhdr *>(notes_write);
 	nhdr->n_namesz = 5;
 	nhdr->n_descsz = sizeof(elf_prpsinfo);
 	nhdr->n_type = NT_PRPSINFO;
 
-	notes += sizeof(Elf32_Nhdr);
-	memcpy(notes, "CORE", 5);
-	notes += 5;
-	notes = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes + 4 - 1) / 4 * 4);
+	notes_write += sizeof(Elf32_Nhdr);
+	memcpy(notes_write, "CORE", 5);
+	notes_write += 5;
+	notes_write = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes_write + 4 - 1) / 4 * 4);
 
-	memcpy(notes, &prpsinfo, sizeof(prpsinfo));
-	notes += sizeof(struct elf_prpsinfo);
-	notes = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes + 4 - 1) / 4 * 4);
+	memcpy(notes_write, &prpsinfo, sizeof(prpsinfo));
+	notes_write += sizeof(struct elf_prpsinfo);
+	notes_write = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes_write + 4 - 1) / 4 * 4);
 
 	// AUXV (?)
 	
 	/*
-	nhdr = reinterpret_cast<Elf32_Nhdr *>(notes);
+	nhdr = reinterpret_cast<Elf32_Nhdr *>(notes_write);
 	nhdr->n_namesz = 5;
 	nhdr->n_descsz = SIZE;
 	nhdr->n_type = NT_AUXV;
 
-	notes += sizeof(Elf32_Nhdr);
-	memcpy(notes, "CORE", 5);
-	notes += 5;
-	notes = (notes + 4 - 1) / 4 * 4;
+	notes_write += sizeof(Elf32_Nhdr);
+	memcpy(notes_write, "CORE", 5);
+	notes_write += 5;
+	notes_write = (notes_write + 4 - 1) / 4 * 4;
 
 	auxv_note?
-	memcpy(notes, DATA, SIZE);
-	notes += SIZE;
-	notes = (notes + 4 - 1) / 4 * 4;
+	memcpy(notes_write, DATA, SIZE);
+	notes_write += SIZE;
+	notes_write = (notes_write + 4 - 1) / 4 * 4;
 	*/
 
-	Akari->console->printf("notes offset: %x\n", notes - notes_start);
+	Akari->console->printf("notes offset: %x\n", notes_write - notes);
 	Akari->console->printf("notes approx: %x\n", notes_size);
-	ASSERT(notes - notes_start == (s32)notes_size);
+	ASSERT(notes_write - notes == (s32)notes_size);
 
-	*size = sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr) * (1 + run_count) + 0x1000 * page_count + sizeof(struct modeswitch_registers);
+	*size = sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr) * (1 + run_count) + 0x1000 * page_count + notes_size;
 
 	Akari->console->printf("Found %d run(s) in %d page(s)\n", run_count, page_count);
 	Akari->console->printf("Allocating 0x%x bytes\n", *size);
@@ -466,9 +466,10 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 		nextWriteHdr->p_offset = reinterpret_cast<u32>(nextWrite) - reinterpret_cast<u32>(core);
 		nextWriteHdr->p_vaddr = nextWriteHdr->p_paddr = 0;
 
-		nextWrite += sizeof(struct modeswitch_registers);
+		memcpy(nextWrite, notes, notes_size);
+		nextWrite += notes_size;
 		
-		nextWriteHdr->p_filesz = sizeof(struct modeswitch_registers);
+		nextWriteHdr->p_filesz = notes_size;
 		nextWriteHdr->p_memsz = 0;
 
 		nextWriteHdr->p_flags = 0;
