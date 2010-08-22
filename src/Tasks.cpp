@@ -439,14 +439,9 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	notes_write = (notes_write + 4 - 1) / 4 * 4;
 	*/
 
-	Akari->console->printf("notes offset: %x\n", notes_write - notes);
-	Akari->console->printf("notes approx: %x\n", notes_size);
 	ASSERT(notes_write - notes == (s32)notes_size);
 
 	*size = sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr) * (1 + run_count) + 0x1000 * page_count + notes_size;
-
-	Akari->console->printf("Found %d run(s) in %d page(s)\n", run_count, page_count);
-	Akari->console->printf("Allocating 0x%x bytes\n", *size);
 
 	ptr_t helperphys;
 	u8 *helper = reinterpret_cast<u8 *>(Akari->memory->alloc(0x1000, &helperphys));
@@ -525,7 +520,6 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 		nextWriteHdr->p_flags = PF_X | PF_W | PF_R;
 		nextWriteHdr->p_align = 0x1000;
 
-		Akari->console->printf("Phdr: %x - %x\n", nextWriteHdr->p_vaddr, nextWriteHdr->p_vaddr + nextWriteHdr->p_filesz);
 		++nextWriteHdr;
 	}
 
