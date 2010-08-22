@@ -109,7 +109,7 @@ namespace IPC {
 	}
 
 	u8 *grabQueue(struct queue_item_info *info) {
-		u8 *data = new u8[info->data_len];
+		u8 *data = reinterpret_cast<u8 *>(Akari->tasks->current->heap->alloc(info->data_len));
 		readQueue(info, data, 0, info->data_len);
 		return data;
 	}
