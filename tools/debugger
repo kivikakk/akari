@@ -54,7 +54,22 @@ while true
 			puts "Usage: receive FILENAME"
 		else
 			s.sendCommand "receive"
-			File.open(args.first, "w") {|f| f.write(s.getMessage)}
+			filesize, received = s.getU32, 0
+			start = Time.now
+
+			puts "#{filesize} byte(s) to receive"
+			File.open(args.first, "w") do |f|
+				while filesize > 0
+					r = [filesize, 100000].min
+					filesize -= r
+					received += r
+
+					f.write s.read(r)
+					f.flush
+
+					puts "#{filesize} byte(s) left to receive (#{(Time.now - start) / received.to_f * filesize})"
+				end
+			end
 		end
 	end
 end
