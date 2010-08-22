@@ -306,7 +306,11 @@ void Tasks::Task::unblockTypeWith(const Symbol &type, u32 data) {
 }
 
 u8 *Tasks::Task::dumpELFCore(u32 *size) const {
-	u8 *core = new u8[52]; *size = 52;
+	ptr_t corephys;
+	u8 *core = Akari->memory->alloc(0x100000, &corephys);
+	*size = 0x100000;
+
+	u32 used = sizeof(Elf32_Ehdr);
 
 	Elf32_Ehdr *hdr = reinterpret_cast<Elf32_Ehdr *>(core);
 	hdr->e_ident[EI_MAG0] = 0x7F;
@@ -332,13 +336,30 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	hdr->e_flags = 0;
 	hdr->e_ehsize = sizeof(Elf32_Ehdr);
 
-	hdr->e_phentsize = 0x65;
+	hdr->e_phentsize = sizeof(Elf32_Phdr);
 	hdr->e_phnum = 0;
 
-	hdr->e_shentsize = 0x65;
+	hdr->e_shentsize = sizeof(Elf32_Shdr);
 	hdr->e_shnum = 0;
 
 	hdr->e_shstrndx = SHN_UNDEF;
+
+	// Identify contiguous areas of allocated memory in the process's directory and
+	// write them into the ELF.
+	
+	u32 last_contiguous_start = 0x1;
+	for (int pti = 0; pti < 1024; ++pti) {
+		Memory::PageTable *pt = pageDir->tables[pti];
+		if (!pt) continue;
+
+		for (int pi = 0; pi < 1024; ++pi) {
+			Memory::Page *p = &pt->pages[pi];
+			if (last_contiguous_start != 1 && !p->present) {
+				// This is after the last contiguous page.
+				++hdr->e_phnum;
+				// resume: here.
+		}
+	}
 
 	return core;
 }
