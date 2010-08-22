@@ -27,7 +27,7 @@ const char *Debugger::versionManufacturer() const { return "Akari"; }
 const char *Debugger::versionProduct() const { return "Akari Debugger"; }
 
 void Debugger::run() {
-	// Akari->console->printf("debugger disabled\n"); return;
+	Akari->console->printf("debugger started\n");
 
 	COMPort com1 = COMPort::COM(1);
 	com1.initialize();
