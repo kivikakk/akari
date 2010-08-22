@@ -94,8 +94,8 @@ extern "C" int main() {
 		u32 msg_id = sendQueue(vfs, 0, reinterpret_cast<u8 *>(&mount_root_op), sizeof(mount_root_op));
 		struct queue_item_info *info = probeQueueFor(msg_id);
 		u8 *reply = grabQueue(info);
+		if (info->data_len != 1 || reply[0] != 1) panic("FAT: couldn't mount self as root");
 		shiftQueue(info);
-		if (strcmp(reinterpret_cast<char *>(reply), "\1") != 0) panic("FAT: couldn't mount self as root");
 		delete [] reply;
 
 	}
