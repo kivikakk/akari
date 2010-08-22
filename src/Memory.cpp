@@ -28,7 +28,7 @@
 #define OFFSET_BIT(n)	((n)%(8*4))
 
 #define KHEAP_START	0xC0000000
-#define KHEAP_INITIAL_SIZE	0x500000
+#define KHEAP_INITIAL_SIZE	0x2000000		// 32MiB
 #define KHEAP_INDEX_SIZE	0x20000
 
 Memory::Memory(ptr_t upperMemory):
