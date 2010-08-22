@@ -339,4 +339,7 @@ struct elf_prpsinfo {
 	char pr_psargs[80];		// initial part of arg list
 };
 
+#define AT_NULL 0
+#define AT_EXECFN 31
+
 #endif
