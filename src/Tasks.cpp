@@ -343,9 +343,24 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	}
 
 	// We'll put together the notes now.
-	u8 *notes = new u8[0x10000]; 	// ???
+	//
+	// First find its size out; both the actual data sections,
+	// as well as the 2 headers and the name.  Align after the
+	// name and after the data sections.
+	struct elf_prstatus prstatus;
+	struct elf_prpsinfo prpsinfo;
+
+	u32 notes_size = sizeof(prstatus);
+	notes_size = (notes_size + 4 - 1) / 4 * 4;
+	notes_size += sizeof(prpsinfo);
+	notes_size = (notes_size + 4 - 1) / 4 * 4;
+	notes_size += sizeof(Elf32_Nhdr) * 2 + (5 + 3) * 2;
+
+	u8 *notes = new u8[notes_size];
+	u8 *notes_start = notes;
 
 	// PRSTATUS
+	memset(&prstatus, 0, sizeof(struct elf_prstatus));
 	
 	Elf32_Nhdr *nhdr = reinterpret_cast<Elf32_Nhdr *>(notes);
 	nhdr->n_namesz = 5;		// "CORE" + NUL
@@ -355,13 +370,15 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	notes += sizeof(Elf32_Nhdr);
 	memcpy(notes, "CORE", 5);
 	notes += 5;
-	notes = (notes + 4 - 1) / 4 * 4;
+	notes = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes + 4 - 1) / 4 * 4);
 	
-	memcpy(notes, DATA, sizeof(struct elf_prstatus));
-	notes += sizeof(struct elf_prstatus);
-	notes = (notes + 4 - 1) / 4 * 4;
+	memcpy(notes, &prstatus, sizeof(prstatus));
+	notes += sizeof(prstatus);
+	notes = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes + 4 - 1) / 4 * 4);
 
 	// PRPSINFO
+	memset(&prpsinfo, 0, sizeof(struct elf_prpsinfo));
+	strcpy(prpsinfo.pr_fname, "Core?");
 
 	nhdr = reinterpret_cast<Elf32_Nhdr *>(notes);
 	nhdr->n_namesz = 5;
@@ -371,11 +388,11 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	notes += sizeof(Elf32_Nhdr);
 	memcpy(notes, "CORE", 5);
 	notes += 5;
-	notes = (notes + 4 - 1) / 4 * 4;
+	notes = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes + 4 - 1) / 4 * 4);
 
-	memcpy(notes, DATA, sizeof(struct elf_prpsinfo));
+	memcpy(notes, &prpsinfo, sizeof(prpsinfo));
 	notes += sizeof(struct elf_prpsinfo);
-	notes = (notes + 4 - 1) / 4 * 4;
+	notes = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes + 4 - 1) / 4 * 4);
 
 	// AUXV (?)
 	
@@ -395,6 +412,10 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	notes += SIZE;
 	notes = (notes + 4 - 1) / 4 * 4;
 	*/
+
+	Akari->console->printf("notes offset: %x\n", notes - notes_start);
+	Akari->console->printf("notes approx: %x\n", notes_size);
+	ASSERT(notes - notes_start == (s32)notes_size);
 
 	*size = sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr) * (1 + run_count) + 0x1000 * page_count + sizeof(struct modeswitch_registers);
 

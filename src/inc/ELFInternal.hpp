@@ -289,4 +289,54 @@ typedef struct {
 #define NT_PRPSINFO 3
 #define NT_AUXV 6
 
+struct elf_user_regs_struct {
+	u32 bx, cx, dx, si, di, bp, ax, ds, es, fs, gs, orig_ax, ip, cs, flags, sp, ss;
+};
+
+typedef u32 elf_greg_t;
+#define ELF_NGREG (sizeof(struct elf_user_regs_struct) / sizeof(elf_greg_t))
+typedef elf_greg_t elf_gregset_t[ELF_NGREG];
+
+struct elf_siginfo {
+	int si_signo, si_code, si_errno;
+};
+
+struct elf_timeval {
+	s32 tv_sec;
+	s32 tv_usec;
+};
+
+struct elf_prstatus {
+	struct elf_siginfo pr_info;
+	s16 pr_cursig;
+	u32 pr_sigpend;
+	u32 pr_sighold;
+
+	pid_t pr_pid;
+	pid_t pr_ppid;
+	pid_t pr_pgrp;
+	pid_t pr_sid;
+	struct elf_timeval pr_utime;
+	struct elf_timeval pr_stime;
+	struct elf_timeval pr_cutime;
+	struct elf_timeval pr_cstime;
+
+	elf_gregset_t pr_reg;
+
+	int pr_fpvalid;		// true if math co-processor being used.
+};
+
+struct elf_prpsinfo {
+	char pr_state;
+	char pr_sname;
+	char pr_zomb;
+	char pr_nice;
+	u32 pr_flag;
+	u16 pr_uid;
+	u16 pr_gid;
+	pid_t pr_pid, pr_ppid, pr_pgrp, pr_sid;
+	char pr_fname[16];		// executable name
+	char pr_psargs[80];		// initial part of arg list
+};
+
 #endif
