@@ -279,4 +279,14 @@ typedef enum {
 	PF_MASKPROC	= 0xf0000000	// unspec
 } ElfProgramHeaderFlag;
 
+typedef struct {
+	Elf32_Word n_namesz;
+	Elf32_Word n_descsz;
+	Elf32_Word n_type;
+} Elf32_Nhdr;
+
+#define NT_PRSTATUS 1
+#define NT_PRPSINFO 3
+#define NT_AUXV 6
+
 #endif

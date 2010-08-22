@@ -306,11 +306,104 @@ void Tasks::Task::unblockTypeWith(const Symbol &type, u32 data) {
 }
 
 u8 *Tasks::Task::dumpELFCore(u32 *size) const {
-	ptr_t corephys;
-	u8 *core = Akari->memory->alloc(0x100000, &corephys);
-	*size = 0x100000;
+	// Identify contiguous areas of allocated memory in the process's directory.
+	std::list<u32> runs;
+	
+	u32 page_count = 0, run_count = 0;
+	for (int pti = 0; pti < 1024; ++pti) {
+		Memory::PageTable *pt = pageDir->tables[pti];
+		if (!pt) continue;
 
-	u32 used = sizeof(Elf32_Ehdr);
+		// Skip kernel linked tables.
+		if  (Akari->memory->_kernelDirectory->tables[pti] == pt) continue;
+
+		s32 last_start = -1;
+
+		for (int pi = 0; pi < 1024; ++pi) {
+			Memory::Page *p = &pt->pages[pi];
+
+			if (last_start != -1 && !p->present) {
+				// Run finished.
+				++run_count;
+				last_start = -1;
+			} else if (last_start == -1 && p->present) {
+				// New run.
+				++page_count;
+				last_start = pi;
+				runs.push_back((u32)pti << 16 | (u32)pi);
+			} else if (p->present) {
+				++page_count;
+			}
+		}
+
+		if (last_start != -1) {
+			// Run finished.
+			++run_count;
+		}
+	}
+
+	// We'll put together the notes now.
+	u8 *notes = new u8[0x10000]; 	// ???
+
+	// PRSTATUS
+	
+	Elf32_Nhdr *nhdr = reinterpret_cast<Elf32_Nhdr *>(notes);
+	nhdr->n_namesz = 5;		// "CORE" + NUL
+	nhdr->n_descsz = sizeof(struct elf_prstatus);
+	nhdr->n_type = NT_PRSTATUS;
+
+	notes += sizeof(Elf32_Nhdr);
+	memcpy(notes, "CORE", 5);
+	notes += 5;
+	notes = (notes + 4 - 1) / 4 * 4;
+	
+	memcpy(notes, DATA, sizeof(struct elf_prstatus));
+	notes += sizeof(struct elf_prstatus);
+	notes = (notes + 4 - 1) / 4 * 4;
+
+	// PRPSINFO
+
+	nhdr = reinterpret_cast<Elf32_Nhdr *>(notes);
+	nhdr->n_namesz = 5;
+	nhdr->n_descsz = sizeof(elf_prpsinfo);
+	nhdr->n_type = NT_PRPSINFO;
+
+	notes += sizeof(Elf32_Nhdr);
+	memcpy(notes, "CORE", 5);
+	notes += 5;
+	notes = (notes + 4 - 1) / 4 * 4;
+
+	memcpy(notes, DATA, sizeof(struct elf_prpsinfo));
+	notes += sizeof(struct elf_prpsinfo);
+	notes = (notes + 4 - 1) / 4 * 4;
+
+	// AUXV (?)
+	
+	/*
+	nhdr = reinterpret_cast<Elf32_Nhdr *>(notes);
+	nhdr->n_namesz = 5;
+	nhdr->n_descsz = SIZE;
+	nhdr->n_type = NT_AUXV;
+
+	notes += sizeof(Elf32_Nhdr);
+	memcpy(notes, "CORE", 5);
+	notes += 5;
+	notes = (notes + 4 - 1) / 4 * 4;
+
+	auxv_note?
+	memcpy(notes, DATA, SIZE);
+	notes += SIZE;
+	notes = (notes + 4 - 1) / 4 * 4;
+	*/
+
+	*size = sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr) * (1 + run_count) + 0x1000 * page_count + sizeof(struct modeswitch_registers);
+
+	Akari->console->printf("Found %d run(s) in %d page(s)\n", run_count, page_count);
+	Akari->console->printf("Allocating 0x%x bytes\n", *size);
+
+	ptr_t helperphys;
+	u8 *helper = reinterpret_cast<u8 *>(Akari->memory->alloc(0x1000, &helperphys));
+	u8 *core = new u8[*size];
 
 	Elf32_Ehdr *hdr = reinterpret_cast<Elf32_Ehdr *>(core);
 	hdr->e_ident[EI_MAG0] = 0x7F;
@@ -330,36 +423,65 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	hdr->e_version = EV_CURRENT;
 	hdr->e_entry = 0;
 
-	hdr->e_phoff = 0;
+	hdr->e_phoff = sizeof(Elf32_Ehdr);
 	hdr->e_shoff = 0;
 
 	hdr->e_flags = 0;
 	hdr->e_ehsize = sizeof(Elf32_Ehdr);
 
 	hdr->e_phentsize = sizeof(Elf32_Phdr);
-	hdr->e_phnum = 0;
+	hdr->e_phnum = 1 + run_count;
 
 	hdr->e_shentsize = sizeof(Elf32_Shdr);
 	hdr->e_shnum = 0;
 
 	hdr->e_shstrndx = SHN_UNDEF;
 
-	// Identify contiguous areas of allocated memory in the process's directory and
-	// write them into the ELF.
-	
-	u32 last_contiguous_start = 0x1;
-	for (int pti = 0; pti < 1024; ++pti) {
-		Memory::PageTable *pt = pageDir->tables[pti];
-		if (!pt) continue;
+	Elf32_Phdr *nextWriteHdr = reinterpret_cast<Elf32_Phdr *>(reinterpret_cast<u32>(core) + sizeof(Elf32_Ehdr));
+   	u8 *nextWrite = reinterpret_cast<u8 *>(nextWriteHdr) + sizeof(Elf32_Phdr) * (1 + run_count);
 
-		for (int pi = 0; pi < 1024; ++pi) {
-			Memory::Page *p = &pt->pages[pi];
-			if (last_contiguous_start != 1 && !p->present) {
-				// This is after the last contiguous page.
-				++hdr->e_phnum;
-				// resume: here.
-		}
+	{
+		nextWriteHdr->p_type = PT_NOTE;
+		nextWriteHdr->p_offset = reinterpret_cast<u32>(nextWrite) - reinterpret_cast<u32>(core);
+		nextWriteHdr->p_vaddr = nextWriteHdr->p_paddr = 0;
+
+		nextWrite += sizeof(struct modeswitch_registers);
+		
+		nextWriteHdr->p_filesz = sizeof(struct modeswitch_registers);
+		nextWriteHdr->p_memsz = 0;
+
+		nextWriteHdr->p_flags = 0;
+		nextWriteHdr->p_align = 0;
+		++nextWriteHdr;
 	}
+
+	for (std::list<u32>::iterator it = runs.begin(); it != runs.end(); ++it) {
+		u32 pti = *it >> 16, pi = *it & 0xFFFF;
+		Memory::PageTable *pt = pageDir->tables[pti];
+
+		nextWriteHdr->p_type = PT_LOAD;
+		nextWriteHdr->p_offset = reinterpret_cast<u32>(nextWrite) - reinterpret_cast<u32>(core);
+		nextWriteHdr->p_vaddr = (pti * 1024 + pi) * 0x1000;
+		nextWriteHdr->p_paddr = 0;
+
+		u32 written = 0;
+		for (; pi < 1024 && pt->pages[pi].present; ++pi) {
+			AkariCopyFramePhysical(pt->pages[pi].pageAddress * 0x1000, helperphys);
+			memcpy(nextWrite, helper, 0x1000);
+
+			nextWrite += 0x1000;
+			written += 0x1000;
+		}
+
+		nextWriteHdr->p_filesz = nextWriteHdr->p_memsz = written;
+		nextWriteHdr->p_flags = PF_X | PF_W | PF_R;		// ?
+		nextWriteHdr->p_align = 12;						// ? 2**12?
+
+		Akari->console->printf("Phdr: %x - %x\n", nextWriteHdr->p_vaddr, nextWriteHdr->p_vaddr + nextWriteHdr->p_filesz);
+		++nextWriteHdr;
+	}
+
+	delete [] helper;
 
 	return core;
 }
