@@ -22,6 +22,7 @@
 #include <UserIPC.hpp>
 #include <physmem.hpp>
 #include <ELFInternal.hpp>
+#include <interrupts.hpp>
 
 Tasks::Tasks(): start(0), current(0), priorityStart(0)
 { }
@@ -361,6 +362,25 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 
 	// PRSTATUS
 	memset(&prstatus, 0, sizeof(struct elf_prstatus));
+
+	struct modeswitch_registers *regs = reinterpret_cast<modeswitch_registers *>(ks);
+	prstatus.pr_reg[0] = regs->callback.ebx;
+	prstatus.pr_reg[1] = regs->callback.ecx;
+	prstatus.pr_reg[2] = regs->callback.edx;
+	prstatus.pr_reg[3] = regs->callback.esi;
+	prstatus.pr_reg[4] = regs->callback.edi;
+	prstatus.pr_reg[5] = regs->callback.ebp;
+	prstatus.pr_reg[6] = regs->callback.eax;
+	prstatus.pr_reg[7] = regs->callback.ds;
+	prstatus.pr_reg[8] = regs->callback.ds;		// es
+	prstatus.pr_reg[9] = regs->callback.ds;		// fs
+	prstatus.pr_reg[10] = regs->callback.ds;	// gs
+	prstatus.pr_reg[11] = regs->callback.eax;	// "orig ax"
+	prstatus.pr_reg[12] = regs->callback.eip;
+	prstatus.pr_reg[13] = regs->callback.cs;
+	prstatus.pr_reg[14] = regs->callback.eflags;
+	prstatus.pr_reg[15] = regs->useresp;
+	prstatus.pr_reg[16] = regs->ss;
 	
 	Elf32_Nhdr *nhdr = reinterpret_cast<Elf32_Nhdr *>(notes_write);
 	nhdr->n_namesz = 5;		// "CORE" + NUL
@@ -496,8 +516,8 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 		}
 
 		nextWriteHdr->p_filesz = nextWriteHdr->p_memsz = written;
-		nextWriteHdr->p_flags = PF_X | PF_W | PF_R;		// ?
-		nextWriteHdr->p_align = 12;						// ? 2**12?
+		nextWriteHdr->p_flags = PF_X | PF_W | PF_R;
+		nextWriteHdr->p_align = 0x1000;
 
 		Akari->console->printf("Phdr: %x - %x\n", nextWriteHdr->p_vaddr, nextWriteHdr->p_vaddr + nextWriteHdr->p_filesz);
 		++nextWriteHdr;
