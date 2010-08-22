@@ -347,7 +347,8 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	//
 	// First find its size out; both the actual data sections,
 	// as well as the 2 headers and the name.  Align after the
-	// name and after the data sections.
+	// name and after the data sections.  We can assume we're
+	// aligned to a dword already ...
 	struct elf_prstatus prstatus;
 	struct elf_prpsinfo prpsinfo;
 
@@ -390,15 +391,18 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	notes_write += sizeof(Elf32_Nhdr);
 	memcpy(notes_write, "CORE", 5);
 	notes_write += 5;
-	notes_write = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes_write + 4 - 1) / 4 * 4);
+	if ((notes_write - notes) % 4 != 0)
+		notes_write += (4 - (notes_write - notes) % 4);
 	
 	memcpy(notes_write, &prstatus, sizeof(prstatus));
 	notes_write += sizeof(prstatus);
-	notes_write = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes_write + 4 - 1) / 4 * 4);
+	if ((notes_write - notes) % 4 != 0)
+		notes_write += (4 - (notes_write - notes) % 4);
 
 	// PRPSINFO
 	memset(&prpsinfo, 0, sizeof(struct elf_prpsinfo));
-	strcpy(prpsinfo.pr_fname, "Core?");
+	strncpy(prpsinfo.pr_fname, name.c_str(), 16);
+	prpsinfo.pr_fname[15] = 0;
 
 	nhdr = reinterpret_cast<Elf32_Nhdr *>(notes_write);
 	nhdr->n_namesz = 5;
@@ -408,11 +412,13 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	notes_write += sizeof(Elf32_Nhdr);
 	memcpy(notes_write, "CORE", 5);
 	notes_write += 5;
-	notes_write = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes_write + 4 - 1) / 4 * 4);
+	if ((notes_write - notes) % 4 != 0)
+		notes_write += (4 - (notes_write - notes) % 4);
 
 	memcpy(notes_write, &prpsinfo, sizeof(prpsinfo));
 	notes_write += sizeof(struct elf_prpsinfo);
-	notes_write = reinterpret_cast<u8 *>(reinterpret_cast<u32>(notes_write + 4 - 1) / 4 * 4);
+	if ((notes_write - notes) % 4 != 0)
+		notes_write += (4 - (notes_write - notes) % 4);
 
 	// AUXV (?)
 	
