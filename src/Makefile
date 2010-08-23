@@ -50,7 +50,7 @@ packages: force_subdir user
 user: force_subdir
 	cd user; $(MAKE) $(MFLAGS) all
 
-include $(CXXDEPS)
+-include $(CXXDEPS)
 
 obj/%.cpp.d: %.cpp
 	@echo "[DEP] $<"

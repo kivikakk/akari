@@ -34,8 +34,8 @@ all: $(TARGET)
 $(TARGET): $(OBJS) $(LINKAGE_OBJS)
 	$(AR) rcs $@ $(OBJS) $(LINKAGE_OBJS)
 
-include $(CXXDEPS)
-include $(LINKAGE_CXXDEPS)
+-include $(CXXDEPS)
+-include $(LINKAGE_CXXDEPS)
 
 obj/User%.cpp.d: ../User%.cpp
 	@echo "[DEP] $<"

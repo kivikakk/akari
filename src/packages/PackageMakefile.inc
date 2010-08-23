@@ -35,7 +35,7 @@ $(TARGET): $(OBJS) ../../$(LINKAGE_TARGET) obj
 	$(LD) -melf_i386 $(OBJS) ../../$(LINKAGE_TARGET) -o $(TARGET)
 	$(STRIP) $(TARGET)
 
-include $(CXXDEPS)
+-include $(CXXDEPS)
 
 obj/%.cpp.d: %.cpp
 	@if [ ! -e obj ]; then mkdir obj; fi
