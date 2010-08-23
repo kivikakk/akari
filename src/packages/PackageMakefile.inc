@@ -38,21 +38,21 @@ $(TARGET): $(OBJS) ../../$(LINKAGE_TARGET) obj
 include $(CXXDEPS)
 
 obj/%.cpp.d: %.cpp
-	if [ ! -e obj ]; then mkdir obj; fi
-
-	$(CXX) -M $(CXXOPTS) -D__CPLUSPLUS $< > $@.$$$$; \
+	@if [ ! -e obj ]; then mkdir obj; fi
+	@echo "[DEP] $<"
+	@$(CXX) -M $(CXXOPTS) -D__CPLUSPLUS $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
 obj/%.s.o: %.s
-	if [ ! -e obj ]; then mkdir obj; fi
-
-	$(AS) $(ASOPTS) -o $@ $<
+	@if [ ! -e obj ]; then mkdir obj; fi
+	@echo "[AS]  $<"
+	@$(AS) $(ASOPTS) -o $@ $<
 
 obj/%.cpp.o: %.cpp
-	if [ ! -e obj ]; then mkdir obj; fi
-
-	$(CXX) $(CXXOPTS) -D__CPLUSPLUS -c -o $@ $<
+	@if [ ! -e obj ]; then mkdir obj; fi
+	@echo "[CXX] $<"
+	@$(CXX) $(CXXOPTS) -D__CPLUSPLUS -c -o $@ $<
 
 clean:
 	-rm $(TARGET) $(OBJS) $(CXXDEPS)

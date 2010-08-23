@@ -53,14 +53,17 @@ user: force_subdir
 include $(CXXDEPS)
 
 obj/%.cpp.d: %.cpp
-	$(CXX) -M $(CXXOPTS) -D__AKARI_KERNEL -D__CPLUSPLUS $< > $@.$$$$; \
+	@echo "[DEP] $<"
+	@$(CXX) -M $(CXXOPTS) -D__AKARI_KERNEL -D__CPLUSPLUS $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
 obj/%.s.o: %.s
-	$(AS) $(ASOPTS) -o $@ $<
+	@echo "[AS]  $<"
+	@$(AS) $(ASOPTS) -o $@ $<
 obj/%.cpp.o: %.cpp
-	$(CXX) $(CXXOPTS) -D__AKARI_VERSION=$(AKARI_VERSION) -D__AKARI_KERNEL -D__CPLUSPLUS -c -o $@ $<
+	@echo "[CXX] $<"
+	@$(CXX) $(CXXOPTS) -D__AKARI_VERSION=$(AKARI_VERSION) -D__AKARI_KERNEL -D__CPLUSPLUS -c -o $@ $<
 
 clean:
 	-rm $(TARGET) $(OBJS) $(CXXDEPS)
