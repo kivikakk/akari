@@ -57,6 +57,10 @@ protected:
 class TimerEventWakeup : public TimerEvent {
 public:
 	TimerEventWakeup(u32 at, Tasks::Task *task);
+
+	explicit TimerEventWakeup(const TimerEventWakeup &);
+	TimerEventWakeup &operator =(const TimerEventWakeup &);
+
 	void operator()();
 
 protected:

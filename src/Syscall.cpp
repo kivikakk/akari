@@ -22,49 +22,49 @@
 #include <UserProcess.hpp>
 #include <Descriptor.hpp>
 
-Syscall::Syscall(): _syscalls_assigned(0) {
+Syscall::Syscall(): _syscalls_assigned(0), _returnTask(0) {
 	Akari->descriptor->idt->installHandler(0x80, &Syscall::_handler);
 
 	// TODO: renumber me someday. There are big holes.
-	addSyscall(0, reinterpret_cast<void *>(&User::putc));
-	addSyscall(1, reinterpret_cast<void *>(&User::puts));
-	addSyscall(3, reinterpret_cast<void *>(&User::getProcessId));
-	addSyscall(4, reinterpret_cast<void *>(&User::irqWait));
-	addSyscall(38, reinterpret_cast<void *>(&User::irqWaitTimeout));
-	addSyscall(5, reinterpret_cast<void *>(&User::irqListen));
-	addSyscall(37, reinterpret_cast<void *>(&User::ticks));
-	addSyscall(6, reinterpret_cast<void *>(&User::panic));
-	addSyscall(7, reinterpret_cast<void *>(&User::sysexit));		// Don't change my number from 7 without changing entry.cpp.
-	addSyscall(8, reinterpret_cast<void *>(&User::defer));
-	addSyscall(9, reinterpret_cast<void *>(&User::malloc));
-	addSyscall(40, reinterpret_cast<void *>(&User::mallocap));
-	addSyscall(42, reinterpret_cast<void *>(&User::physAddr));
-	addSyscall(10, reinterpret_cast<void *>(&User::free));
-	addSyscall(41, reinterpret_cast<void *>(&User::flushTLB));
+	addSyscall(0, reinterpret_cast<syscall_fn_t>(&User::putc));
+	addSyscall(1, reinterpret_cast<syscall_fn_t>(&User::puts));
+	addSyscall(3, reinterpret_cast<syscall_fn_t>(&User::getProcessId));
+	addSyscall(4, reinterpret_cast<syscall_fn_t>(&User::irqWait));
+	addSyscall(38, reinterpret_cast<syscall_fn_t>(&User::irqWaitTimeout));
+	addSyscall(5, reinterpret_cast<syscall_fn_t>(&User::irqListen));
+	addSyscall(37, reinterpret_cast<syscall_fn_t>(&User::ticks));
+	addSyscall(6, reinterpret_cast<syscall_fn_t>(&User::panic));
+	addSyscall(7, reinterpret_cast<syscall_fn_t>(&User::sysexit));		// Don't change my number from 7 without changing entry.cpp.
+	addSyscall(8, reinterpret_cast<syscall_fn_t>(&User::defer));
+	addSyscall(9, reinterpret_cast<syscall_fn_t>(&User::malloc));
+	addSyscall(40, reinterpret_cast<syscall_fn_t>(&User::mallocap));
+	addSyscall(42, reinterpret_cast<syscall_fn_t>(&User::physAddr));
+	addSyscall(10, reinterpret_cast<syscall_fn_t>(&User::free));
+	addSyscall(41, reinterpret_cast<syscall_fn_t>(&User::flushTLB));
 
-	addSyscall(24, reinterpret_cast<void *>(&User::IPC::processId));
-	addSyscall(25, reinterpret_cast<void *>(&User::IPC::processIdByName));
-	addSyscall(39, reinterpret_cast<void *>(&User::IPC::processIdByNameBlock));
-	addSyscall(12, reinterpret_cast<void *>(&User::IPC::registerName));
+	addSyscall(24, reinterpret_cast<syscall_fn_t>(&User::IPC::processId));
+	addSyscall(25, reinterpret_cast<syscall_fn_t>(&User::IPC::processIdByName));
+	addSyscall(39, reinterpret_cast<syscall_fn_t>(&User::IPC::processIdByNameBlock));
+	addSyscall(12, reinterpret_cast<syscall_fn_t>(&User::IPC::registerName));
 
-	addSyscall(13, reinterpret_cast<void *>(&User::IPC::registerStream));
-	addSyscall(14, reinterpret_cast<void *>(&User::IPC::obtainStreamWriter));
-	addSyscall(15, reinterpret_cast<void *>(&User::IPC::obtainStreamListener));
-	addSyscall(16, reinterpret_cast<void *>(&User::IPC::readStream));
-	addSyscall(17, reinterpret_cast<void *>(&User::IPC::readStreamUnblock));
-	addSyscall(18, reinterpret_cast<void *>(&User::IPC::writeStream));
+	addSyscall(13, reinterpret_cast<syscall_fn_t>(&User::IPC::registerStream));
+	addSyscall(14, reinterpret_cast<syscall_fn_t>(&User::IPC::obtainStreamWriter));
+	addSyscall(15, reinterpret_cast<syscall_fn_t>(&User::IPC::obtainStreamListener));
+	addSyscall(16, reinterpret_cast<syscall_fn_t>(&User::IPC::readStream));
+	addSyscall(17, reinterpret_cast<syscall_fn_t>(&User::IPC::readStreamUnblock));
+	addSyscall(18, reinterpret_cast<syscall_fn_t>(&User::IPC::writeStream));
 
-	addSyscall(19, reinterpret_cast<void *>(&User::IPC::probeQueue));
-	addSyscall(20, reinterpret_cast<void *>(&User::IPC::probeQueueUnblock));
-	addSyscall(26, reinterpret_cast<void *>(&User::IPC::probeQueueFor));
-	addSyscall(27, reinterpret_cast<void *>(&User::IPC::probeQueueForUnblock));
-	addSyscall(21, reinterpret_cast<void *>(&User::IPC::readQueue));
-	addSyscall(31, reinterpret_cast<void *>(&User::IPC::grabQueue));
-	addSyscall(22, reinterpret_cast<void *>(&User::IPC::shiftQueue));
-	addSyscall(23, reinterpret_cast<void *>(&User::IPC::sendQueue));
+	addSyscall(19, reinterpret_cast<syscall_fn_t>(&User::IPC::probeQueue));
+	addSyscall(20, reinterpret_cast<syscall_fn_t>(&User::IPC::probeQueueUnblock));
+	addSyscall(26, reinterpret_cast<syscall_fn_t>(&User::IPC::probeQueueFor));
+	addSyscall(27, reinterpret_cast<syscall_fn_t>(&User::IPC::probeQueueForUnblock));
+	addSyscall(21, reinterpret_cast<syscall_fn_t>(&User::IPC::readQueue));
+	addSyscall(31, reinterpret_cast<syscall_fn_t>(&User::IPC::grabQueue));
+	addSyscall(22, reinterpret_cast<syscall_fn_t>(&User::IPC::shiftQueue));
+	addSyscall(23, reinterpret_cast<syscall_fn_t>(&User::IPC::sendQueue));
 
-	addSyscall(35, reinterpret_cast<void *>(&User::Process::fork));
-	addSyscall(36, reinterpret_cast<void *>(&User::Process::spawn));
+	addSyscall(35, reinterpret_cast<syscall_fn_t>(&User::Process::fork));
+	addSyscall(36, reinterpret_cast<syscall_fn_t>(&User::Process::spawn));
 }
 
 u8 Syscall::versionMajor() const { return 0; }
@@ -72,7 +72,7 @@ u8 Syscall::versionMinor() const { return 1; }
 const char *Syscall::versionManufacturer() const { return "Akari"; }
 const char *Syscall::versionProduct() const { return "Akari Syscall"; }
 
-void Syscall::addSyscall(u16 num, void *fn) {
+void Syscall::addSyscall(u16 num, syscall_fn_t fn) {
 	_syscalls[num] = fn;
 }
 
@@ -97,7 +97,7 @@ void *Syscall::_handler(struct modeswitch_registers *regs) {
 
 	Akari->syscall->_returnTask = 0;
 
-	void *call = Akari->syscall->_syscalls[regs->callback.eax];
+	syscall_fn_t call = Akari->syscall->_syscalls[regs->callback.eax];
     int ret;
     asm volatile("  \
         push %1; \

@@ -80,18 +80,20 @@ extern "C" int main() {
 		if (request[0] == PCI_OP_DEVICE_CONFIG) {
 			device_list_t &l = authed(info.from);
 
-			pci_device_regular pciinfo[l.size()];
+			pci_device_regular *pciinfo = new pci_device_regular[l.size()];
 
 			u32 offset = 0;
 			for (device_list_t::iterator it = l.begin(); it != l.end(); ++it) {
-				for (u32 i = 0; i < sizeof(pciinfo); i += 4) {
-					*reinterpret_cast<u32 *>(reinterpret_cast<u8 *>(&pciinfo) + i + offset) =
+				for (u32 i = 0; i < sizeof(pci_device_regular) * l.size(); i += 4) {
+					*reinterpret_cast<u32 *>(reinterpret_cast<u8 *>(pciinfo) + i + offset) =
 						read_config_long(D_BUS(*it), D_SLOT(*it), D_FN(*it), i);
 				}
 				offset += sizeof(pci_device_regular);
 			}
 
-			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(&pciinfo), offset);
+			sendQueue(info.from, info.id, reinterpret_cast<u8 *>(pciinfo), offset);
+
+			delete [] pciinfo;
 		} else if (request[0] == PCI_OP_DMA_UP) {
 			// Apparently we have DMA. Bring up other devices if we haven't already.
 

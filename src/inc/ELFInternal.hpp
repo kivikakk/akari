@@ -142,7 +142,7 @@ typedef enum {
 	SHT_LOPROC	= 0x70000000,	// processor-specific
 	SHT_HIPROC	= 0x7fffffff,	// " "
 	SHT_LOUSER	= 0x80000000,	// reserved for apps
-	SHT_HIUSER	= 0xffffffff,	// " " "
+	SHT_HIUSER	= 0xffffffff	// " " "
 } ElfSectionHeaderType;
 
 // Index 0 is always empty. 0, SHT_NULL, 0, 0, 0, unspecified, unspecified, 0, 0, 0. It is mentioned in the table.
@@ -268,7 +268,7 @@ typedef enum {
 	PT_LOOS		= 0x60000000,
 	PT_HIOS		= 0x6fffffff,
 	PT_LOPROC	= 0x70000000,
-	PT_HIPROC	= 0x7fffffff,
+	PT_HIPROC	= 0x7fffffff
 } ElfProgramHeaderType;
 
 typedef enum {

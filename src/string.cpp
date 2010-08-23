@@ -20,27 +20,22 @@
 std::string::string(): _str(0), _length(0)
 { }
 
-std::string::string(const std::string &r): _length(r._length) {
+std::string::string(const std::string &r): _str(0), _length(r._length) {
 	_str = new char[_length + 1];
-	memcpy(_str, r._str, _length);
-	_str[_length] = 0;
+	memcpy(_str, r._str, _length + 1);
 }
 
-std::string::string(const char *s) {
-	_length = strlen(s);
+std::string::string(const char *s): _str(0), _length(strlen(s)) {
 	_str = new char[_length + 1];
 	strcpy(_str, s);
 }
 
-std::string::string(const char *s, u32 n): _length(n) {
-	_str = new char[_length + 1];
+std::string::string(const char *s, u32 n): _str(new char[n + 1]), _length(n) {
 	memcpy(_str, s, _length);
 	_str[_length] = 0;
 }
 
-std::string::string(char c) {
-	_length = 1;
-	_str = new char[2];
+std::string::string(char c): _str(new char[2]), _length(1) {
 	_str[0] = c;
 	_str[1] = 0;
 }
@@ -49,6 +44,13 @@ std::string::~string() {
 	if (_str) {
 		delete [] _str;
 	}
+}
+
+std::string &std::string::operator =(const std::string &r) {
+	_length = r._length;
+	_str = new char[r._length + 1];
+	memcpy(_str, r._str, r._length + 1);
+	return *this;
 }
 
 bool std::string::operator ==(const std::string &r) const {

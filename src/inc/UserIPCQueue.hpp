@@ -45,14 +45,14 @@ namespace IPC {
 
 #elif defined(__AKARI_LINKAGE)
 
-DEFN_SYSCALL0(probeQueue, 19, struct queue_item_info *);
-DEFN_SYSCALL0(probeQueueUnblock, 20, struct queue_item_info *);
-DEFN_SYSCALL1(probeQueueFor, 26, struct queue_item_info *, u32);
-DEFN_SYSCALL1(probeQueueForUnblock, 27, struct queue_item_info *, u32);
-DEFN_SYSCALL4(readQueue, 21, u32, struct queue_item_info *, u8 *, u32, u32);
-DEFN_SYSCALL1(grabQueue, 31, u8 *, struct queue_item_info *);
-DEFN_SYSCALL1(shiftQueue, 22, void, struct queue_item_info *);
-DEFN_SYSCALL4(sendQueue, 23, u32, pid_t, u32, const u8 *, u32);
+DEFN_SYSCALL0(probeQueue, 19, struct queue_item_info *)
+DEFN_SYSCALL0(probeQueueUnblock, 20, struct queue_item_info *)
+DEFN_SYSCALL1(probeQueueFor, 26, struct queue_item_info *, u32)
+DEFN_SYSCALL1(probeQueueForUnblock, 27, struct queue_item_info *, u32)
+DEFN_SYSCALL4(readQueue, 21, u32, struct queue_item_info *, u8 *, u32, u32)
+DEFN_SYSCALL1(grabQueue, 31, u8 *, struct queue_item_info *)
+DEFN_SYSCALL1(shiftQueue, 22, void, struct queue_item_info *)
+DEFN_SYSCALL4(sendQueue, 23, u32, pid_t, u32, const u8 *, u32)
 
 #else
 

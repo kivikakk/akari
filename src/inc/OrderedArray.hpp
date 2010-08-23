@@ -34,6 +34,15 @@ public:
 		memset(_array, 0, maxSize * sizeof(T));
 	}
 
+	explicit OrderedArray(const OrderedArray<T> &r);
+
+	OrderedArray &operator =(const OrderedArray<T> &r) {
+		_array = r._array;
+		_size = r._size;
+		_maxSize = r._maxSize;
+		_lessThan = r._lessThan;
+	}
+
 	~OrderedArray() {
 		// I'm assuming we don't want to remove array, as we didn't allocate it ourselves.
 	}

@@ -132,6 +132,17 @@ namespace IPC {
 		_listener(&getStream(id, node)->getListener(listener)), _buffer(buffer), _n(n)
 	{ }
 
+	ReadStreamCall::ReadStreamCall(const ReadStreamCall &r):
+		_listener(r._listener), _buffer(r._buffer), _n(r._n)
+	{ }
+
+	ReadStreamCall &ReadStreamCall::operator =(const ReadStreamCall &r) {
+		_listener = r._listener;
+		_buffer = r._buffer;
+		_n = r._n;
+		return *this;
+	}
+
 	Tasks::Task::Stream::Listener *ReadStreamCall::getListener() const {
 		return _listener;
 	}

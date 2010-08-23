@@ -31,8 +31,8 @@ namespace Process {
 
 #elif defined(__AKARI_LINKAGE)
 
-DEFN_SYSCALL0(fork, 35, pid_t);
-DEFN_SYSCALL4(spawn, 36, pid_t, const char *, const u8 *, u32, const char **);
+DEFN_SYSCALL0(fork, 35, pid_t)
+DEFN_SYSCALL4(spawn, 36, pid_t, const char *, const u8 *, u32, const char **)
 
 #else
 

@@ -39,7 +39,7 @@ typedef struct {
 typedef struct {
 	u8 cmd;
 	u32 inode, offset, length;
-	char data[];
+	char data[1];
 } VFSOpWrite;
 
 typedef struct {
@@ -61,7 +61,7 @@ typedef struct {
 typedef struct {
 	u8 cmd;
 	u32 inode;
-	char name[];
+	char name[1];
 } VFSOpFinddir;
 
 typedef struct {
@@ -70,7 +70,7 @@ typedef struct {
 
 typedef struct {
 	u8 cmd;
-	char name[];
+	char name[1];
 } VFSOpRegisterDriver;
 
 typedef struct {

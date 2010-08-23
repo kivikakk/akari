@@ -164,7 +164,7 @@ static u32 read_fs(VFSNode *node, u32 offset, u32 length, void *buffer) {
 }
 
 static VFSNode *finddir_fs(VFSNode *node, const char *component) {
-	u32 cmd_len = sizeof(VFSOpFinddir) + strlen(component) + 1;
+	u32 cmd_len = sizeof(VFSOpFinddir) + strlen(component) + 1 - 1;
 	
 	VFSOpFinddir *op = reinterpret_cast<VFSOpFinddir *>(malloc(cmd_len));
 	op->cmd = VFS_OP_FINDDIR;

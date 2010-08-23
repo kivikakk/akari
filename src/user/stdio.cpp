@@ -34,7 +34,7 @@ std::string getline() {
 	char *kbbuf = new char[cs];
 
 	while (true) {
-		u32 incoming = readStream(keyboard_pid, "input", keyboard_hook, kbbuf + n, 1);
+		/*u32 incoming = */readStream(keyboard_pid, "input", keyboard_hook, kbbuf + n, 1);
 
 		if (kbbuf[n] == 8) {
 			if (n > 0) {

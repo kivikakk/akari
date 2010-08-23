@@ -37,6 +37,9 @@ class Kernel {
 	public:
 		static Kernel *Construct(ptr_t, ptr_t);
 
+		explicit Kernel(const Kernel &);
+		Kernel &operator =(const Kernel &);
+
 		std::list<Subsystem *> subsystems;
 
 		Memory *memory;

@@ -31,6 +31,15 @@ namespace IPC {
 		ProbeQueueCall(Tasks::Task *_task, u32 _reply_to): task(_task), reply_to(_reply_to)
 		{ }
 
+		explicit ProbeQueueCall(const ProbeQueueCall &r): task(r.task), reply_to(r.reply_to)
+		{ }
+
+		ProbeQueueCall &operator =(const ProbeQueueCall &r) {
+			task = r.task;
+			reply_to = r.reply_to;
+			return *this;
+		}
+
 		u32 operator()() {
 			Tasks::Task::Queue::Item *item;
 			if (reply_to == 0)

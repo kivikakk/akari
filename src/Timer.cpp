@@ -28,7 +28,7 @@ TimerEvent::~TimerEvent() {
 	Akari->timer->desched(*this);
 }
 
-Timer::Timer()
+Timer::Timer(): time_til_next(), events()
 { }
 
 u8 Timer::versionMajor() const { return 0; }

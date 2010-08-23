@@ -47,7 +47,9 @@ extern "C" void exit(int status) {
 extern "C" int main(int argc, char **argv);
 
 extern "C" void start(int argc, char **argv) {
-	exit(main(argc, argv));
+	// __extension__ to avoid warnings for taking the address of main.
+	__extension__ int retval = main(argc, argv);
+	exit(retval);
 }
 
 void *operator new(size_t n) {

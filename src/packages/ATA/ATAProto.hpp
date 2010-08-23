@@ -34,7 +34,7 @@ typedef struct {
 	u32 sector;
 	u16 offset;
 	u32 length;
-	u8 data[];
+	u8 data[1];
 } ATAOpWrite;
 
 typedef struct {

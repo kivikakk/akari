@@ -181,7 +181,7 @@ VFSDirent *fs_readdir(pid_t pid, u32 inode, u32 index) {
 }
 
 VFSNode *fs_finddir(pid_t pid, u32 inode, const char *name) {
-	u32 cmd_len = sizeof(VFSOpFinddir) + strlen(name) + 1;
+	u32 cmd_len = sizeof(VFSOpFinddir) + strlen(name) + 1 - 1;
 	VFSOpFinddir *op = reinterpret_cast<VFSOpFinddir *>(malloc(cmd_len));
 	op->cmd = VFS_OP_FINDDIR;
 	op->inode = inode;

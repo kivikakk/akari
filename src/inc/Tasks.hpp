@@ -44,6 +44,9 @@ class Tasks : public Subsystem {
 public:
 	Tasks();
 
+	explicit Tasks(const Tasks &);
+	Tasks &operator =(const Tasks &);
+
 	u8 versionMajor() const;
 	u8 versionMinor() const;
 	const char *versionManufacturer() const;
@@ -104,6 +107,9 @@ public:
 				Item(u32, u32, pid_t, u32, const void *, u32);
 				~Item();
 
+				explicit Item(const Item &r);
+				Item &operator =(const Item &r);
+
 				struct queue_item_info info;
 				char *data;
 			};
@@ -120,6 +126,9 @@ public:
 		protected:
 			std::list<Item *> list;
 		};
+
+		explicit Task(const Task &);
+		Task &operator =(const Task &);
 
 		static Task *BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pageDirBase);
 		static Task *CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 iopl, Memory::PageDirectory *pageDirBase, const char *name, const std::list<std::string> &args);

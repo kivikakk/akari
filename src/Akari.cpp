@@ -23,8 +23,9 @@
 Kernel *Akari;
 
 Kernel::Kernel():
-		memory(0), console(0), descriptor(0), timer(0), tasks(0), syscall(0), elf(0) {
-}
+subsystems(),
+memory(0), console(0), descriptor(0), timer(0), tasks(0), syscall(0), elf(0), debugger(0)
+{ }
 
 /**
  * Constructs an Kernel, using the given address as the current placement address.

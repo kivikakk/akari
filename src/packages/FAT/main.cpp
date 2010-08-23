@@ -64,7 +64,7 @@ extern "C" int main() {
 	// Register with VFS
 	{
 		const char *driver_name = "fat";
-		u32 cmd_len = sizeof(VFSOpRegisterDriver) + strlen(driver_name) + 1;	// trailing NUL
+		u32 cmd_len = sizeof(VFSOpRegisterDriver) + strlen(driver_name) + 1 - 1;	// trailing NUL, less the [1] in the struct
 		VFSOpRegisterDriver *register_driver_op = static_cast<VFSOpRegisterDriver *>(malloc(cmd_len));
 		register_driver_op->cmd = VFS_OP_REGISTER_DRIVER;
 		strcpy(register_driver_op->name, "fat");

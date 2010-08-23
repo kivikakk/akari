@@ -24,7 +24,7 @@
 #include <ELFInternal.hpp>
 #include <interrupts.hpp>
 
-Tasks::Tasks(): start(0), current(0), priorityStart(0)
+Tasks::Tasks(): start(0), current(0), priorityStart(0), registeredTasks()
 { }
 
 u8 Tasks::versionMajor() const { return 0; }
@@ -539,7 +539,7 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	return core;
 }
 
-Tasks::Task::Stream::Stream(): _wl_id(0) {
+Tasks::Task::Stream::Stream(): _exclusive(false), _writers(), _listeners(), _wl_id(0) {
 }
 
 u32 Tasks::Task::Stream::registerWriter(bool exclusive) {
@@ -667,7 +667,7 @@ u32 Tasks::Task::Stream::_nextId() {
 }
 
 Tasks::Task::Queue::Item::Item(u32 id, u32 timestamp, pid_t from, u32 reply_to, const void *_data, u32 data_len):
-	data(0)
+	info(), data(0)
 {
 	info.id = id;
 	info.timestamp = timestamp;
@@ -684,7 +684,8 @@ Tasks::Task::Queue::Item::~Item() {
 		delete [] data;
 }
 
-Tasks::Task::Queue::Queue() { }
+Tasks::Task::Queue::Queue(): list()
+{ }
 
 u32 Tasks::Task::Queue::push_back(pid_t from, u32 reply_to, const void *data, u32 data_len) {
 	// This should become some random-ish guid in the future.
@@ -733,15 +734,14 @@ Tasks::Task::Task(u8 cpl, const std::string &name):
 		id(0), name(name), registeredName(),
 		cpl(cpl), pageDir(0),
 		heap(0), heapStart(0), heapEnd(0), heapMax(0),
-		ks(0) {
+		ks(0),
+		streamsByName(new std::map<Symbol, Stream *>()),
+		replyQueue(new Queue()) {
 	static pid_t lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
 	id = ++lastAssignedId;
 
 	for (u16 i = 0; i < 8192; ++i)
 		iomap[i] = 0xFF;
-
-	streamsByName = new std::map<Symbol, Stream *>();
-	replyQueue = new Queue();
 }
 
 Tasks::Task::~Task() {

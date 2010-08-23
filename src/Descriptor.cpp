@@ -46,8 +46,7 @@ u8 Descriptor::versionMinor() const { return 1; }
 const char *Descriptor::versionManufacturer() const { return "Akari"; }
 const char *Descriptor::versionProduct() const { return "Akari Descriptor Table Manager"; }
 
-Descriptor::GDT::GDT(u32 n): _entryCount(n), _entries(0) {
-	_entries = new Entry[n];
+Descriptor::GDT::GDT(u32 n): _entryCount(n), _entries(new Entry[n]), _pointer(), _tssEntry() {
 	_pointer.limit = (sizeof(Entry) * n - 1);
 	_pointer.base = (u32)_entries;
 
@@ -122,7 +121,7 @@ void Descriptor::GDT::setTSSIOMap(u8 *const &iomap) {
 	memcpy(_tssEntry.iomap, iomap, 8192);
 }
 
-Descriptor::IDT::IDT() {
+Descriptor::IDT::IDT(): _pointer() {
 	for (u16 i = 0; i < 0x100; ++i)
 		_routines[i] = 0;
 

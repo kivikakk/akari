@@ -25,6 +25,9 @@ class Memory : public Subsystem {
 public:
 	Memory(ptr_t);
 
+	explicit Memory(const Memory &);
+	Memory &operator =(const Memory &);
+
 	u8 versionMajor() const;
 	u8 versionMinor() const;
 	const char *versionManufacturer() const;
@@ -55,7 +58,8 @@ public:
 		void allocFrame(ptr_t, bool kernel, bool writeable);
 
 		union {
-			struct {
+			// prevent complaint about anonymous struct.
+			__extension__ struct {
 				bool present			: 1;
 				bool readwrite			: 1;
 				bool user				: 1;

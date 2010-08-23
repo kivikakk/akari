@@ -34,8 +34,25 @@ namespace std {
 			clear();
 		}
 
+		slist &operator =(const slist &r) {
+			clear();
+			for (iterator it = r.begin(); it != r.end(); ++it)
+				push_back(*it);
+			return *this;
+		}
+
 		class base_iterator {
 		public:
+			base_iterator(const base_iterator &r): _data(r._data)
+			{ }
+
+			virtual ~base_iterator() { }
+
+			base_iterator &operator =(const base_iterator &r) {
+				_data = r._data;
+				return *this;
+			}
+
 			bool operator ==(const base_iterator &r) const {
 				return _data == r._data;
 			}
@@ -61,9 +78,8 @@ namespace std {
 			}
 
 		protected:
-			base_iterator(listNode *data) {
-				_data = data;
-			}
+			base_iterator(listNode *data): _data(data)
+			{ }
 
 			listNode *_data;
 		};

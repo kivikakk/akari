@@ -24,14 +24,19 @@
 
 class Syscall : public Subsystem {
 	public:
+		typedef u32(*syscall_fn_t)();
+
 		Syscall();
+
+		explicit Syscall(const Syscall &);
+		Syscall &operator =(const Syscall &);
 
 		u8 versionMajor() const;
 		u8 versionMinor() const;
 		const char *versionManufacturer() const;
 		const char *versionProduct() const;
 
-		void addSyscall(u16 num, void *fn);
+		void addSyscall(u16 num, syscall_fn_t fn);
 
 		void returnToTask(Tasks::Task *task);
 		void returnToNextTask();
@@ -39,7 +44,7 @@ class Syscall : public Subsystem {
 	protected:
 		static void *_handler(struct modeswitch_registers *);
 
-		void *_syscalls[AKARI_SYSCALL_MAXCALLS];
+		syscall_fn_t _syscalls[AKARI_SYSCALL_MAXCALLS];
 		u16 _syscalls_assigned;
 
 		Tasks::Task *_returnTask;

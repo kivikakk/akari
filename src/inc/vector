@@ -23,8 +23,8 @@ namespace std {
 		explicit vector(): _capacity(0), _size(0), _array(0)
 		{ }
 
-		vector(const vector &r): _capacity(r._capacity), _size(r._size) {
-			_array = reinterpret_cast<T *>(new u8[sizeof(T) * _capacity]);
+		vector(const vector &r): 
+		_capacity(r._capacity), _size(r._size), _array(reinterpret_cast<T *>(new u8[sizeof(T) * r._capacity])) {
 			for (u32 i = 0; i < _size; ++i)
 				new(&_array[i]) T(r._array[i]);
 		}
@@ -39,6 +39,9 @@ namespace std {
 		}
 
 		vector &operator =(const vector &r) {
+			if (_array)
+				delete [] _array;
+
 			_capacity = r._capacity;
 			_size = r._size;
 			_array = reinterpret_cast<T *>(new u8[sizeof(T) * _capacity]);

@@ -61,21 +61,21 @@ namespace User {
 
 #elif defined(__AKARI_LINKAGE)
 
-DEFN_SYSCALL1(putc, 0, void, char);
-DEFN_SYSCALL1(puts, 1, void, const char *);
-DEFN_SYSCALL0(getProcessId, 3, u32);
-DEFN_SYSCALL0(irqWait, 4, void);
-DEFN_SYSCALL1(irqWaitTimeout, 38, bool, u32);
-DEFN_SYSCALL1(irqListen, 5, void, u32);
-DEFN_SYSCALL0(ticks, 37, u32);
-DEFN_SYSCALL1(panic, 6, void, const char *);
-DEFN_SYSCALL0(sysexit, 7, void);
-DEFN_SYSCALL0(defer, 8, void);
-DEFN_SYSCALL1(malloc, 9, void *, u32);
-DEFN_SYSCALL2(mallocap, 40, void *, u32, phptr *);
-DEFN_SYSCALL1(physAddr, 42, phptr, void *);
-DEFN_SYSCALL1(free, 10, void, void *);
-DEFN_SYSCALL0(flushTLB, 41, void);
+DEFN_SYSCALL1(putc, 0, void, char)
+DEFN_SYSCALL1(puts, 1, void, const char *)
+DEFN_SYSCALL0(getProcessId, 3, u32)
+DEFN_SYSCALL0(irqWait, 4, void)
+DEFN_SYSCALL1(irqWaitTimeout, 38, bool, u32)
+DEFN_SYSCALL1(irqListen, 5, void, u32)
+DEFN_SYSCALL0(ticks, 37, u32)
+DEFN_SYSCALL1(panic, 6, void, const char *)
+DEFN_SYSCALL0(sysexit, 7, void)
+DEFN_SYSCALL0(defer, 8, void)
+DEFN_SYSCALL1(malloc, 9, void *, u32)
+DEFN_SYSCALL2(mallocap, 40, void *, u32, phptr *)
+DEFN_SYSCALL1(physAddr, 42, phptr, void *)
+DEFN_SYSCALL1(free, 10, void, void *)
+DEFN_SYSCALL0(flushTLB, 41, void)
 
 #else
 

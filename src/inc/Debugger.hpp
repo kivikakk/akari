@@ -25,6 +25,9 @@ class Debugger : public Subsystem {
 public:
 	Debugger();
 
+	explicit Debugger(const Debugger &);
+	Debugger &operator =(const Debugger &);
+
 	u8 versionMajor() const;
 	u8 versionMinor() const;
 	const char *versionManufacturer() const;

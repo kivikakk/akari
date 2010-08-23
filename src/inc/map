@@ -25,10 +25,10 @@ namespace std {
 	template <typename K, typename V>
 	class map {
 	public:
-		map()
+		map(): items()
 		{ }
 
-		~map()
+		virtual ~map()
 		{ }
 
 		typedef struct {

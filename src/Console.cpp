@@ -27,7 +27,7 @@
 
 #define SCREEN_BLANK	0x0720
 
-Console::Console() {
+Console::Console(): _cursorX(0), _cursorY(0) {
 	clear();
 }
 

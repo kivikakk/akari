@@ -42,6 +42,9 @@ namespace IPC {
 	public:
 		ReadStreamCall(pid_t id, const char *node, u32 listener, char *buffer, u32 n);
 
+		explicit ReadStreamCall(const ReadStreamCall &);
+		ReadStreamCall &operator =(const ReadStreamCall &);
+
 		Tasks::Task::Stream::Listener *getListener() const;
 		u32 operator ()();
 
@@ -58,17 +61,17 @@ namespace IPC {
 
 #elif defined(__AKARI_LINKAGE)
 
-DEFN_SYSCALL0(processId, 24, pid_t);
-DEFN_SYSCALL1(processIdByName, 25, pid_t, const char *);
-DEFN_SYSCALL1(processIdByNameBlock, 39, pid_t, const char *);
-DEFN_SYSCALL1(registerName, 12, bool, const char *);
+DEFN_SYSCALL0(processId, 24, pid_t)
+DEFN_SYSCALL1(processIdByName, 25, pid_t, const char *)
+DEFN_SYSCALL1(processIdByNameBlock, 39, pid_t, const char *)
+DEFN_SYSCALL1(registerName, 12, bool, const char *)
 
-DEFN_SYSCALL1(registerStream, 13, bool, const char *);
-DEFN_SYSCALL3(obtainStreamWriter, 14, u32, pid_t, const char *, bool);
-DEFN_SYSCALL2(obtainStreamListener, 15, u32, pid_t, const char *);
-DEFN_SYSCALL5(readStream, 16, u32, pid_t, const char *, u32, char *, u32);
-DEFN_SYSCALL5(readStreamUnblock, 17, u32, pid_t, const char *, u32, char *, u32);
-DEFN_SYSCALL5(writeStream, 18, u32, pid_t, const char *, u32, const char *, u32);
+DEFN_SYSCALL1(registerStream, 13, bool, const char *)
+DEFN_SYSCALL3(obtainStreamWriter, 14, u32, pid_t, const char *, bool)
+DEFN_SYSCALL2(obtainStreamListener, 15, u32, pid_t, const char *)
+DEFN_SYSCALL5(readStream, 16, u32, pid_t, const char *, u32, char *, u32)
+DEFN_SYSCALL5(readStreamUnblock, 17, u32, pid_t, const char *, u32, char *, u32)
+DEFN_SYSCALL5(writeStream, 18, u32, pid_t, const char *, u32, const char *, u32)
 
 #else
 
