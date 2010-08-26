@@ -35,7 +35,7 @@
 // These can't be too low - otherwise the kernel may have
 // expanded into this area by the time a process is created.
 #define PROCESS_HEAP_START			0x20000000
-#define PROCESS_HEAP_SIZE			0x500000		// 5MiB
+#define PROCESS_HEAP_SIZE			0x100000		// 1MiB
 #define PROC_HEAP_SIZE 				0x10000
 
 #define USER_TASK_BASE				0x50000000

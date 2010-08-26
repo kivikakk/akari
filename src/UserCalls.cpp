@@ -153,7 +153,7 @@ namespace User {
 		// when exit becomes more complicated later we may have to do cleanup
 		// instead of just a sysexit, may not be ideal for a process that's
 		// dieing because it sucks.
-		Akari->debugger->run();
+		//Akari->debugger->run();
 		sysexit();
 	}
 

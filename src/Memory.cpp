@@ -164,7 +164,7 @@ void *Memory::PageFault(struct modeswitch_registers *r) {
 
 	Akari->console->printf("Address: 0x%x\n", faultingAddress);
 
-	Akari->debugger->run();
+	//Akari->debugger->run();
 
 	// Return 0, which tells the interrupt handler to kill this process.
 	return 0;
