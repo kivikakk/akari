@@ -85,6 +85,12 @@ extern "C" int main() {
 		} else {
 			std::string path = join(cwd, line[0]);
 
+			bool bg = false;
+			if (path[path.length() - 1] == '&') {
+				bg = true;
+				path = path.substr(0, path.length() - 1);
+			}
+
 			if (fexists(path.c_str())) {
 				FILE *f = fopen(path.c_str(), "r");
 				bool is_empty = !flen(f);
@@ -94,7 +100,8 @@ extern "C" int main() {
 					printf("%s: is empty (perhaps is a directory)\n", line[0].c_str());
 				} else {
 					pid_t pid = bootstrap(path.c_str(), 0);
-					waitProcess(pid);
+					if (!bg)
+						waitProcess(pid);
 				}
 			} else {
 				printf("%s: No such file or directory\n", line[0].c_str());
