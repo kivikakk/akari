@@ -14,17 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-include ../Makefile.inc
+TARGET = Net
+COPYDEST = C:/Net
 
-PACKAGES = ATA FAT VFS Booter PCI Kb Shell 80867010 PS Net
+include ../PackageMakefile.inc
 
-all: $(PACKAGES)
-
-$(PACKAGES): force_subdir
-	@cd $@; $(MAKE) $(MFLAGS) all
-
-force_subdir:
-	@true
-
-clean:
-	@for i in $(PACKAGES); do (cd $$i; $(MAKE) $(MFLAGS) clean); done
