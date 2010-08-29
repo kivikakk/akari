@@ -358,7 +358,7 @@ int vasprintf(char **ret, const char *format, va_list ap) {
 					u8 c = (n / index);
 					n -= static_cast<u32>(c) * index;
 
-					if (!c && index > orig && orig != 0) {
+					if (!c && index > orig && index != 1) {
 						s += (padder == 0 ? ' ' : padder);
 					} else {
 						s += (c >= 0 && c <= 9) ? (c + '0') : (c - 10 + 'a');
