@@ -24,11 +24,41 @@
 
 #include "NetProto.hpp"
 #include "main.hpp"
+#include "../PCI/PCIProto.hpp"
 
+pid_t pci = 0;
 
 extern "C" int main() {
 	if (!registerName("system.io.net"))
 		panic("Net: could not register system.io.net");
+
+	pci = processIdByNameBlock("system.bus.pci");
+
+	pci_device_regular *configs;
+
+	{
+		PCIOpDeviceConfig op = { PCI_OP_DEVICE_CONFIG };
+		u32 msg_id = sendQueue(pci, 0, reinterpret_cast<u8 *>(&op), sizeof(PCIOpDeviceConfig));
+
+		struct queue_item_info *info = probeQueueFor(msg_id);
+
+		printf("Net: %d config(s) (%d bytes leftover)\n",
+			info->data_len / sizeof(pci_device_regular),
+			info->data_len % sizeof(pci_device_regular));
+
+		if (!info->data_len || info->data_len % sizeof(pci_device_regular)) {
+			return 1;
+		}
+
+		if (info->data_len / sizeof(pci_device_regular) > 1) {
+			printf("Net: dunno what to do with many?\n");
+			return 1;
+		}
+
+		configs = new pci_device_regular[info->data_len / sizeof(pci_device_regular)];
+		readQueue(info, reinterpret_cast<u8 *>(configs), 0, info->data_len);
+		shiftQueue(info);
+	}
 
 	printf("Net: started\n");
 
@@ -38,7 +68,7 @@ extern "C" int main() {
 		shiftQueue(&info);
 
 		if (request[0] == NET_OP_NOOP) {
-			NetOpNoop *op = reinterpret_cast<NetOpNoop *>(request);
+			// NetOpNoop *op = reinterpret_cast<NetOpNoop *>(request);
 
 			// u8 *buffer = new u8[op->length];
 			// sendQueue(info.from, info.id, buffer, bytes_read);
