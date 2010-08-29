@@ -93,7 +93,8 @@ extern "C" int main() {
 				if (is_empty) {
 					printf("%s: is empty (perhaps is a directory)\n", line[0].c_str());
 				} else {
-					bootstrap(path.c_str(), 0);
+					pid_t pid = bootstrap(path.c_str(), 0);
+					waitProcess(pid);
 				}
 			} else {
 				printf("%s: No such file or directory\n", line[0].c_str());
