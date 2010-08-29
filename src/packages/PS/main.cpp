@@ -33,6 +33,8 @@ extern "C" int main(int argc, char **argv) {
 		printf(i.flags & PROCESS_FLAG_IRQ_LISTEN ? "Q" : "-");
 		printf(i.flags & PROCESS_FLAG_CURRENT ? "R" : "-");
 
+		printf(" ");
+
 		if (i.registeredName) {
 			printf("[%s] ", i.registeredName);
 			int padding = 21 - 3 - strlen(i.registeredName);
