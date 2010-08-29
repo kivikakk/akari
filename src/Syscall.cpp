@@ -43,6 +43,7 @@ Syscall::Syscall(): _syscalls_assigned(0), _returnTask(0) {
 	addSyscall(41, reinterpret_cast<syscall_fn_t>(&User::flushTLB));
 
 	addSyscall(43, reinterpret_cast<syscall_fn_t>(&User::IPC::getProcessList));
+	addSyscall(44, reinterpret_cast<syscall_fn_t>(&User::IPC::waitProcess));
 	addSyscall(24, reinterpret_cast<syscall_fn_t>(&User::IPC::processId));
 	addSyscall(25, reinterpret_cast<syscall_fn_t>(&User::IPC::processIdByName));
 	addSyscall(39, reinterpret_cast<syscall_fn_t>(&User::IPC::processIdByNameBlock));

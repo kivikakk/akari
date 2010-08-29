@@ -26,6 +26,7 @@
 #include <BlockingCall.hpp>
 #include <Timer.hpp>
 #include <Debugger.hpp>
+#include <UserIPC.hpp>
 
 namespace User {
 	void putc(char c) {
@@ -158,6 +159,17 @@ namespace User {
 	}
 
 	void sysexit() {
+		Tasks::Task *task = Akari->tasks->start;
+		while (task) {
+			if (task == Akari->tasks->current) {
+				task = task->next;
+				continue;
+			}
+
+			task->unblockTypeWith(IPC::WaitProcessCall::type(), Akari->tasks->current->id);
+			task = task->next;
+		}
+
 		Akari->syscall->returnToNextTask();
 		// Find the Task* which refers to Akari->tasks->current, and get it to skip it.
 		Tasks::Task **scanner = &Akari->tasks->start;

@@ -39,6 +39,7 @@ typedef struct {
 namespace User {
 namespace IPC {
 	int getProcessList(process_info_t **info);
+	int waitProcess(pid_t pid);
 
 	pid_t processId();
 	pid_t processIdByName(const char *name);
@@ -51,6 +52,23 @@ namespace IPC {
 	u32 readStream(pid_t id, const char *node, u32 listener, char *buffer, u32 n);
 	u32 readStreamUnblock(pid_t id, const char *node, u32 listener, char *buffer, u32 n);
 	u32 writeStream(pid_t id, const char *node, u32 writer, const char *buffer, u32 n);
+
+	class WaitProcessCall : public BlockingCall {
+	public:
+		WaitProcessCall(pid_t pid);
+
+		explicit WaitProcessCall(const WaitProcessCall &);
+		WaitProcessCall &operator =(const WaitProcessCall &);
+
+		u32 operator ()();
+		bool unblockWith(u32 data) const;
+
+		static Symbol type();
+		Symbol insttype() const;
+
+	protected:
+		pid_t _pid;
+	};
 
 	class ReadStreamCall : public BlockingCall {
 	public:
@@ -76,6 +94,7 @@ namespace IPC {
 #elif defined(__AKARI_LINKAGE)
 
 DEFN_SYSCALL1(getProcessList, 43, int, process_info_t **)
+DEFN_SYSCALL1(waitProcess, 44, int, pid_t)
 DEFN_SYSCALL0(processId, 24, pid_t)
 DEFN_SYSCALL1(processIdByName, 25, pid_t, const char *)
 DEFN_SYSCALL1(processIdByNameBlock, 39, pid_t, const char *)
@@ -91,6 +110,7 @@ DEFN_SYSCALL5(writeStream, 18, u32, pid_t, const char *, u32, const char *, u32)
 #else
 
 DECL_SYSCALL1(getProcessList, int, process_info_t **);
+DECL_SYSCALL1(waitProcess, int, pid_t);
 DECL_SYSCALL0(processId, pid_t);
 DECL_SYSCALL1(processIdByName, pid_t, const char *);
 DECL_SYSCALL1(processIdByNameBlock, pid_t, const char *);

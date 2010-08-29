@@ -71,6 +71,18 @@ namespace IPC {
 		return pcount;
 	}
 
+	int waitProcess(pid_t pid) {
+		WaitProcessCall c(pid);
+		int status = c();
+		if (!c.shallBlock())
+			return status;
+
+		Akari->tasks->current->userWaiting = true;
+		Akari->tasks->current->userCall = new WaitProcessCall(c);
+		Akari->syscall->returnToNextTask();
+		return 0;
+	}
+
 	pid_t processId() {
 		return Akari->tasks->current->id;
 	}
@@ -171,6 +183,43 @@ namespace IPC {
 		return target->registerListener();
 	}
 
+	// WaitProcessCall's implementation
+	
+	WaitProcessCall::WaitProcessCall(pid_t pid): _pid(pid)
+	{ }
+
+	WaitProcessCall::WaitProcessCall(const WaitProcessCall &c):
+		_pid(c._pid)
+	{ }
+
+	u32 WaitProcessCall::operator ()() {
+		Tasks::Task *task = Akari->tasks->start;
+		bool running = false;
+
+		while (task) {
+			if (task->id == _pid) {
+				running = true;
+				break;
+			}
+			task = task->next;
+		}
+
+		if (running) {
+			_willBlock();
+			return 0;
+		}
+
+		_wontBlock();
+		return 0;		// (arlen): this is NOT a return code.
+	}
+
+	bool WaitProcessCall::unblockWith(u32 data) const {
+		return _pid == data;
+	}
+
+	Symbol WaitProcessCall::type() { return Symbol("WaitProcessCall"); }
+	Symbol WaitProcessCall::insttype() const { return type(); }
+
 	// ReadStreamCall's implementation
 
 	ReadStreamCall::ReadStreamCall(pid_t id, const char *node, u32 listener, char *buffer, u32 n):
@@ -181,12 +230,12 @@ namespace IPC {
 		_listener(r._listener), _buffer(r._buffer), _n(r._n)
 	{ }
 
-	ReadStreamCall &ReadStreamCall::operator =(const ReadStreamCall &r) {
+	/*ReadStreamCall &ReadStreamCall::operator =(const ReadStreamCall &r) {
 		_listener = r._listener;
 		_buffer = r._buffer;
 		_n = r._n;
 		return *this;
-	}
+	}*/
 
 	Tasks::Task::Stream::Listener *ReadStreamCall::getListener() const {
 		return _listener;
