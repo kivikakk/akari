@@ -39,8 +39,8 @@ extern "C" void exit(int status) {
 	for (std::list<void (*)(void *)>::reverse_iterator it = exit_handlers.rbegin(); it != exit_handlers.rend(); ++it)
 		(*it)(0);
 
-	if (status)
-		panic("non-zero exit from process");
+	// if (status)
+		// panic("non-zero exit from process");
 	sysexit();
 }
 
