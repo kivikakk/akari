@@ -20,12 +20,26 @@
 #include <arch.hpp>
 #include <UserGates.hpp>
 
+#define PROCESS_FLAG_BLOCKING	(1 << 0)
+#define PROCESS_FLAG_IRQ_LISTEN	(1 << 1)
+#define PROCESS_FLAG_CURRENT	(1 << 2)
+
+typedef struct {
+	pid_t pid;
+	u32 flags;
+	char *name;
+	char *registeredName;
+	u8 cpl;
+} process_info_t;
+
 #if defined(__AKARI_KERNEL)
 
 #include <Tasks.hpp>
 
 namespace User {
 namespace IPC {
+	int getProcessList(process_info_t **info);
+
 	pid_t processId();
 	pid_t processIdByName(const char *name);
 	pid_t processIdByNameBlock(const char *name);
@@ -61,6 +75,7 @@ namespace IPC {
 
 #elif defined(__AKARI_LINKAGE)
 
+DEFN_SYSCALL1(getProcessList, 43, int, process_info_t **)
 DEFN_SYSCALL0(processId, 24, pid_t)
 DEFN_SYSCALL1(processIdByName, 25, pid_t, const char *)
 DEFN_SYSCALL1(processIdByNameBlock, 39, pid_t, const char *)
@@ -75,6 +90,7 @@ DEFN_SYSCALL5(writeStream, 18, u32, pid_t, const char *, u32, const char *, u32)
 
 #else
 
+DECL_SYSCALL1(getProcessList, int, process_info_t **);
 DECL_SYSCALL0(processId, pid_t);
 DECL_SYSCALL1(processIdByName, pid_t, const char *);
 DECL_SYSCALL1(processIdByNameBlock, pid_t, const char *);

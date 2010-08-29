@@ -26,6 +26,51 @@
 
 namespace User {
 namespace IPC {
+	int getProcessList(process_info_t **info) {
+		int pcount = 1;
+		Tasks::Task *task = Akari->tasks->start;
+		while (task->next) {
+			task = task->next; ++pcount;
+		}
+
+		*info = reinterpret_cast<process_info_t *>(
+				Akari->tasks->current->heap->alloc(sizeof(process_info_t) * pcount));
+
+		int index = 0;
+		task = Akari->tasks->start;
+		while (index < pcount) {
+			process_info_t *i = &((*info)[index]);
+
+			i->pid = task->id;
+
+			i->flags  = task->userWaiting ? PROCESS_FLAG_BLOCKING : 0;
+			i->flags |= task->irqListen ? PROCESS_FLAG_IRQ_LISTEN : 0;
+			i->flags |= task == Akari->tasks->current ? PROCESS_FLAG_CURRENT : 0;
+
+			i->name = 0;
+			if (task->name.length() > 0) {
+				i->name = reinterpret_cast<char *>(
+						Akari->tasks->current->heap->alloc(task->name.length() + 1));
+				strcpy(i->name, task->name.c_str());
+			}
+
+			i->registeredName = 0;
+			if (task->registeredName.c_str() != 0) {
+				i->registeredName = reinterpret_cast<char *>(
+						Akari->tasks->current->heap->alloc(
+							strlen(task->registeredName.c_str()) + 1));
+				strcpy(i->registeredName, task->registeredName.c_str());
+			}
+
+			i->cpl = task->cpl;
+
+			task = task->next;
+			++index;
+		}
+
+		return pcount;
+	}
+
 	pid_t processId() {
 		return Akari->tasks->current->id;
 	}

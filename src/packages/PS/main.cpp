@@ -21,7 +21,33 @@
 #include <UserIPCQueue.hpp>
 
 extern "C" int main(int argc, char **argv) {
-	printf("PS: hello\n");
+	process_info_t *plist;
+
+	int n = getProcessList(&plist);
+	for (int j = 0; j < n; ++j) {
+		process_info_t &i = plist[j];
+
+		printf("% 6d  %d ", i.pid, i.cpl);
+
+		printf(i.flags & PROCESS_FLAG_BLOCKING ? "B" : "-");
+		printf(i.flags & PROCESS_FLAG_IRQ_LISTEN ? "Q" : "-");
+		printf(i.flags & PROCESS_FLAG_CURRENT ? "R" : "-");
+
+		if (i.registeredName) {
+			printf("[%s] ", i.registeredName);
+			int padding = 21 - 3 - strlen(i.registeredName);
+			while (padding-- > 0)
+				printf(" ");
+			// maximal 21
+		} else printf("                     ");
+
+		if (i.name) {
+			printf("%s", i.name);
+		}
+
+		printf("\n");
+	}
+
 	return 0;
 }
 
