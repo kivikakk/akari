@@ -304,59 +304,76 @@ int vasprintf(char **ret, const char *format, va_list ap) {
 
 	bool is_escape = false;
 	u32 lenmod = 0;
-	char c;
+	char c, padder, sepr;
+
 	while ((c = *format++)) {
 		if (c == '%') {
 			if (!is_escape) {
 				is_escape = true;
-				lenmod = 0;
+				lenmod = padder = sepr = 0;
 				continue;
 			} else {
 				s += c;
 				is_escape = false;
 			}
 		} else if (is_escape) {
+			if ((c == ' ' || c == '0') && !lenmod && padder == 0) {
+				padder = c;
+				continue;
+			}
+
+			if (c == ',') {
+				sepr = c;
+				continue;
+			}
+
 			if (c >= '0' && c <= '9') {
 				lenmod = (lenmod * 10) + (c - '0');
 				continue;
 			}
 
 			switch (c) {
-				case 's': {
-					s += va_arg(ap, const char *);
-					break;
+			case 's': {
+				s += va_arg(ap, const char *);
+				break;
+			}
+			case 'd':
+			case 'x': {
+				u32 n = va_arg(ap, u32);
+				u32 orig = n;
+				u32 base = (c == 'd') ? 10 : 16;
+
+				u32 index = 1, digits = 1;
+				u32 separator = 0;
+
+				switch (base) {
+					case 10: separator = 3; break;
+					case 2: case 8: case 16: separator = 4; break;
 				}
-				case 'd':
-				case 'x': {
-					u32 n = va_arg(ap, u32);
-					u32 base = (c == 'd') ? 10 : 16;
 
-					u32 index = 1, digits = 1;
-					u32 separator = 0;
+				while (n / index >= base || digits < lenmod)
+					index *= base, ++digits;
 
-					switch (base) {
-						case 10: separator = 3; break;
-						case 2: case 8: case 16: separator = 4; break;
+				do {
+					u8 c = (n / index);
+					n -= static_cast<u32>(c) * index;
+
+					if (!c && index > orig && orig != 0) {
+						s += (padder == 0 ? ' ' : padder);
+					} else {
+						s += (c >= 0 && c <= 9) ? (c + '0') : (c - 10 + 'a');
 					}
 
-					while (n / index >= base || digits < lenmod)
-						index *= base, ++digits;
+					index /= base;
 
-					do {
-						u8 c = (n / index);
-						n -= static_cast<u32>(c) * index;
+					--digits;
 
-						s += (c >= 0 && c <= 9) ? (c + '0') : (c - 10 + 'a');
-						index /= base;
+					if (separator > 0 && digits % separator == 0 && index >= 1 && sepr)
+						s += sepr;
+				} while (index >= 1);
 
-						--digits;
-
-						if (separator > 0 && digits % separator == 0 && index >= 1)
-							s += ',';
-					} while (index >= 1);
-
-					break;
-				}
+				break;
+			}
 			}
 
 			is_escape = false;

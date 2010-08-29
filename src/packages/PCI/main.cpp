@@ -163,9 +163,9 @@ u16 check_vendor(u16 bus, u8 slot, u8 fn) {
 }
 
 void check_device(u16 bus, u8 slot, u8 fn, u16 vendor, u16 device) {
-	printf("PCI: %x/%x/%x: %x/%x\n", bus, slot, fn, vendor, device);
+	printf("PCI: %x/%x/%x: %04x/%04x\n", bus, slot, fn, vendor, device);
 
-	char *filename = rasprintf("/%4x%4x", vendor, device);
+	char *filename = rasprintf("/%04x%04x", vendor, device);
 
 	if (fexists(filename)) {
 		pid_t r = bootstrap(filename, 0);
