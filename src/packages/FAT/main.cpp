@@ -354,16 +354,22 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 		cluster_buffer = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
 
 	u32 current_cluster = cluster_for_inode(inode);
+	u32 current = 0;
 
-	if (index <= 1 && inode == 0) {
-		// Root dir. Add mythical . (0) and .. (1) entries.
-		VFSDirent *dirent = new VFSDirent;
-		strcpy(dirent->name, index == 0 ? "." : "..");
-		dirent->inode = 0;
-		return dirent;
+	if (inode == 0) {
+		// Root dir. Add mythical . (0) and .. (1) entries if
+		// they ask, otherwise start with the current index adjusted
+		// so it looks like they exist.
+		
+		if (index <= 1) {
+			VFSDirent *dirent = new VFSDirent;
+			strcpy(dirent->name, index == 0 ? "." : "..");
+			dirent->inode = 0;
+			return dirent;
+		}
+
+		current = 2;
 	}
-
-	u32 current = 2;
 
 	while (true) {
 		fat_read_cluster(current_cluster, cluster_buffer);
