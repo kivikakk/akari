@@ -24,10 +24,26 @@ extern "C" int main(int argc, char **argv) {
 	process_info_t *plist;
 
 	int n = getProcessList(&plist);
+
+	int longestRegisteredName = 0;
+	for (int j = 0; j < n; ++j) {
+		if (plist[j].registeredName) {
+			int regNameLen = strlen(plist[j].registeredName);
+			if (regNameLen > longestRegisteredName)
+				longestRegisteredName = regNameLen;
+		}
+	}
+
+	printf("   PID RING STAT GLOBAL");
+	int padding = longestRegisteredName - 6 + 3;
+	while (padding-- > 0)
+		printf(" ");
+	printf("COMMAND\n");
+
 	for (int j = 0; j < n; ++j) {
 		process_info_t &i = plist[j];
 
-		printf("% 6d  %d ", i.pid, i.cpl);
+		printf("% 6d % 4d  ", i.pid, i.cpl);
 
 		printf(i.flags & PROCESS_FLAG_BLOCKING ? "B" : "-");
 		printf(i.flags & PROCESS_FLAG_IRQ_LISTEN ? "Q" : "-");
@@ -35,13 +51,14 @@ extern "C" int main(int argc, char **argv) {
 
 		printf(" ");
 
+		int padding = longestRegisteredName + 3;
 		if (i.registeredName) {
 			printf("[%s] ", i.registeredName);
-			int padding = 21 - 3 - strlen(i.registeredName);
-			while (padding-- > 0)
-				printf(" ");
-			// maximal 21
-		} else printf("                     ");
+			padding -= 3 + strlen(i.registeredName);
+		}
+
+		while (padding-- > 0)
+			printf(" ");
 
 		if (i.name) {
 			printf("%s", i.name);
