@@ -83,7 +83,13 @@ extern "C" int main() {
 				cwd = path;
 			}
 		} else {
-			std::string path = join(cwd, line[0]);
+			std::string path;
+		   
+			if (line[0][0] == '/') {
+				path = line[0];
+			} else {
+				path = join(cwd, line[0]);
+			}
 
 			bool bg = false;
 			if (path[path.length() - 1] == '&') {
