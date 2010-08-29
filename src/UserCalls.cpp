@@ -159,6 +159,14 @@ namespace User {
 	}
 
 	void sysexit() {
+		for (std::map<Symbol, Tasks::Task *>::iterator it = Akari->tasks->registeredTasks.begin();
+				it != Akari->tasks->registeredTasks.end(); ++it) {
+			if (it->second == Akari->tasks->current) {
+				Akari->tasks->registeredTasks.erase(it->first);
+				break;
+			}
+		}
+
 		Tasks::Task *task = Akari->tasks->start;
 		while (task) {
 			if (task == Akari->tasks->current) {

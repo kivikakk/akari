@@ -31,10 +31,15 @@ namespace std {
 		virtual ~map()
 		{ }
 
-		typedef struct {
+		class pair {
+		public:
+			bool operator ==(const pair &right) const {
+				return first == right.first && second == right.second;
+			}
+
 			const K first;
 			V second;
-		} pair;
+		};
 
 		class iterator {
 		friend class map;
@@ -55,6 +60,11 @@ namespace std {
 
 			pair *operator ->() { return &*it; }
 			pair *const &operator ->() const { return &*it; }
+
+			iterator &operator ++() {
+				++it;
+				return *this;
+			}
 
 		protected:
 			iterator(typename std::list<pair>::iterator _it): it(_it)
@@ -105,6 +115,16 @@ namespace std {
 			
 			items.push_back(add);
 			return items.rbegin()->second;
+		}
+
+		int erase(const K &first) {
+			for (typename std::list<pair>::iterator it = items.begin(); it != items.end(); ++it) {
+				if (first == it->first) {
+					items.remove(*it);
+					return 1;
+				}
+			}
+			return 0;
 		}
 
 	protected:
