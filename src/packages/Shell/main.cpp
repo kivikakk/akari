@@ -77,7 +77,7 @@ extern "C" int main() {
 
 			DIR *dirp = opendir(path.c_str());
 			if (!dirp) {
-				printf("cd: %s: Filen eller katalogen finns inte\n", line[1].c_str());
+				printf("cd: %s: No such file or directory\n", line[1].c_str());
 			} else {
 				closedir(dirp);
 				cwd = path;
@@ -91,12 +91,12 @@ extern "C" int main() {
 				fclose(f);
 
 				if (is_empty) {
-					printf("%s: är tom (kanske är en katalog)\n", line[0].c_str());
+					printf("%s: is empty (perhaps is a directory)\n", line[0].c_str());
 				} else {
 					bootstrap(path.c_str(), 0);
 				}
 			} else {
-				printf("%s: Filen eller katalogen finns inte\n", line[0].c_str());
+				printf("%s: No such file or directory\n", line[0].c_str());
 			}
 		}
 	}
