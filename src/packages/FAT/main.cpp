@@ -381,10 +381,12 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 				break;
 			else if (fd->filename[0] == 0xe5)
 				continue;
-			else if (fd->filename[11] == 0x0f)
+			else if (fd->filename[11] == 0x0f) {
 				continue;	// TODO LFN
-			else if (fd->attributes & FAT_VOLUME_ID)
+			}
+			else if (fd->attributes & FAT_VOLUME_ID) {
 				continue;	// fd->filename is vol ID
+			}
 
 			// dir or file now!
 			else if (current++ == index) {
