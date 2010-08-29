@@ -34,21 +34,26 @@ OBJS := $(patsubst %.s,obj/%.s.o,$(ASMSRCS)) $(patsubst %.cpp,obj/%.cpp.o,$(CXXS
 all: $(TARGET)-copy
 
 $(TARGET)-copy: $(TARGET) menu.lst
-	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
-	$(MTOOLS_BIN)/mcopy -D o menu.lst $(MENUDEST)
+	@echo "[MCOPY] $(TARGET)"
+	@$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
+	@echo "[MCOPY] menu.lst"
+	@$(MTOOLS_BIN)/mcopy -D o menu.lst $(MENUDEST)
 
 $(TARGET): $(OBJS) $(LDFILE) user packages ../test
-	$(LD) $(LDOPTS) -T$(LDFILE) $(OBJS) -o $(TARGET)
-	$(STRIP) $(TARGET)
+	@echo "[LD]    $@"
+	@$(LD) $(LDOPTS) -T$(LDFILE) $(OBJS) -o $(TARGET)
+	@echo "[STRIP] $@"
+	@$(STRIP) $(TARGET)
 
 ../test: force_subdir
-	cd ../test; $(MAKE) $(MFLAGS) all
+	@echo "[TEST]"
+	@cd ../test; $(MAKE) $(MFLAGS) all
 
 packages: force_subdir user
-	cd packages; $(MAKE) $(MFLAGS) all
+	@cd packages; $(MAKE) $(MFLAGS) all
 
 user: force_subdir
-	cd user; $(MAKE) $(MFLAGS) all
+	@cd user; $(MAKE) $(MFLAGS) all
 
 -include $(CXXDEPS)
 
@@ -66,9 +71,9 @@ obj/%.cpp.o: %.cpp
 	@$(CXX) $(CXXOPTS) -D__AKARI_VERSION=$(AKARI_VERSION) -D__AKARI_KERNEL -D__CPLUSPLUS -c -o $@ $<
 
 clean:
-	-rm $(TARGET) $(OBJS) $(CXXDEPS)
-	-cd user; make clean
-	-cd packages; make clean
+	@-rm $(TARGET) $(OBJS) $(CXXDEPS)
+	@-cd user; make clean
+	@-cd packages; make clean
 
 force_subdir:
 	@true

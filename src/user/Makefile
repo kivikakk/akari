@@ -32,7 +32,8 @@ CXXOPTS += -I../inc
 all: $(TARGET)
 
 $(TARGET): $(OBJS) $(LINKAGE_OBJS)
-	$(AR) rcs $@ $(OBJS) $(LINKAGE_OBJS)
+	@echo "[AR]  $@"
+	@$(AR) rcs $@ $(OBJS) $(LINKAGE_OBJS)
 
 -include $(CXXDEPS)
 -include $(LINKAGE_CXXDEPS)
@@ -62,4 +63,4 @@ obj/%.cpp.o: %.cpp
 	@$(CXX) $(CXXOPTS) -D__CPLUSPLUS -c -o $@ $<
 
 clean:
-	-rm $(TARGET) $(OBJS) $(LINKAGE_OBJS) $(LINKAGE_CXXDEPS) $(CXXDEPS)
+	@-rm $(TARGET) $(OBJS) $(LINKAGE_OBJS) $(LINKAGE_CXXDEPS) $(CXXDEPS)

@@ -29,32 +29,35 @@ CXXOPTS += -I../../inc -I../../user/inc
 all: $(TARGET)-copy
 
 $(TARGET)-copy: $(TARGET)
-	$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
+	@echo "[MCOPY] $<"
+	@$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
 
 $(TARGET): $(OBJS) ../../$(LINKAGE_TARGET) obj
-	$(LD) -melf_i386 $(OBJS) ../../$(LINKAGE_TARGET) -o $(TARGET)
-	$(STRIP) $(TARGET)
+	@echo "[LD]    $@"
+	@$(LD) -melf_i386 $(OBJS) ../../$(LINKAGE_TARGET) -o $(TARGET)
+	@echo "[STRIP] $@"
+	@$(STRIP) $(TARGET)
 
 -include $(CXXDEPS)
 
 obj/%.cpp.d: %.cpp
 	@if [ ! -e obj ]; then mkdir obj; fi
-	@echo "[DEP] $<"
+	@echo "[DEP]   $<"
 	@$(CXX) -M $(CXXOPTS) -D__CPLUSPLUS $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
 obj/%.s.o: %.s
 	@if [ ! -e obj ]; then mkdir obj; fi
-	@echo "[AS]  $<"
+	@echo "[AS]    $<"
 	@$(AS) $(ASOPTS) -o $@ $<
 
 obj/%.cpp.o: %.cpp
 	@if [ ! -e obj ]; then mkdir obj; fi
-	@echo "[CXX] $<"
+	@echo "[CXX]   $<"
 	@$(CXX) $(CXXOPTS) -D__CPLUSPLUS -c -o $@ $<
 
 clean:
-	-rm $(TARGET) $(OBJS) $(CXXDEPS)
+	@-rm $(TARGET) $(OBJS) $(CXXDEPS)
 
 # vim: filetype=make:

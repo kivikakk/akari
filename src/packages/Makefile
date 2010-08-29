@@ -21,10 +21,10 @@ PACKAGES = ATA FAT VFS Booter PCI Kb Shell 80867010 PS
 all: $(PACKAGES)
 
 $(PACKAGES): force_subdir
-	cd $@; $(MAKE) $(MFLAGS) all
+	@cd $@; $(MAKE) $(MFLAGS) all
 
 force_subdir:
 	@true
 
 clean:
-	@for i in $(PACKAGES); do (cd $$i; make clean); done
+	@for i in $(PACKAGES); do (cd $$i; $(MAKE) $(MFLAGS) clean); done
