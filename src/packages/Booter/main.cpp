@@ -17,6 +17,7 @@
 #include <stdio.hpp>
 #include <fs.hpp>
 #include <UserCalls.hpp>
+#include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
 #include <arch.hpp>
 #include <proc.hpp>
@@ -25,6 +26,7 @@
 
 extern "C" int main() {
 	pid_t pci = bootstrap("/PCI", 0);
+	registerName(pci, "system.bus.pci");
 	
 	{
 		PCIOpAwaitDriversUp op = { PCI_OP_AWAIT_DRIVERS_UP };
@@ -34,7 +36,9 @@ extern "C" int main() {
 
 	printf("Booter: started\n");
 
-	bootstrap("/Kb", 0);
+	pid_t kb = bootstrap("/Kb", 0);
+	registerName(kb, "system.io.keyboard");
+
 	bootstrap("/Shell", 0);
 
 	return 0;

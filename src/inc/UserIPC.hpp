@@ -44,7 +44,7 @@ namespace IPC {
 	pid_t processId();
 	pid_t processIdByName(const char *name);
 	pid_t processIdByNameBlock(const char *name);
-	bool registerName(const char *name);
+	bool registerName(pid_t pid, const char *name);
 
 	bool registerStream(const char *node);
 	u32 obtainStreamWriter(pid_t id, const char *node, bool exclusive);
@@ -98,7 +98,7 @@ DEFN_SYSCALL1(waitProcess, 44, int, pid_t)
 DEFN_SYSCALL0(processId, 24, pid_t)
 DEFN_SYSCALL1(processIdByName, 25, pid_t, const char *)
 DEFN_SYSCALL1(processIdByNameBlock, 39, pid_t, const char *)
-DEFN_SYSCALL1(registerName, 12, bool, const char *)
+DEFN_SYSCALL2(registerName, 12, bool, pid_t, const char *)
 
 DEFN_SYSCALL1(registerStream, 13, bool, const char *)
 DEFN_SYSCALL3(obtainStreamWriter, 14, u32, pid_t, const char *, bool)
@@ -114,7 +114,7 @@ DECL_SYSCALL1(waitProcess, int, pid_t);
 DECL_SYSCALL0(processId, pid_t);
 DECL_SYSCALL1(processIdByName, pid_t, const char *);
 DECL_SYSCALL1(processIdByNameBlock, pid_t, const char *);
-DECL_SYSCALL1(registerName, bool, const char *);
+DECL_SYSCALL2(registerName, bool, pid_t, const char *);
 
 DECL_SYSCALL1(registerStream, bool, const char *);
 DECL_SYSCALL3(obtainStreamWriter, u32, pid_t, const char *, bool);

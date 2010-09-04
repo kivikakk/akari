@@ -85,17 +85,14 @@ extern "C" int main() {
 	bool capslock_down = false, numlock_down = false, scrolllock_down = false;
 	bool pressed_ctrl = false, pressed_alt = false, pressed_shift = false;
 
-	if (!registerName("system.io.keyboard"))
-		panic("could not register system.io.keyboard");
-
 	if (!registerStream("input"))
-		panic("could not register system.io.keyboard:input");
+		panic("could not register input");
 
 	u32 myPid = processId();
 	u32 writer = obtainStreamWriter(myPid, "input", true);
 	if (writer == static_cast<u32>(-1)) {
 		// This shouldn't be possible if we just initialised the damn thing.
-		panic("could not obtain writer on system.io.keyboard:input");
+		panic("could not obtain writer on own input");
 	}
 
 	irqListen(1);

@@ -29,9 +29,6 @@
 pid_t pci = 0;
 
 extern "C" int main() {
-	if (!registerName("system.io.net"))
-		panic("Net: could not register system.io.net");
-
 	pci = processIdByNameBlock("system.bus.pci");
 
 	pci_device_regular *configs;

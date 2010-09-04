@@ -49,9 +49,6 @@ extern "C" int main() {
 		drivers.push_back(null_driver);
 	}
 
-	if (!registerName("system.io.vfs"))
-		panic("VFS: could not register system.io.vfs");
-
 	printf("VFS: started\n");
 
 	while (true) {

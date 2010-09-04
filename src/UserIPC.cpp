@@ -131,19 +131,23 @@ namespace IPC {
 		return processIdByName_impl(name, true);
 	}
 
-	bool registerName(const char *name) {
+	bool registerName(pid_t pid, const char *name) {
 		Symbol sName(name);
 
 		if (Akari->tasks->registeredTasks.find(sName) != Akari->tasks->registeredTasks.end())
 			return false;
 
-		Akari->tasks->registeredTasks[sName] = Akari->tasks->current;
-		Akari->tasks->current->registeredName = sName;
+		Tasks::Task *task = Akari->tasks->getTaskById(pid);
+		if (!task)
+			return false;
 
-		for (Tasks::Task *task = Akari->tasks->start; (task); task = task->next) {
-			if (task->userWaiting && task->userCall && task->userCall->insttype() == ProcessIdByNameCall::type()) {
-				if (static_cast<ProcessIdByNameCall *>(task->userCall)->getName() == sName)
-					task->userWaiting = false;
+		Akari->tasks->registeredTasks[sName] = task;
+		task->registeredName = sName;
+
+		for (Tasks::Task *it = Akari->tasks->start; (it); it = it->next) {
+			if (it->userWaiting && it->userCall && it->userCall->insttype() == ProcessIdByNameCall::type()) {
+				if (static_cast<ProcessIdByNameCall *>(it->userCall)->getName() == sName)
+					it->userWaiting = false;
 			}
 		}
 

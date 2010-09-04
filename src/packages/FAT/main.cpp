@@ -55,10 +55,6 @@ extern "C" int main() {
 		return 1;
 	}
 
-	// Register our name
-	if (!registerName("system.io.fs.fat"))
-		panic("FAT: could not register system.io.fs.fat");
-
 	vfs = processIdByNameBlock("system.io.vfs");
 
 	// Register with VFS

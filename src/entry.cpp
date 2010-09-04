@@ -27,6 +27,7 @@
 #include <Syscall.hpp>
 #include <ELF.hpp>
 #include <Debugger.hpp>
+#include <UserIPC.hpp>
 
 #define UKERNEL_STACK_POS	0xE0000000
 #define UKERNEL_STACK_SIZE	0x2000
@@ -152,16 +153,19 @@ static void AkariEntryCont() {
 	for (u16 j = 0; j < 16; ++j)
 		ata->setIOMap(0xC000 + j, true);
 	idle->next = ata;
+	User::IPC::registerName(ata->id, "system.io.ata");
 	
 	// FAT driver
 	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "fat", std::list<std::string>());
 	Akari->elf->loadImageInto(fat, reinterpret_cast<u8 *>(module_by_name("/fat")->module));
 	ata->next = fat;
+	User::IPC::registerName(fat->id, "system.io.fs.fat");
 	
 	// VFS driver
 	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "vfs", std::list<std::string>());
 	Akari->elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module_by_name("/vfs")->module));
 	fat->next = vfs;
+	User::IPC::registerName(vfs->id, "system.io.vfs");
 	
 	// Booter
 	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "booter", std::list<std::string>());

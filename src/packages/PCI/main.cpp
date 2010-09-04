@@ -67,8 +67,6 @@ extern "C" int main() {
 		printf("PCI: failed init\n");
 		return 1;
 	}
-	if (!registerName("system.bus.pci"))
-		panic("PCI: could not register system.bus.pci");
 
 	printf("PCI: started\n");
 

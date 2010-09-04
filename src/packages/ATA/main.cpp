@@ -48,10 +48,6 @@ extern "C" int main() {
 	ata_read_data(0, 0, 512, reinterpret_cast<u8 *>(&hdd_mbr));
 	if (hdd_mbr.signature != 0xAA55) panic("MBR: invalid MBR!\n");
 
-	// Now we need to wait and listen for commands!
-	if (!registerName("system.io.ata"))
-		panic("ATA: could not register system.io.ata");
-
 	printf("ATA: started\n");
 
 	while (true) {
