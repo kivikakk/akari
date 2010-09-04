@@ -82,7 +82,7 @@ void AkariEntry() {
 	Akari->elf = new ELF(); Akari->subsystems.push_back(Akari->elf);
 	Akari->debugger = new Debugger(); Akari->subsystems.push_back(Akari->debugger);
 
-	Akari->console->putString("Akari " __AKARI_VERSION ". Dedicerad till Misty.\nBörjar ...\n");
+	Akari->console->putString("Akari " __AKARI_VERSION ". Dedicated to Misty.\nStarting ...\n");
 
 	// This is done before paging is turned on (otherwise the memory where the
 	// modules reside is protected), but after memory is initialised.
@@ -171,7 +171,7 @@ static void AkariEntryCont() {
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	Akari->memory->switchPageDirectory(base->pageDir);
 
-	Akari->console->putString("Akari: operativsystemskärnainitialisering klar.\n");
+	Akari->console->putString("Akari: kernel initialised.\n");
 
 	Tasks::SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 
