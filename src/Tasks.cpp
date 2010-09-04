@@ -306,6 +306,16 @@ void Tasks::Task::unblockTypeWith(const Symbol &type, u32 data) {
 	}
 }
 
+void Tasks::Task::grantPrivilege(priv_t priv) {
+	ASSERT(priv < PRIV_COUNT);
+	privMap[priv / 8] |= (1 << (priv % 8));
+}
+
+bool Tasks::Task::hasPrivilege(priv_t priv) const {
+	ASSERT(priv < PRIV_COUNT);
+	return privMap[priv / 8] & (1 << (priv % 8));
+}
+
 u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	// Identify contiguous areas of allocated memory in the process's directory.
 	std::list<u32> runs;
@@ -735,6 +745,7 @@ Tasks::Task::Task(u8 cpl, const std::string &name):
 		cpl(cpl), pageDir(0),
 		heap(0), heapStart(0), heapEnd(0), heapMax(0),
 		ks(0),
+		privMap(new u8[PRIV_MAP_SIZE]),
 		streamsByName(new std::map<Symbol, Stream *>()),
 		replyQueue(new Queue()) {
 	static pid_t lastAssignedId = 0;	// wouldn't be surprised if this needs to be accessible some day
@@ -742,6 +753,8 @@ Tasks::Task::Task(u8 cpl, const std::string &name):
 
 	for (u16 i = 0; i < 8192; ++i)
 		iomap[i] = 0xFF;
+
+	memset(privMap, 0, PRIV_MAP_SIZE);
 }
 
 Tasks::Task::~Task() {
@@ -753,4 +766,5 @@ Tasks::Task::~Task() {
 	// Good chance we do.
 	delete streamsByName;
 	delete replyQueue;
+	delete [] privMap;
 }

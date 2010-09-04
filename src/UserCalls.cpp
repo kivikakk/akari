@@ -27,13 +27,16 @@
 #include <Timer.hpp>
 #include <Debugger.hpp>
 #include <UserIPC.hpp>
+#include <UserPrivs.hpp>
 
 namespace User {
 	void putc(char c) {
+		requirePrivilege(PRIV_CONSOLE_WRITE);
 		Akari->console->putChar(c);
 	}
 
 	void puts(const char *s) {
+		requirePrivilege(PRIV_CONSOLE_WRITE);
 		Akari->console->putString(s);
 	}
 
@@ -90,6 +93,8 @@ namespace User {
 	Symbol IRQWaitCall::insttype() const { return type(); }
 
 	void irqWait() {
+		requirePrivilege(PRIV_IRQ);
+
 		Akari->tasks->current->irqWaitStart = 0;
 
 		IRQWaitCall c(0);
@@ -104,6 +109,8 @@ namespace User {
 	}
 
 	bool irqWaitTimeout(u32 ms) {
+		requirePrivilege(PRIV_IRQ);
+
 		Akari->tasks->current->irqWaitStart = AkariMicrokernelSwitches;
 
 		IRQWaitCall c(ms);
@@ -118,6 +125,8 @@ namespace User {
 	}
 
 	void irqListen(u32 irq) {
+		requirePrivilege(PRIV_IRQ);
+
 		Akari->tasks->current->irqListen = irq;
 		Akari->tasks->current->irqListenHits = 0;
 	}
@@ -195,23 +204,32 @@ namespace User {
 	}
 
 	void *malloc(u32 n) {
+		requirePrivilege(PRIV_MALLOC);
+
 		ASSERT(Akari->tasks->current->heap);
 		return Akari->tasks->current->heap->alloc(n);
 	}
 
 	void *mallocap(u32 n, phptr *p) {
+		requirePrivilege(PRIV_MALLOC);
+		requirePrivilege(PRIV_PHYSADDR);
+
 		void *mem = Akari->tasks->current->heap->allocAligned(n);
 		*p = physAddr(mem);
 		return mem;
 	}
 
 	phptr physAddr(void *ptr) {
+		requirePrivilege(PRIV_PHYSADDR);
+
 		Memory::Page *page = Akari->tasks->current->pageDir->getPage(reinterpret_cast<u32>(ptr), false);
 		if (!page) return 0;
 		return page->pageAddress * 0x1000 + (reinterpret_cast<u32>(ptr) & 0xFFF);
 	}
 
 	void free(void *p) {
+		requirePrivilege(PRIV_MALLOC);
+
 		ASSERT(Akari->tasks->current->heap);
 		bool success = Akari->tasks->current->heap->free(p);
 		if (!success) {
@@ -220,6 +238,7 @@ namespace User {
 	}
 
 	void flushTLB() {
+		requirePrivilege(PRIV_PAGING_ADMIN);
 		__asm__ __volatile__("mov %%cr3, %%eax; mov %%eax, %%cr3" : : : "%eax");
 	}
 }

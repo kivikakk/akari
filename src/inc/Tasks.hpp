@@ -26,6 +26,7 @@
 #include <Symbol.hpp>
 #include <BlockingCall.hpp>
 #include <UserIPCQueue.hpp>
+#include <UserPrivs.hpp>
 
 // user task kernel stack is used for state when it's
 // pre-empted, and for system calls, etc.
@@ -139,6 +140,9 @@ public:
 		void unblockType(const Symbol &type);
 		void unblockTypeWith(const Symbol &type, u32 data);
 
+		void grantPrivilege(priv_t priv);
+		bool hasPrivilege(priv_t priv) const;
+
 		u8 *dumpELFCore(u32 *size) const;
 
 		// Task linked list.
@@ -164,6 +168,7 @@ public:
 		u32 heapStart, heapEnd, heapMax;
 		u32 ks;
 		u8 iomap[8192];
+		u8 *privMap;
 
 		std::map<Symbol, Stream *> *streamsByName;
 		Queue *replyQueue;

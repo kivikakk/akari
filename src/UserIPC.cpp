@@ -23,6 +23,7 @@
 #include <Console.hpp>
 #include <Syscall.hpp>
 #include <BlockingCall.hpp>
+#include <UserPrivs.hpp>
 
 namespace User {
 namespace IPC {
@@ -132,6 +133,8 @@ namespace IPC {
 	}
 
 	bool registerName(pid_t pid, const char *name) {
+		requirePrivilege(PRIV_REGISTER_NAME);
+
 		Symbol sName(name);
 
 		if (Akari->tasks->registeredTasks.find(sName) != Akari->tasks->registeredTasks.end())
