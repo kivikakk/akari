@@ -26,11 +26,10 @@ typedef enum {
 	PRIV_IRQ = 2,
 	PRIV_MALLOC = 3,
 	PRIV_PHYSADDR = 4,
-	PRIV_PAGING_ADMIN = 5,
-	PRIV_REGISTER_NAME = 6
+	PRIV_REGISTER_NAME = 5
 } priv_t;
 
-#define PRIV_COUNT 7
+#define PRIV_COUNT 6
 #define PRIV_MAP_SIZE ((PRIV_COUNT + 7) / 8)
 
 namespace User {

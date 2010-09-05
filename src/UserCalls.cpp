@@ -236,10 +236,5 @@ namespace User {
 			panic("free returned false");
 		}
 	}
-
-	void flushTLB() {
-		requirePrivilege(PRIV_PAGING_ADMIN);
-		__asm__ __volatile__("mov %%cr3, %%eax; mov %%eax, %%cr3" : : : "%eax");
-	}
 }
 #endif

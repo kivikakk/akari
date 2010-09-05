@@ -41,7 +41,6 @@ namespace User {
 	void *mallocap(u32 n, phptr *phys);
 	phptr physAddr(void *ptr);
 	void free(void *p);
-	void flushTLB();
 
 	class IRQWaitCall : public BlockingCall {
 	public:
@@ -75,7 +74,6 @@ DEFN_SYSCALL1(malloc, 9, void *, u32)
 DEFN_SYSCALL2(mallocap, 40, void *, u32, phptr *)
 DEFN_SYSCALL1(physAddr, 42, phptr, void *)
 DEFN_SYSCALL1(free, 10, void, void *)
-DEFN_SYSCALL0(flushTLB, 41, void)
 
 #else
 
@@ -93,7 +91,6 @@ DECL_SYSCALL1(malloc, void *, u32);
 DECL_SYSCALL2(mallocap, void *, u32, phptr *);
 DECL_SYSCALL1(physAddr, phptr, void *);
 DECL_SYSCALL1(free, void, void *);
-DECL_SYSCALL0(flushTLB, void);
 
 #endif
 
