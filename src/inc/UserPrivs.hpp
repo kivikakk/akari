@@ -21,15 +21,16 @@
 
 // Update PRIV_COUNT when this changes.
 typedef enum {
-	PRIV_CONSOLE_WRITE = 0,
-	PRIV_IRQ = 1,
-	PRIV_MALLOC = 2,
-	PRIV_PHYSADDR = 3,
-	PRIV_PAGING_ADMIN = 4,
-	PRIV_REGISTER_NAME = 5
+	PRIV_GRANT_PRIV = 0,
+	PRIV_CONSOLE_WRITE = 1,
+	PRIV_IRQ = 2,
+	PRIV_MALLOC = 3,
+	PRIV_PHYSADDR = 4,
+	PRIV_PAGING_ADMIN = 5,
+	PRIV_REGISTER_NAME = 6
 } priv_t;
 
-#define PRIV_COUNT 6
+#define PRIV_COUNT 7
 #define PRIV_MAP_SIZE ((PRIV_COUNT + 7) / 8)
 
 namespace User {

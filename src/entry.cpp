@@ -139,6 +139,8 @@ static void AkariEntryCont() {
 	// ATA driver
 	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "ata", std::list<std::string>());
 	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
+	Akari->tasks->registeredTasks["system.io.ata"] = ata;
+	ata->registeredName = "system.io.ata";
 
 	for (u16 j = 0; j < 8; ++j) {
 		ata->setIOMap(0x1F0 + j, true);
@@ -148,28 +150,34 @@ static void AkariEntryCont() {
 	ata->setIOMap(0x3F6, true);
 	ata->setIOMap(0x376, true);
 
+	ata->grantPrivilege(PRIV_IRQ);
+	ata->grantPrivilege(PRIV_PHYSADDR);
+
 	// DMA busmastering. (assuming it'll be at c000. Need to do this later properly. XXX
 	
 	for (u16 j = 0; j < 16; ++j)
 		ata->setIOMap(0xC000 + j, true);
 	idle->next = ata;
-	User::IPC::registerName(ata->id, "system.io.ata");
 	
 	// FAT driver
 	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "fat", std::list<std::string>());
 	Akari->elf->loadImageInto(fat, reinterpret_cast<u8 *>(module_by_name("/fat")->module));
+	Akari->tasks->registeredTasks["system.io.fs.fat"] = fat;
+	fat->registeredName = "system.io.fs.fat";
 	ata->next = fat;
-	User::IPC::registerName(fat->id, "system.io.fs.fat");
 	
 	// VFS driver
 	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "vfs", std::list<std::string>());
 	Akari->elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module_by_name("/vfs")->module));
+	Akari->tasks->registeredTasks["system.io.vfs"] = vfs;
+	vfs->registeredName = "system.io.vfs";
 	fat->next = vfs;
-	User::IPC::registerName(vfs->id, "system.io.vfs");
 	
 	// Booter
 	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "booter", std::list<std::string>());
 	Akari->elf->loadImageInto(booter, reinterpret_cast<u8 *>(module_by_name("/booter")->module));
+	booter->grantPrivilege(PRIV_REGISTER_NAME);
+	booter->grantPrivilege(PRIV_GRANT_PRIV);
 	vfs->next = booter;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.

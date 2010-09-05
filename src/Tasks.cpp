@@ -757,11 +757,7 @@ Tasks::Task::Task(u8 cpl, const std::string &name):
 	memset(privMap, 0, PRIV_MAP_SIZE);
 
 	grantPrivilege(PRIV_CONSOLE_WRITE);
-	grantPrivilege(PRIV_IRQ);
 	grantPrivilege(PRIV_MALLOC);
-	grantPrivilege(PRIV_PHYSADDR);
-	grantPrivilege(PRIV_PAGING_ADMIN);
-	grantPrivilege(PRIV_REGISTER_NAME);
 }
 
 Tasks::Task::~Task() {

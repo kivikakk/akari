@@ -19,6 +19,7 @@
 
 #include <arch.hpp>
 #include <UserGates.hpp>
+#include <UserPrivs.hpp>
 
 #define PROCESS_FLAG_BLOCKING	(1 << 0)
 #define PROCESS_FLAG_IRQ_LISTEN	(1 << 1)
@@ -40,6 +41,7 @@ namespace User {
 namespace IPC {
 	int getProcessList(process_info_t **info);
 	int waitProcess(pid_t pid);
+	bool grantPrivilege(pid_t pid, priv_t priv);
 
 	pid_t processId();
 	pid_t processIdByName(const char *name);
@@ -95,6 +97,8 @@ namespace IPC {
 
 DEFN_SYSCALL1(getProcessList, 43, int, process_info_t **)
 DEFN_SYSCALL1(waitProcess, 44, int, pid_t)
+DEFN_SYSCALL2(grantPrivilege, 45, bool, pid_t, priv_t)
+
 DEFN_SYSCALL0(processId, 24, pid_t)
 DEFN_SYSCALL1(processIdByName, 25, pid_t, const char *)
 DEFN_SYSCALL1(processIdByNameBlock, 39, pid_t, const char *)
@@ -111,6 +115,8 @@ DEFN_SYSCALL5(writeStream, 18, u32, pid_t, const char *, u32, const char *, u32)
 
 DECL_SYSCALL1(getProcessList, int, process_info_t **);
 DECL_SYSCALL1(waitProcess, int, pid_t);
+DECL_SYSCALL2(grantPrivilege, bool, pid_t, priv_t);
+
 DECL_SYSCALL0(processId, pid_t);
 DECL_SYSCALL1(processIdByName, pid_t, const char *);
 DECL_SYSCALL1(processIdByNameBlock, pid_t, const char *);

@@ -37,6 +37,7 @@ extern "C" int main() {
 	printf("Booter: started\n");
 
 	pid_t kb = bootstrap("/Kb", 0);
+	grantPrivilege(kb, PRIV_IRQ);
 	registerName(kb, "system.io.keyboard");
 
 	bootstrap("/Shell", 0);
