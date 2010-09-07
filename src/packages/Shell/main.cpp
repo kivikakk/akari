@@ -98,12 +98,8 @@ extern "C" int main() {
 			}
 
 			if (fexists(path.c_str())) {
-				FILE *f = fopen(path.c_str(), "r");
-				bool is_empty = !flen(f);
-				fclose(f);
-
-				if (is_empty) {
-					printf("%s: is empty (perhaps is a directory)\n", line[0].c_str());
+				if (fdir(path.c_str())) {
+					printf("%s: is a directory\n", line[0].c_str());
 				} else {
 					pid_t pid = bootstrap(path.c_str(), 0);
 					if (!bg)
