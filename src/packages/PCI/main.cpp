@@ -158,8 +158,16 @@ void check_non_hds() {
 		}
 
 		if (is_hd) continue;
-		printf("bootstrapping %s\n", dirent->name);
-		//bootstrap(
+		
+		char *filename = rasprintf("/drivers/%s", dirent->name);
+		if (!fexists(filename) || !ffile(filename)) {
+			delete [] filename;
+			continue;
+		}
+
+		printf("bootstrapping %s\n", filename);
+		bootstrap(filename, 0);
+		delete [] filename;
 	}
 
 	closedir(dirp);

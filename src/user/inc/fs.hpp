@@ -25,6 +25,8 @@ typedef struct {
 } FILE;
 
 bool fexists(const char *filename);
+bool ffile(const char *filename);
+bool fdir(const char *filename);
 FILE *fopen(const char *filename, const char *mode);
 u32 fread(void *buf, u32 size, u32 n, FILE *stream);
 u32 flen(FILE *stream);

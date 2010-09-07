@@ -62,6 +62,20 @@ bool fexists(const char *filename) {
 	return node;
 }
 
+bool ffile(const char *filename) {
+	init();
+
+	VFSNode *node = resolve_path(filename);
+	return node->flags & VFS_FILE;
+}
+
+bool fdir(const char *filename) {
+	init();
+
+	VFSNode *node = resolve_path(filename);
+	return node->flags & VFS_DIRECTORY;
+}
+
 FILE *fopen(const char *filename, const char *mode) {
 	init();
 
