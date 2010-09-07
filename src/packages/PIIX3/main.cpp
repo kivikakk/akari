@@ -34,7 +34,7 @@ extern "C" int main(int argc, char **argv) {
 	pci_device_regular *configs;
 
 	{
-		PCIOpDeviceConfig op = { PCI_OP_DEVICE_CONFIG };
+		PCIOpDeviceConfig op = { PCI_OP_DEVICE_CONFIG, 0x8086, 0x7010 };
 		u32 msg_id = sendQueue(pci, 0, reinterpret_cast<u8 *>(&op), sizeof(PCIOpDeviceConfig));
 
 		struct queue_item_info *info = probeQueueFor(msg_id);

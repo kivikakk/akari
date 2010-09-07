@@ -23,6 +23,7 @@
 
 typedef struct {
 	u8 cmd;
+	u16 device, vendor;
 } PCIOpDeviceConfig;
 
 typedef struct {

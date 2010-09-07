@@ -39,19 +39,16 @@
 #define D_SLOT(device)	(u8)((device) >> 8)
 #define D_FN(device)	(u8)(device)
 
-typedef u32 device_t;
-typedef std::slist<device_t> device_list_t;
-typedef std::map<pid_t, device_list_t> auth_map;
-static auth_map auths;
+typedef u32 device_t, venddev_t;
+typedef std::map< venddev_t, std::slist<device_t> > device_list_t;
 
-static void check_all_devices(bool hds);
+void check_hds();
+void check_non_hds();
+static void check_all_devices();
 static bool init();
 static u16 check_vendor(u16 bus, u8 slot, u8 fn);
-static void check_device(u16 bus, u8 slot, u8 fn, u16 vendor, u16 device);
 static u16 read_config_word(u16 bus, u8 slot, u8 fn, u16 offset);
 static u32 read_config_long(u16 bus, u8 slot, u8 fn, u16 offset);
-static void add_auth(pid_t pid, u16 bus, u8 slot, u8 fn);
-static device_list_t &authed(pid_t pid);
 
 static bool non_hds_brought_up = false;
 
@@ -61,6 +58,7 @@ typedef struct {
 } AwaitingDriversUp;
 
 static std::slist<AwaitingDriversUp> awaiting_drivers_up;
+static device_list_t all_devices;
 
 extern "C" int main() {
 	if (!init()) {
@@ -76,13 +74,14 @@ extern "C" int main() {
 		shiftQueue(&info);
 
 		if (request[0] == PCI_OP_DEVICE_CONFIG) {
-			device_list_t &l = authed(info.from);
+			PCIOpDeviceConfig *op = reinterpret_cast<PCIOpDeviceConfig *>(request);
 
-			pci_device_regular *pciinfo = new pci_device_regular[l.size()];
+			std::slist<device_t> &dl = all_devices[((u32)op->device << 16) | op->vendor];
+			u32 length = dl.size(), offset = 0;
+			pci_device_regular *pciinfo = new pci_device_regular[length];
 
-			u32 offset = 0;
-			for (device_list_t::iterator it = l.begin(); it != l.end(); ++it) {
-				for (u32 i = 0; i < sizeof(pci_device_regular) * l.size(); i += 4) {
+			for (std::slist<device_t>::iterator it = dl.begin(); it != dl.end(); ++it) {
+				for (u32 i = 0; i < sizeof(pci_device_regular); i += 4) {
 					*reinterpret_cast<u32 *>(reinterpret_cast<u8 *>(pciinfo) + i + offset) =
 						read_config_long(D_BUS(*it), D_SLOT(*it), D_FN(*it), i);
 				}
@@ -97,7 +96,7 @@ extern "C" int main() {
 
 			if (!non_hds_brought_up) {
 				non_hds_brought_up = true;
-				check_all_devices(false);
+				check_non_hds();
 
 				for (std::slist<AwaitingDriversUp>::iterator it = awaiting_drivers_up.begin(); it != awaiting_drivers_up.end(); ++it)
 					sendQueue(it->pid, it->msg_id, 0, 0);
@@ -119,12 +118,54 @@ extern "C" int main() {
 	}
 }
 
-const u32 known_harddisk_drivers[] = {
-	0x80867010,
-	0
+typedef struct {
+	const char *name;
+	u16 vendor, device;
+} name_vendor_pair_t;
+
+const name_vendor_pair_t known_harddisk_drivers[] = {
+	{ "PIIX3", 0x8086, 0x7010 },
+	{ 0, 0, 0 }
 };
 
-void check_all_devices(bool hds) {
+void check_hds() {
+	const name_vendor_pair_t *p = known_harddisk_drivers;
+	while (p->name) {
+		char *filename = rasprintf("/drivers/%s", p->name);
+		if (fexists(filename)) {
+			bootstrap(filename, 0);
+		}
+
+		delete [] filename;
+
+		++p;
+	}
+}
+
+void check_non_hds() {
+	DIR *dirp = opendir("/drivers/");
+	VFSDirent *dirent;
+
+	while ((dirent = readdir(dirp))) {
+		bool is_hd = false;
+
+		const name_vendor_pair_t *p = known_harddisk_drivers;
+		while (!is_hd && p->name) {
+			if (stricmp(dirent->name, p->name) == 0) {
+				is_hd = true;
+			}
+			++p;
+		}
+
+		if (is_hd) continue;
+		printf("bootstrapping %s\n", dirent->name);
+		//bootstrap(
+	}
+
+	closedir(dirp);
+}
+
+void check_all_devices() {
 	for (u16 bus = 0; bus < 256; ++bus) {
 		for (u8 slot = 0; slot < 32; ++slot) {
 			for (u8 fn = 0; fn < 8; ++fn) {
@@ -135,15 +176,8 @@ void check_all_devices(bool hds) {
 				} else if (vendor != 0xFFFF) {
 					u16 device = read_config_word(bus, slot, fn, 2);
 
-					bool is_hd = false;
-					const u32 *p = known_harddisk_drivers;
-					while (*p && !is_hd)
-						if (*p++ == ((static_cast<u32>(vendor) << 16) | device))
-							is_hd = true;
-
-					if ((hds && is_hd) || (!hds && !is_hd)) {
-						check_device(bus, slot, fn, vendor, device);
-					}
+					std::slist<device_t> &dl = all_devices[((u32)vendor) << 16 | (u32)device];
+					dl.push_back(DEVICE(bus, slot, fn));
 				}
 			}
 		}
@@ -151,26 +185,14 @@ void check_all_devices(bool hds) {
 }
 
 bool init() {
-	check_all_devices(true);
+	check_hds();
+	check_all_devices();
 
 	return true;
 }
 
 u16 check_vendor(u16 bus, u8 slot, u8 fn) {
 	return read_config_word(bus, slot, fn, 0);
-}
-
-void check_device(u16 bus, u8 slot, u8 fn, u16 vendor, u16 device) {
-	printf("PCI: %x/%x/%x: %04x/%04x\n", bus, slot, fn, vendor, device);
-
-	char *filename = rasprintf("/%04x%04x", vendor, device);
-
-	if (fexists(filename)) {
-		pid_t r = bootstrap(filename, 0);
-		add_auth(r, bus, slot, fn);
-	}
-
-	delete [] filename;
 }
 
 u16 read_config_word(u16 bus, u8 slot, u8 fn, u16 offset) {
@@ -181,28 +203,5 @@ u16 read_config_word(u16 bus, u8 slot, u8 fn, u16 offset) {
 
 u32 read_config_long(u16 bus, u8 slot, u8 fn, u16 offset) {
 	return read_config_word(bus, slot, fn, offset) | (read_config_word(bus, slot, fn, offset + 2) << 16);
-}
-
-void add_auth(pid_t pid, u16 bus, u8 slot, u8 fn) {
-	device_t vendor_device = DEVICE(bus, slot, fn);
-
-	auth_map::iterator it = auths.find(pid);
-	if (it == auths.end()) {
-		auths[pid] = device_list_t();
-		it = auths.find(pid);
-	}
-
-	if (std::find(it->second.begin(), it->second.end(), vendor_device) == it->second.end())
-		it->second.push_back(vendor_device);
-}
-
-device_list_t &authed(pid_t pid) {
-	auth_map::iterator it = auths.find(pid);
-	if (it == auths.end()) {
-		auths[pid] = device_list_t();
-		return auths[pid];
-	}
-
-	return it->second;
 }
 

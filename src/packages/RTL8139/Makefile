@@ -14,9 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-TARGET = 80867010
-#COPYDEST = C:/Drivers/80867010
-COPYDEST = C:/80867010
+TARGET = RTL8139
+COPYDEST = C:/Drivers/RTL8139
 
 include ../PackageMakefile.inc
 
