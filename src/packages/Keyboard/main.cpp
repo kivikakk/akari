@@ -80,6 +80,7 @@ static s8 capslockInvert(s8 c) {
 extern "C" int main() {
 	// 128-bit=16 bytes bitfield
 	u8 held_scancodes[16];     
+	printf("Keyboard: starting ... ");
 
 	bool echo_mode = false;
 	bool capslock_down = false, numlock_down = false, scrolllock_down = false;
@@ -97,10 +98,9 @@ extern "C" int main() {
 
 	irqListen(1);
 
-	printf("Kb: started\n");
-
 	u8 scancode = AkariInB(0x60);
 	bool mustUpdateLEDs = false;
+	printf("done!\n");
 
 	while (true) {
 		if (scancode & 0x80) {

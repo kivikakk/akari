@@ -47,11 +47,12 @@ static u32 root_cluster;
 static std::map<u32, u8 *> fat_clusters;
 
 extern "C" int main() {
+	printf("FAT: starting ... ");
 	ata = processIdByNameBlock("system.io.ata");
 
 	// Initialize our important stuff
 	if (!init()) {
-		printf("FAT: calling it quits in init");
+		printf("calling it quits in init");
 		return 1;
 	}
 
@@ -76,7 +77,7 @@ extern "C" int main() {
 		shiftQueue(info);
 
 		if (!reply.success) {
-			printf("FAT: failed to register; VFS said 0x%x\n", reply.driver);
+			printf("failed to register; VFS said 0x%x\n", reply.driver);
 			panic("FAT: failed to register with VFS");
 		}
 
@@ -97,7 +98,7 @@ extern "C" int main() {
 	}
 
 	// All done.
-	printf("FAT: started\n");
+	printf("done!\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();

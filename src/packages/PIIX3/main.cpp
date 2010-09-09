@@ -39,7 +39,7 @@ extern "C" int main(int argc, char **argv) {
 
 		struct queue_item_info *info = probeQueueFor(msg_id);
 
-		printf("80867010: %d config(s) (%d bytes leftover)\n",
+		printf("PIIX3: %d config(s) (%d bytes leftover)\n",
 				info->data_len / sizeof(pci_device_regular),
 				info->data_len % sizeof(pci_device_regular));
 
@@ -48,7 +48,7 @@ extern "C" int main(int argc, char **argv) {
 		}
 
 		if (info->data_len / sizeof(pci_device_regular) > 1) {
-			printf("80867010: dunno what to do with many?\n");
+			printf("PIIX3: dunno what to do with many?\n");
 			return 1;
 		}
 

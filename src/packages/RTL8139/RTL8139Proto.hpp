@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef NET_PROTO_HPP
-#define NET_PROTO_HPP
+#ifndef RTL8139_PROTO_HPP
+#define RTL8139_PROTO_HPP
 
 #include <arch.hpp>
 
-#define NET_OP_NOOP 	0x1
+#define RTL8139_OP_NOOP 	0x1
 
 typedef struct {
 	u8 cmd;
-} NetOpNoop;
+} RTL8139OpNoop;
 
 
 #endif

@@ -19,5 +19,5 @@ export CC=gcc
 export CXX=g++
 export STRIP=strip
 export MTOOLS_BIN=/usr/bin
-alias qemu="qemu -s -m 128 -hda /home/celtic/Code/akimg.img -boot c -serial tcp::18148,server,nowait"
+alias qemu="qemu -s -m 128 -hda /home/celtic/Code/akimg.img -boot c -serial tcp::18148,server,nowait -net nic,model=rtl8139"
 alias debug="gdb Akari -q -ex 'target remote localhost:1234'"

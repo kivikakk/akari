@@ -22,7 +22,7 @@
 #include <vector>
 #include <debug.hpp>
 
-#include "NetProto.hpp"
+#include "RTL8139Proto.hpp"
 #include "main.hpp"
 #include "../PCI/PCIProto.hpp"
 
@@ -39,7 +39,7 @@ extern "C" int main() {
 
 		struct queue_item_info *info = probeQueueFor(msg_id);
 
-		printf("Net: %d config(s) (%d bytes leftover)\n",
+		printf("RTL8139: %d config(s) (%d bytes leftover)\n",
 			info->data_len / sizeof(pci_device_regular),
 			info->data_len % sizeof(pci_device_regular));
 
@@ -48,7 +48,7 @@ extern "C" int main() {
 		}
 
 		if (info->data_len / sizeof(pci_device_regular) > 1) {
-			printf("Net: dunno what to do with many?\n");
+			printf("RTL8139: dunno what to do with many?\n");
 			return 1;
 		}
 
@@ -57,21 +57,35 @@ extern "C" int main() {
 		shiftQueue(info);
 	}
 
-	printf("Net: started\n");
+	// Let's power it up.
+	u16 iobase = static_cast<u16>(configs->bar0) & ~0x3;
+	u8 irq = static_cast<u8>(configs->interrupt_line);
+	u8 macaddr[] = {
+		AkariInB(iobase),
+		AkariInB(iobase + 1),
+		AkariInB(iobase + 2),
+		AkariInB(iobase + 3),
+		AkariInB(iobase + 4),
+		AkariInB(iobase + 5)
+	};
 
+	printf("RTL8139: started (IO base %4x, IRQ %d)\n", iobase, irq);
+	printf("RTL8139: MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
+			macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
+	
 	while (true) {
 		struct queue_item_info info = *probeQueue();
 		u8 *request = grabQueue(&info);
 		shiftQueue(&info);
 
-		if (request[0] == NET_OP_NOOP) {
-			// NetOpNoop *op = reinterpret_cast<NetOpNoop *>(request);
+		if (request[0] == RTL8139_OP_NOOP) {
+			// RTL8139OpNoop *op = reinterpret_cast<RTL8139OpNoop *>(request);
 
 			// u8 *buffer = new u8[op->length];
 			// sendQueue(info.from, info.id, buffer, bytes_read);
 			// delete [] buffer;
 		} else {
-			panic("Net: confused");
+			panic("RTL8139: confused");
 		}
 	}
 }

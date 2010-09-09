@@ -61,12 +61,12 @@ static std::slist<AwaitingDriversUp> awaiting_drivers_up;
 static device_list_t all_devices;
 
 extern "C" int main() {
+	printf("PCI: starting ... ");
 	if (!init()) {
-		printf("PCI: failed init\n");
+		printf("failed init\n");
 		return 1;
 	}
-
-	printf("PCI: started\n");
+	printf("done!\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();
@@ -166,7 +166,17 @@ void check_non_hds() {
 		}
 
 		printf("bootstrapping %s\n", filename);
-		bootstrap(filename);
+
+		bootstrap_options_t bsops;
+		bsops.iobits.push_back(0xc100);
+		bsops.iobits.push_back(0xc101);
+		bsops.iobits.push_back(0xc102);
+		bsops.iobits.push_back(0xc103);
+		bsops.iobits.push_back(0xc104);
+		bsops.iobits.push_back(0xc105);
+		bsops.iobits.push_back(0xc106);
+
+		bootstrap(filename, std::slist<std::string>(), bsops);
 		delete [] filename;
 	}
 

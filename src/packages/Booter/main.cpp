@@ -25,8 +25,6 @@
 #include "../PCI/PCIProto.hpp"
 
 extern "C" int main() {
-	printf("Booter: started\n");
-
 	bootstrap_options_t bsops;
 
 	bsops.iobits.push_back(0xCF8);
@@ -37,6 +35,7 @@ extern "C" int main() {
 	bsops.iobits.push_back(0xCFD);
 	bsops.iobits.push_back(0xCFE);
 	bsops.iobits.push_back(0xCFF);
+	bsops.privs.push_back(PRIV_GRANT_PRIV);
 
 	pid_t pci = bootstrap("/PCI", std::slist<std::string>(), bsops);
 	registerName(pci, "system.bus.pci");
@@ -50,6 +49,8 @@ extern "C" int main() {
 	bsops.iobits.clear();
 	bsops.iobits.push_back(0x60);
 	bsops.iobits.push_back(0x64);
+
+	bsops.privs.clear();
 	bsops.privs.push_back(PRIV_IRQ);
 
 	pid_t keyboard = bootstrap("/Keyboard", std::slist<std::string>(), bsops);
