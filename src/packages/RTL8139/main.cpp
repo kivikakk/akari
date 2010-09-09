@@ -82,6 +82,9 @@ extern "C" int main() {
 	phptr pptr;
 	u8 *localbuff = static_cast<u8 *>(mallocap(8192 + 16, &pptr));
 	AkariOutL(iobase + 0x30, pptr);
+	AkariOutW(iobase + 0x3C, 0x0005);	// TOK, ROK
+	AkariOutL(iobase + 0x44, 0xF);		// 1<<7 is WRAP bit. 0xF = AccBroad + AccMulti + AccPhysMatch + AccAllPack
+	AkariOutB(iobase + 0x37, 0x0C);		// RE + TE high
 	
 	while (true) {
 		struct queue_item_info info = *probeQueue();
