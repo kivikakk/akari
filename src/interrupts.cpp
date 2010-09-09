@@ -15,6 +15,7 @@
 // along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Akari.hpp>
+#include <UserIPC.hpp>
 #include <interrupts.hpp>
 #include <Console.hpp>
 #include <Descriptor.hpp>
@@ -63,6 +64,17 @@ void *isr_handler(struct modeswitch_registers *r) {
 		// TODO OMG: refactor this code! It's terrible! Half-copied from
 		// UserCalls.cpp and the surrounding architecture to skip a killed
 		// task in Syscalls. These can be unified, now.
+
+		Tasks::Task *task = Akari->tasks->start;
+		while (task) {
+			if (task == Akari->tasks->current) {
+				task = task->next;
+				continue;
+			}
+
+			task->unblockTypeWith(User::IPC::WaitProcessCall::type(), Akari->tasks->current->id);
+			task = task->next;
+		}
 
 		Tasks::Task *nextTask = Akari->tasks->prepareFetchNextTask();
 
