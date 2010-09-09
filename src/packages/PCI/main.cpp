@@ -168,13 +168,9 @@ void check_non_hds() {
 		printf("bootstrapping %s\n", filename);
 
 		bootstrap_options_t bsops;
-		bsops.iobits.push_back(0xc100);
-		bsops.iobits.push_back(0xc101);
-		bsops.iobits.push_back(0xc102);
-		bsops.iobits.push_back(0xc103);
-		bsops.iobits.push_back(0xc104);
-		bsops.iobits.push_back(0xc105);
-		bsops.iobits.push_back(0xc106);
+		bsops.privs.push_back(PRIV_PHYSADDR);
+		for (u32 i = 0; i < 0x53; ++i)
+			bsops.iobits.push_back(0xc100 + i);
 
 		bootstrap(filename, std::slist<std::string>(), bsops);
 		delete [] filename;

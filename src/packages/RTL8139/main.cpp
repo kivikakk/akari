@@ -72,6 +72,16 @@ extern "C" int main() {
 	printf("RTL8139: started (IO base %4x, IRQ %d)\n", iobase, irq);
 	printf("RTL8139: MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 			macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
+
+	AkariOutB(iobase + 0x52, 0x00);
+	AkariOutB(iobase + 0x37, 0x10);
+	while (AkariInB(iobase + 0x37) & 0x10) {
+		printf(".");
+	}
+
+	phptr pptr;
+	u8 *localbuff = static_cast<u8 *>(mallocap(8192 + 16, &pptr));
+	AkariOutL(iobase + 0x30, pptr);
 	
 	while (true) {
 		struct queue_item_info info = *probeQueue();
