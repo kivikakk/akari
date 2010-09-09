@@ -20,7 +20,7 @@
 #include <UserProcess.hpp>
 #include <UserCalls.hpp>
 
-pid_t bootstrap(const char *filename, const char **args) {
+pid_t bootstrap(const char *filename, const std::slist<std::string> &args, const bootstrap_options_t &options) {
 	FILE *prog = fopen(filename, "r");
 	if (!prog) {
 		printf("couldn't open %s\n", filename);
@@ -32,8 +32,29 @@ pid_t bootstrap(const char *filename, const char **args) {
 	fread(image, image_len, 1, prog);
 	fclose(prog);
 
-	pid_t pid = spawn(filename, image, image_len, args);
+	char **argsc = new char*[args.size() + 1];
+	u32 i = 0;
+	for (std::slist<std::string>::iterator it = args.begin(); it != args.end(); ++it) {
+		argsc[i++] = strdup(it->c_str());
+	}
+	argsc[i] = 0;
+
+	pid_t task = spawn(filename, image, image_len, argsc);
+
+	for (i = 0; i < args.size(); ++i)
+		delete [] argsc[i];
+	delete [] argsc;
 	delete [] image;
-	return pid;
+
+	for (std::slist<u32>::iterator it = options.privs.begin(); it != options.privs.end(); ++it)
+		grantPrivilege(task, *it);
+
+	for (std::slist<u16>::iterator it = options.iobits.begin(); it != options.iobits.end(); ++it)
+		grantIOPriv(task, *it);
+
+
+	beginExecution(task);
+
+	return task;
 }
 

@@ -24,7 +24,7 @@
 #include <ELFInternal.hpp>
 #include <interrupts.hpp>
 
-Tasks::Tasks(): start(0), current(0), priorityStart(0), registeredTasks()
+Tasks::Tasks(): start(0), current(0), priorityStart(0), registeredTasks(), tasksByPid()
 { }
 
 u8 Tasks::versionMajor() const { return 0; }
@@ -277,6 +277,8 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 	nt->heapStart = PROCESS_HEAP_START;
 	nt->heapEnd = nt->heapMax = PROCESS_HEAP_START + PROCESS_HEAP_SIZE;
 	// Heap will be initialised first time we switch to the process.
+	
+	Akari->tasks->tasksByPid[nt->id] = nt;
 
 	return nt;
 }

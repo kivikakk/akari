@@ -84,15 +84,6 @@ namespace IPC {
 		return 0;
 	}
 
-	bool grantPrivilege(pid_t pid, priv_t priv) {
-		requirePrivilege(PRIV_GRANT_PRIV);
-		Tasks::Task *task = Akari->tasks->getTaskById(pid);
-		if (!task)
-			return false;
-		task->grantPrivilege(priv);
-		return true;
-	}
-
 	pid_t processId() {
 		return Akari->tasks->current->id;
 	}

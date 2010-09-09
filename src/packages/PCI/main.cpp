@@ -133,7 +133,7 @@ void check_hds() {
 	while (p->name) {
 		char *filename = rasprintf("/drivers/%s", p->name);
 		if (fexists(filename)) {
-			bootstrap(filename, 0);
+			bootstrap(filename);
 		}
 
 		delete [] filename;
@@ -166,7 +166,7 @@ void check_non_hds() {
 		}
 
 		printf("bootstrapping %s\n", filename);
-		bootstrap(filename, 0);
+		bootstrap(filename);
 		delete [] filename;
 	}
 

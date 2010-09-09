@@ -18,8 +18,19 @@
 #define __PROC_HPP
 
 #include <arch.hpp>
+#include <string>
+#include <slist>
 
-pid_t bootstrap(const char *filename, const char **args);
+typedef class BootstrapOptions {
+public:
+	BootstrapOptions(): privs(), iobits() {
+	}
+
+	std::slist<u32> privs;
+	std::slist<u16> iobits;
+} bootstrap_options_t;
+
+pid_t bootstrap(const char *filename, const std::slist<std::string> &args=std::slist<std::string>(), const bootstrap_options_t &options=bootstrap_options_t());
 
 #endif
 

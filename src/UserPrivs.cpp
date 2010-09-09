@@ -19,6 +19,8 @@
 #include <Tasks.hpp>
 #include <UserCalls.hpp>
 
+#if defined(__AKARI_KERNEL)
+
 namespace User {
 
 void requirePrivilege(priv_t priv) {
@@ -28,3 +30,5 @@ void requirePrivilege(priv_t priv) {
 }
 
 }
+
+#endif

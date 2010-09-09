@@ -17,6 +17,7 @@
 #include <UserIPCQueue.hpp>
 
 #if defined(__AKARI_KERNEL)
+
 #include <Akari.hpp>
 #include <Console.hpp>
 #include <Symbol.hpp>

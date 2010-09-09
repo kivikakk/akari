@@ -188,6 +188,7 @@ public:
 	Task *start, *current;
 	Task *priorityStart;
 	std::map<Symbol, Task *> registeredTasks;
+	std::map<pid_t, Task *> tasksByPid;
 };
 
 #endif

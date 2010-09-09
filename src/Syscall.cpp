@@ -43,7 +43,6 @@ Syscall::Syscall(): _syscalls_assigned(0), _returnTask(0) {
 
 	addSyscall(43, reinterpret_cast<syscall_fn_t>(&User::IPC::getProcessList));
 	addSyscall(44, reinterpret_cast<syscall_fn_t>(&User::IPC::waitProcess));
-	addSyscall(45, reinterpret_cast<syscall_fn_t>(&User::IPC::grantPrivilege));
 
 	addSyscall(24, reinterpret_cast<syscall_fn_t>(&User::IPC::processId));
 	addSyscall(25, reinterpret_cast<syscall_fn_t>(&User::IPC::processIdByName));
@@ -68,6 +67,9 @@ Syscall::Syscall(): _syscalls_assigned(0), _returnTask(0) {
 
 	addSyscall(35, reinterpret_cast<syscall_fn_t>(&User::Process::fork));
 	addSyscall(36, reinterpret_cast<syscall_fn_t>(&User::Process::spawn));
+	addSyscall(45, reinterpret_cast<syscall_fn_t>(&User::Process::grantPrivilege));
+	addSyscall(46, reinterpret_cast<syscall_fn_t>(&User::Process::grantIOPriv));
+	addSyscall(47, reinterpret_cast<syscall_fn_t>(&User::Process::beginExecution));
 }
 
 u8 Syscall::versionMajor() const { return 0; }

@@ -31,35 +31,42 @@ namespace Process {
 		return 0;
 	}
 
-	pid_t spawn(const char *name, const u8 *elf, u32 elf_len, const char **args) {
+	pid_t spawn(const char *name, const u8 *elf, u32 elf_len, char *const *args) {
 		std::list<std::string> argl;
 
 		while (args && *args) 
 			argl.push_back(*args++);
 
 		Tasks::Task *new_task = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, name, argl);
-
 		Akari->elf->loadImageInto(new_task, elf);
-		
-		// Oh, this is terrible. XXX
-		new_task->next = Akari->tasks->start;
-		Akari->tasks->start = new_task;
-
-		// HACK for KB to work here.
-		new_task->setIOMap(0x60, true);
-		new_task->setIOMap(0x64, true);
-
-		// HACK for PCI to work
-		new_task->setIOMap(0xCF8, true);
-		new_task->setIOMap(0xCF9, true);
-		new_task->setIOMap(0xCFA, true);
-		new_task->setIOMap(0xCFB, true);
-		new_task->setIOMap(0xCFC, true);
-		new_task->setIOMap(0xCFD, true);
-		new_task->setIOMap(0xCFE, true);
-		new_task->setIOMap(0xCFF, true);
-
 		return new_task->id;
+	}
+
+	bool grantPrivilege(pid_t taskpid, u16 priv) {
+		requirePrivilege(PRIV_GRANT_PRIV);
+		Tasks::Task *task = Akari->tasks->tasksByPid[taskpid];
+		if (!task)
+			return false;
+		task->grantPrivilege(static_cast<priv_t>(priv));
+		return true;
+	}
+
+	bool grantIOPriv(pid_t taskpid, u16 port) {
+		requirePrivilege(PRIV_GRANT_PRIV);
+		Tasks::Task *task = Akari->tasks->tasksByPid[taskpid];
+		if (!task)
+			return false;
+		task->setIOMap(port, true);
+		return true;
+	}
+
+	bool beginExecution(pid_t taskpid) {
+		Tasks::Task *task = Akari->tasks->tasksByPid[taskpid];
+		if (!task)
+			return false;
+		task->next = Akari->tasks->start;
+		Akari->tasks->start = task;
+		return true;
 	}
 }
 }

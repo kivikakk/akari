@@ -25,7 +25,20 @@
 #include "../PCI/PCIProto.hpp"
 
 extern "C" int main() {
-	pid_t pci = bootstrap("/PCI", 0);
+	printf("Booter: started\n");
+
+	bootstrap_options_t bsops;
+
+	bsops.iobits.push_back(0xCF8);
+	bsops.iobits.push_back(0xCF9);
+	bsops.iobits.push_back(0xCFA);
+	bsops.iobits.push_back(0xCFB);
+	bsops.iobits.push_back(0xCFC);
+	bsops.iobits.push_back(0xCFD);
+	bsops.iobits.push_back(0xCFE);
+	bsops.iobits.push_back(0xCFF);
+
+	pid_t pci = bootstrap("/PCI", std::slist<std::string>(), bsops);
 	registerName(pci, "system.bus.pci");
 	
 	{
@@ -34,13 +47,15 @@ extern "C" int main() {
 		shiftQueue(probeQueueFor(msg_id));
 	}
 
-	printf("Booter: started\n");
+	bsops.iobits.clear();
+	bsops.iobits.push_back(0x60);
+	bsops.iobits.push_back(0x64);
+	bsops.privs.push_back(PRIV_IRQ);
 
-	pid_t kb = bootstrap("/Keyboard", 0);
-	grantPrivilege(kb, PRIV_IRQ);
-	registerName(kb, "system.io.keyboard");
+	pid_t keyboard = bootstrap("/Keyboard", std::slist<std::string>(), bsops);
+	registerName(keyboard, "system.io.keyboard");
 
-	bootstrap("/Shell", 0);
+	bootstrap("/Shell");
 
 	return 0;
 }
