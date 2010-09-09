@@ -190,6 +190,8 @@ void check_all_devices() {
 				} else if (vendor != 0xFFFF) {
 					u16 device = read_config_word(bus, slot, fn, 2);
 
+					printf("PCI: %04x/%02x/%02x %04x:%04x\n", bus, slot, fn, vendor, device);
+
 					std::slist<device_t> &dl = all_devices[((u32)vendor) << 16 | (u32)device];
 					dl.push_back(DEVICE(bus, slot, fn));
 				}
