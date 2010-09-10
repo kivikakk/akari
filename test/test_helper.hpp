@@ -26,13 +26,7 @@ public:
 	void putString(const char *s);
 };
 
-class Kernel {
-public:
-	Kernel();
-	Console *console;
-};
-
-extern Kernel *Akari;
+extern Console *mu_console;
 
 #define DEBUG
 #define __PTR_TYPE_DEFINED__

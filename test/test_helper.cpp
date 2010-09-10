@@ -19,10 +19,7 @@
 #include <cstdarg>
 #include <cstdlib>
 
-Kernel *Akari = new Kernel();
-
-Kernel::Kernel(): console(new Console())
-{ }
+Console *mu_console = new Console();
 
 void Console::printf(const char *s, ...) {
 	va_list ap;

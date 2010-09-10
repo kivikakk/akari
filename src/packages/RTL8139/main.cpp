@@ -22,6 +22,7 @@
 #include <vector>
 #include <debug.hpp>
 
+#include "RTL.hpp"
 #include "RTL8139Proto.hpp"
 #include "main.hpp"
 #include "../PCI/PCIProto.hpp"
@@ -85,6 +86,9 @@ extern "C" int main() {
 	AkariOutW(iobase + IntrMask, TxOK | RxOK);	// TOK, ROK
 	AkariOutL(iobase + RxConfig, AcceptAllPhys | AcceptMyPhys | AcceptMulticast | AcceptBroadcast);
 	AkariOutB(iobase + ChipCmd, CmdTxEnb | CmdRxEnb);		// RE + TE high
+
+	// XXX
+	delete [] localbuff;
 	
 	while (true) {
 		struct queue_item_info info = *probeQueue();

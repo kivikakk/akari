@@ -26,14 +26,14 @@
 
 // Maximum events (Rx packets, etc.) to handle at each interrupt
 
-static int max_interrupt_work = 20;
+// static int max_interrupt_work = 20;
 
 // Maximum number of multicast addresses to filter (vs. Rx-all-multicast).
 // The RTL chips use a 64 element hash table based on the Ethernet CRC.  It
 // is efficient to update the hardware filter, but recalculating the table
 // for a long filter list is painful
 
-static int multicast_filter_limit = 32;
+// static int multicast_filter_limit = 32;
 
 // Operational parameters that are set at compile time
 
@@ -111,7 +111,7 @@ enum RTL8139_registers
   FIFOTMS          = 0x70,        // FIFO Control and test
   CSCR             = 0x74,        // Chip Status and Configuration Register
   PARA78           = 0x78, 
-  PARA7c           = 0x7c,        // Magic transceiver parameter register
+  PARA7c           = 0x7c        // Magic transceiver parameter register
 };
 
 enum ChipCmdBits 
@@ -119,7 +119,7 @@ enum ChipCmdBits
   RxBufEmpty = 0x01,
   CmdTxEnb   = 0x04,
   CmdRxEnb   = 0x08,
-  CmdReset   = 0x10,
+  CmdReset   = 0x10
 };
 
 // Interrupt register bits
@@ -134,7 +134,7 @@ enum IntrStatusBits
   RxUnderrun = 0x0020, 
   RxFIFOOver = 0x0040, 
   PCSTimeout = 0x4000,
-  PCIErr     = 0x8000, 
+  PCIErr     = 0x8000 
 };
 
 enum TxStatusBits 
@@ -144,7 +144,7 @@ enum TxStatusBits
   TxStatOK      = 0x00008000,
   TxOutOfWindow = 0x20000000,
   TxAborted     = 0x40000000,
-  TxCarrierLost = 0x80000000,
+  TxCarrierLost = 0x80000000
 };
 
 enum RxStatusBits 
@@ -157,7 +157,7 @@ enum RxStatusBits
   RxBadSymbol = 0x0020, 
   RxBroadcast = 0x2000,
   RxPhysical  = 0x4000, 
-  RxMulticast = 0x8000, 
+  RxMulticast = 0x8000 
 };
 
 // Bits in RxConfig
@@ -169,7 +169,7 @@ enum RxConfigBits
   AcceptMulticast = 0x04, 
   AcceptRunt      = 0x10, 
   AcceptErr       = 0x20, 
-  AcceptBroadcast = 0x08,
+  AcceptBroadcast = 0x08
 };
 
 enum CSCRBits 
@@ -178,7 +178,7 @@ enum CSCRBits
   CSCR_LinkDownOffCmd = 0x003c0,
   CSCR_LinkChangeBit  = 0x00800,
   CSCR_LinkStatusBits = 0x0f000, 
-  CSCR_LinkDownCmd    = 0x0f3c0,
+  CSCR_LinkDownCmd    = 0x0f3c0
 };
 
 // Twister tuning parameters from RealTek.
@@ -196,6 +196,7 @@ unsigned long param[4][4] =
   {0xbb39de43, 0xbb39ce43, 0xbb39ce83, 0xbb39ce83}
 };
 
+/*
 struct nic 
 {
   dev_t devno;                          // Device number
@@ -249,6 +250,7 @@ struct nic
   unsigned char medialock;              // Don't sense media type
   unsigned char mediasense;             // Media sensing in progress
 };
+*/
 
 #endif
 
