@@ -29,10 +29,10 @@ void AkariPanic(const char *message) {
 	for (u16 j = 0; j < 80 * 25; ++j, ++i)
 		*(reinterpret_cast<u8 *>(i) + 1) = SCREEN_DEATH;
 	
-	if (Akari && Akari->console) {
-		Akari->console->putString(PANIC_MSG);
-		Akari->console->putString("\n");
-		Akari->console->putString(message);
+	if (mu_console) {
+		mu_console->putString(PANIC_MSG);
+		mu_console->putString("\n");
+		mu_console->putString(message);
 	} else {
 		// "Clever."
 		i = reinterpret_cast<u16 *>(SCREEN_VMEM);

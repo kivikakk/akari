@@ -23,7 +23,7 @@
 #include <Descriptor.hpp>
 
 Syscall::Syscall(): _syscalls_assigned(0), _returnTask(0) {
-	Akari->descriptor->idt->installHandler(0x80, &Syscall::_handler);
+	mu_descriptor->idt->installHandler(0x80, &Syscall::_handler);
 
 	// TODO: renumber me someday. There are big holes.
 	addSyscall(0, reinterpret_cast<syscall_fn_t>(&User::putc));
@@ -72,11 +72,6 @@ Syscall::Syscall(): _syscalls_assigned(0), _returnTask(0) {
 	addSyscall(47, reinterpret_cast<syscall_fn_t>(&User::Process::beginExecution));
 }
 
-u8 Syscall::versionMajor() const { return 0; }
-u8 Syscall::versionMinor() const { return 1; }
-const char *Syscall::versionManufacturer() const { return "Akari"; }
-const char *Syscall::versionProduct() const { return "Akari Syscall"; }
-
 void Syscall::addSyscall(u16 num, syscall_fn_t fn) {
 	_syscalls[num] = fn;
 }
@@ -86,8 +81,8 @@ void Syscall::returnToTask(Tasks::Task *task) {
 }
 
 void Syscall::returnToNextTask() {
-	Tasks::Task *nextTask = Akari->tasks->prepareFetchNextTask();
-	if (nextTask == Akari->tasks->current) {
+	Tasks::Task *nextTask = mu_tasks->prepareFetchNextTask();
+	if (nextTask == mu_tasks->current) {
 		AkariPanic("TODO: let no 'active' processes being running. i.e. have the ukernel HLT or similar. -- bigger question; why isn't idle task running!? or why is it trying to 'returnToNextTask' from a syscall?");
 	}
 		
@@ -97,12 +92,12 @@ void Syscall::returnToNextTask() {
 void *Syscall::_handler(struct modeswitch_registers *regs) {
 	if (regs->callback.eax >= AKARI_SYSCALL_MAXCALLS)
 		AkariPanic("System call greater than maximum requested. TODO: kill requesting process.");
-	if (!Akari->syscall->_syscalls[regs->callback.eax])
+	if (!mu_syscall->_syscalls[regs->callback.eax])
 		AkariPanic("Non-existing system call requested.");
 
-	Akari->syscall->_returnTask = 0;
+	mu_syscall->_returnTask = 0;
 
-	syscall_fn_t call = Akari->syscall->_syscalls[regs->callback.eax];
+	syscall_fn_t call = mu_syscall->_syscalls[regs->callback.eax];
     int ret;
     asm volatile("  \
         push %1; \
@@ -123,10 +118,10 @@ void *Syscall::_handler(struct modeswitch_registers *regs) {
 
     regs->callback.eax = ret;
 
-	if (Akari->syscall->_returnTask) {
-		Akari->tasks->saveRegisterToTask(Akari->tasks->current, regs);
-		Akari->tasks->current = Akari->syscall->_returnTask;
-		return Akari->tasks->assignInternalTask(Akari->tasks->current);
+	if (mu_syscall->_returnTask) {
+		mu_tasks->saveRegisterToTask(mu_tasks->current, regs);
+		mu_tasks->current = mu_syscall->_returnTask;
+		return mu_tasks->assignInternalTask(mu_tasks->current);
 	}
 
 	return regs;

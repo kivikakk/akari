@@ -50,42 +50,42 @@ void *isr_handler(struct modeswitch_registers *r) {
 	ASSERT(r->callback.int_no < 0x20 || r->callback.int_no >= 0x30);
 	// I guess this is right? What other IDTs are there? Hm.
 
-	void *resume = Akari->descriptor->idt->callHandler(r->callback.int_no, r);
+	void *resume = mu_descriptor->idt->callHandler(r->callback.int_no, r);
 	if (!resume) {
 		// nothing to call!
-		Akari->console->putChar('\n');
-		Akari->console->putString((r->callback.int_no < 32 && isr_messages[r->callback.int_no]) ? isr_messages[r->callback.int_no] : "[Intel reserved]");
-		Akari->console->putString(" exception occured!\n");
+		mu_console->putChar('\n');
+		mu_console->putString((r->callback.int_no < 32 && isr_messages[r->callback.int_no]) ? isr_messages[r->callback.int_no] : "[Intel reserved]");
+		mu_console->putString(" exception occured!\n");
 
-		Akari->console->printf("EIP: %x, ESP: %x, EBP: %x, CS: %x, EFLAGS: %x, useresp: %x\nProcess 0x%x \"%s\" killed.\n",
+		mu_console->printf("EIP: %x, ESP: %x, EBP: %x, CS: %x, EFLAGS: %x, useresp: %x\nProcess 0x%x \"%s\" killed.\n",
 			r->callback.eip, r->callback.esp, r->callback.ebp, r->callback.cs, r->callback.eflags, r->useresp,
-			Akari->tasks->current->id, Akari->tasks->current->name.c_str());
+			mu_tasks->current->id, mu_tasks->current->name.c_str());
 
 		// TODO OMG: refactor this code! It's terrible! Half-copied from
 		// UserCalls.cpp and the surrounding architecture to skip a killed
 		// task in Syscalls. These can be unified, now.
 
-		Tasks::Task *task = Akari->tasks->start;
+		Tasks::Task *task = mu_tasks->start;
 		while (task) {
-			if (task == Akari->tasks->current) {
+			if (task == mu_tasks->current) {
 				task = task->next;
 				continue;
 			}
 
-			task->unblockTypeWith(User::IPC::WaitProcessCall::type(), Akari->tasks->current->id);
+			task->unblockTypeWith(User::IPC::WaitProcessCall::type(), mu_tasks->current->id);
 			task = task->next;
 		}
 
-		Tasks::Task *nextTask = Akari->tasks->prepareFetchNextTask();
+		Tasks::Task *nextTask = mu_tasks->prepareFetchNextTask();
 
-		Tasks::Task **scanner = &Akari->tasks->start;
-		while (*scanner != Akari->tasks->current) {
+		Tasks::Task **scanner = &mu_tasks->start;
+		while (*scanner != mu_tasks->current) {
 			scanner = &(*scanner)->next;
 		}
 		*scanner = (*scanner)->next;
 
-		Akari->tasks->current = nextTask;
-		return Akari->tasks->assignInternalTask(Akari->tasks->current);
+		mu_tasks->current = nextTask;
+		return mu_tasks->assignInternalTask(mu_tasks->current);
 	}
 
 	return resume;
@@ -98,6 +98,6 @@ void *irq_handler(struct modeswitch_registers *r) {
 		AkariOutB(0xA0, 0x20);		// EOI to slave IRQ controller
 	AkariOutB(0x20, 0x20);			// EOI to master IRQ controller
 
-	return Akari->descriptor->irqt->callHandler(r->callback.int_no - 0x20, r);
+	return mu_descriptor->irqt->callHandler(r->callback.int_no - 0x20, r);
 }
 

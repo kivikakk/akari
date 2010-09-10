@@ -17,7 +17,6 @@
 #ifndef __TASKS_HPP__
 #define __TASKS_HPP__
 
-#include <Subsystem.hpp>
 #include <Memory.hpp>
 #include <interrupts.hpp>
 #include <map>
@@ -41,17 +40,12 @@
 
 #define USER_TASK_BASE				0x50000000
 
-class Tasks : public Subsystem {
+class Tasks {
 public:
 	Tasks();
 
 	explicit Tasks(const Tasks &);
 	Tasks &operator =(const Tasks &);
-
-	u8 versionMajor() const;
-	u8 versionMinor() const;
-	const char *versionManufacturer() const;
-	const char *versionProduct() const;
 
 	static void SwitchRing(u8 cpl, u8 iopl);
 

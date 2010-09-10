@@ -25,16 +25,11 @@ TimerEvent::TimerEvent(u32 at): at(at)
 { }
 
 TimerEvent::~TimerEvent() {
-	Akari->timer->desched(*this);
+	mu_timer->desched(*this);
 }
 
 Timer::Timer(): time_til_next(), events()
 { }
-
-u8 Timer::versionMajor() const { return 0; }
-u8 Timer::versionMinor() const { return 1; }
-const char *Timer::versionManufacturer() const { return "Akari"; }
-const char *Timer::versionProduct() const { return "Akari Timer Manager"; }
 
 void Timer::setTimer(u16 hz) {
 	u16 r = 0x1234dc / hz;

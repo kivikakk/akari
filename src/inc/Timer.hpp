@@ -17,7 +17,6 @@
 #ifndef __TIMER_HPP__
 #define __TIMER_HPP__
 
-#include <Subsystem.hpp>
 #include <Tasks.hpp>
 #include <list>
 #include <counted_ptr>
@@ -34,14 +33,9 @@ public:
 	u32 at;
 };
 
-class Timer : public Subsystem {
+class Timer {
 public:
 	Timer();
-
-	u8 versionMajor() const;
-	u8 versionMinor() const;
-	const char *versionManufacturer() const;
-	const char *versionProduct() const;
 
 	void setTimer(u16);
 	void tick();

@@ -27,11 +27,6 @@
 Tasks::Tasks(): start(0), current(0), priorityStart(0), registeredTasks(), tasksByPid()
 { }
 
-u8 Tasks::versionMajor() const { return 0; }
-u8 Tasks::versionMinor() const { return 1; }
-const char *Tasks::versionManufacturer() const { return "Akari"; }
-const char *Tasks::versionProduct() const { return "Akari Task Manager"; }
-
 void Tasks::SwitchRing(u8 cpl, u8 iopl) {
 	// This code works by fashioning the stack to be right for a cross-privilege IRET into
 	// the ring, IOPL, etc. of our choice, simultaneously enabling interrupts.
@@ -93,7 +88,7 @@ Tasks::Task *Tasks::getTaskById(pid_t id) const {
 }
 
 static inline Tasks::Task *_NextTask(Tasks::Task *t) {
-	return t->next ? t->next : Akari->tasks->start;
+	return t->next ? t->next : mu_tasks->start;
 }
 
 Tasks::Task *Tasks::prepareFetchNextTask() {
@@ -147,15 +142,15 @@ void *Tasks::assignInternalTask(Task *task) {
 	// now set the page directory, ks for TSS (if applicable) and stack to switch to as appropriate
 	
 	ASSERT(task);
-	Akari->memory->switchPageDirectory(task->pageDir);
+	mu_memory->switchPageDirectory(task->pageDir);
 
 	if (!task->heap && task->heapStart != task->heapMax) {
 		task->heap = new Heap(task->heapStart, task->heapEnd, task->heapMax, PROC_HEAP_SIZE, false, false);	// false false? XXX Always?
 	}
 
 	if (task->cpl > 0) {
-		Akari->descriptor->gdt->setTSSStack(task->ks + sizeof(struct modeswitch_registers));
-		Akari->descriptor->gdt->setTSSIOMap(task->iomap);
+		mu_descriptor->gdt->setTSSStack(task->ks + sizeof(struct modeswitch_registers));
+		mu_descriptor->gdt->setTSSIOMap(task->iomap);
 	}
 
 	if (task->userWaiting) {
@@ -179,9 +174,9 @@ Tasks::Task *Tasks::Task::BootstrapInitialTask(u8 cpl, Memory::PageDirectory *pa
 	Task *nt = new Task(cpl, "initial task");
 
 	if (cpl > 0)
-		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE)) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		nt->ks = reinterpret_cast<u32>(mu_memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE)) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 	else {
-		// nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE)) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
+		// nt->ks = reinterpret_cast<u32>(mu_memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE)) + USER_TASK_KERNEL_STACK_SIZE - sizeof(struct modeswitch_registers);
 		AkariPanic("I haven't tested a non-user initial task. Uncomment this panic at your own peril.");
 		// i.e. you may need to add some code as deemed appropriate here. Current thoughts are that you may need to
 		// be careful about where you placed the stack.. probably not, but just check it all matches up?
@@ -204,7 +199,7 @@ static u32 load_task_argv(Tasks::Task *nt, const std::list<std::string> &args) {
 	u32 base = total_args_len + 4 * (args.size() + 4);
 
 	u32 start_phys;
-	u8 *start_page = static_cast<u8 *>(Akari->memory->allocAligned(0x1000, &start_phys));
+	u8 *start_page = static_cast<u8 *>(mu_memory->allocAligned(0x1000, &start_phys));
 	*reinterpret_cast<u32 *>(start_page + 0x1000 - base) = 0xDEADBEEF;
 
 	*reinterpret_cast<u32 *>(start_page + 0x1000 - base + 4) = args.size();
@@ -224,7 +219,7 @@ static u32 load_task_argv(Tasks::Task *nt, const std::list<std::string> &args) {
 
 	AkariCopyFramePhysical(start_phys, nt->pageDir->getPage(USER_TASK_BASE - 0x1000, true)->pageAddress * 0x1000);
 
-	Akari->memory->free(start_page);
+	mu_memory->free(start_page);
 
 	return base;
 }
@@ -243,7 +238,7 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 			nt->pageDir->getPage(page, true)->allocAnyFrame(false, true);
 		}
 
-		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE))
+		nt->ks = reinterpret_cast<u32>(mu_memory->allocAligned(USER_TASK_KERNEL_STACK_SIZE))
 			+ USER_TASK_KERNEL_STACK_SIZE
 			- sizeof(struct modeswitch_registers);
 		regs = reinterpret_cast<struct modeswitch_registers *>(nt->ks);
@@ -254,7 +249,7 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 		regs->ss = 0x10 + (cpl * 0x11);		// same as ds: ss is set by TSS, ds is manually set by irq_timer_multitask after
 
 	} else {
-		nt->ks = reinterpret_cast<u32>(Akari->memory->allocAligned(USER_TASK_STACK_SIZE)) + USER_TASK_STACK_SIZE;
+		nt->ks = reinterpret_cast<u32>(mu_memory->allocAligned(USER_TASK_STACK_SIZE)) + USER_TASK_STACK_SIZE;
 		nt->ks -= sizeof(struct callback_registers);
 		regs = reinterpret_cast<struct modeswitch_registers *>(nt->ks);
 	}
@@ -278,7 +273,7 @@ Tasks::Task *Tasks::Task::CreateTask(u32 entry, u8 cpl, bool interruptFlag, u8 i
 	nt->heapEnd = nt->heapMax = PROCESS_HEAP_START + PROCESS_HEAP_SIZE;
 	// Heap will be initialised first time we switch to the process.
 	
-	Akari->tasks->tasksByPid[nt->id] = nt;
+	mu_tasks->tasksByPid[nt->id] = nt;
 
 	return nt;
 }
@@ -328,7 +323,7 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 		if (!pt) continue;
 
 		// Skip kernel linked tables.
-		if  (Akari->memory->_kernelDirectory->tables[pti] == pt) continue;
+		if  (mu_memory->_kernelDirectory->tables[pti] == pt) continue;
 
 		s32 last_start = -1;
 
@@ -467,7 +462,7 @@ u8 *Tasks::Task::dumpELFCore(u32 *size) const {
 	*size = sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr) * (1 + run_count) + 0x1000 * page_count + notes_size;
 
 	ptr_t helperphys;
-	u8 *helper = reinterpret_cast<u8 *>(Akari->memory->alloc(0x1000, &helperphys));
+	u8 *helper = reinterpret_cast<u8 *>(mu_memory->alloc(0x1000, &helperphys));
 	u8 *core = new u8[*size];
 
 	Elf32_Ehdr *hdr = reinterpret_cast<Elf32_Ehdr *>(core);

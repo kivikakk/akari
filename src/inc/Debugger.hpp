@@ -17,21 +17,15 @@
 #ifndef __DEBUGGER_HPP__
 #define __DEBUGGER_HPP__
 
-#include <Subsystem.hpp>
 #include <Tasks.hpp>
 #include <string>
 
-class Debugger : public Subsystem {
+class Debugger {
 public:
 	Debugger();
 
 	explicit Debugger(const Debugger &);
 	Debugger &operator =(const Debugger &);
-
-	u8 versionMajor() const;
-	u8 versionMinor() const;
-	const char *versionManufacturer() const;
-	const char *versionProduct() const;
 
 	void run();
 	void setReceiveFile(u8 *file, u32 size);

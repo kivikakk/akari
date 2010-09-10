@@ -18,9 +18,7 @@
 #define __AKARI_HPP__
 
 #include <arch.hpp>
-#include <list>
 
-class Subsystem;
 class Memory;
 class Console;
 class Descriptor;
@@ -30,32 +28,14 @@ class Syscall;
 class ELF;
 class Debugger;
 
-/**
- * The base class for the kernel services.
- */
-class Kernel {
-	public:
-		static Kernel *Construct(ptr_t, ptr_t);
-
-		explicit Kernel(const Kernel &);
-		Kernel &operator =(const Kernel &);
-
-		std::list<Subsystem *> subsystems;
-
-		Memory *memory;
-		Console *console;
-		Descriptor *descriptor;
-		Timer *timer;
-		Tasks *tasks;
-		Syscall *syscall;
-		ELF *elf;
-		Debugger *debugger;
-	
-	protected:
-		Kernel();
-};
-
-extern Kernel *Akari;
+extern Memory *mu_memory;
+extern Console *mu_console;
+extern Descriptor *mu_descriptor;
+extern Timer *mu_timer;
+extern Tasks *mu_tasks;
+extern Syscall *mu_syscall;
+extern ELF *mu_elf;
+extern Debugger *mu_debugger;
 
 #endif
 

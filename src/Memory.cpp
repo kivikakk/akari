@@ -36,11 +36,6 @@ _upperMemory(upperMemory), _placementAddress(0), _frames(0), _frameCount(0), _he
 _kernelDirectory(0), _activeDirectory(0)
 { }
 
-u8 Memory::versionMajor() const { return 0; }
-u8 Memory::versionMinor() const { return 1; }
-const char *Memory::versionManufacturer() const { return "Akari"; }
-const char *Memory::versionProduct() const { return "Akari Memory Heap"; }
-
 void Memory::setPlacementMode(ptr_t addr) {
 	ASSERT(!_placementAddress);
 
@@ -82,7 +77,7 @@ void Memory::setPaging(bool mode) {
 	for (ptr_t i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
 		_kernelDirectory->getPage(i, true)->allocAnyFrame(false, KERNEL_HEAP_PROMISC);
 
-	Akari->descriptor->idt->installHandler(14, this->PageFault);
+	mu_descriptor->idt->installHandler(14, this->PageFault);
 
 	switchPageDirectory(_kernelDirectory);
 	_heap = new Heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, KHEAP_INDEX_SIZE, false, !(KERNEL_HEAP_PROMISC));
@@ -155,16 +150,16 @@ void *Memory::PageFault(struct modeswitch_registers *r) {
 	bool reserved = 	r->callback.err_code & 0x8;
 	bool insFetch = 	r->callback.err_code & 0x10;
 
-	Akari->console->printf("\nPage fault!\n");
-	if (notPresent) Akari->console->printf(" * Page wasn't present.\n");
-	if (writeOp) 	Akari->console->printf(" * Write operation.\n");
-	if (userMode) 	Akari->console->printf(" * From user-mode.\n");
-	if (reserved) 	Akari->console->printf(" * Clobbered reserved bits in page.\n");
-	if (insFetch) 	Akari->console->printf(" * On instruction fetch.\n");
+	mu_console->printf("\nPage fault!\n");
+	if (notPresent) mu_console->printf(" * Page wasn't present.\n");
+	if (writeOp) 	mu_console->printf(" * Write operation.\n");
+	if (userMode) 	mu_console->printf(" * From user-mode.\n");
+	if (reserved) 	mu_console->printf(" * Clobbered reserved bits in page.\n");
+	if (insFetch) 	mu_console->printf(" * On instruction fetch.\n");
 
-	Akari->console->printf("Address: 0x%x\n", faultingAddress);
+	mu_console->printf("Address: 0x%x\n", faultingAddress);
 
-	//Akari->debugger->run();
+	//mu_debugger->run();
 
 	// Return 0, which tells the interrupt handler to kill this process.
 	return 0;
@@ -225,8 +220,8 @@ ptr_t Memory::freeFrame() const {
 void Memory::Page::allocAnyFrame(bool kernel, bool writeable) {
 	ASSERT(!pageAddress);
 
-	ptr_t addr = Akari->memory->freeFrame();
-	Akari->memory->setFrame(addr);
+	ptr_t addr = mu_memory->freeFrame();
+	mu_memory->setFrame(addr);
 	present = true;
 	readwrite = writeable;
 	user = !kernel;
@@ -236,7 +231,7 @@ void Memory::Page::allocAnyFrame(bool kernel, bool writeable) {
 void Memory::Page::allocFrame(ptr_t addr, bool kernel, bool writeable) {
 	ASSERT(!pageAddress);
 
-	Akari->memory->setFrame(addr);
+	mu_memory->setFrame(addr);
 	present = true;
 	readwrite = writeable;
 	user = !kernel;
@@ -246,7 +241,7 @@ void Memory::Page::allocFrame(ptr_t addr, bool kernel, bool writeable) {
 // PageTable
 
 Memory::PageTable *Memory::PageTable::Allocate(ptr_t *phys) {
-	PageTable *table = static_cast<PageTable *>(Akari->memory->allocAligned(sizeof(PageTable), phys));
+	PageTable *table = static_cast<PageTable *>(mu_memory->allocAligned(sizeof(PageTable), phys));
 	memset(table, 0, sizeof(PageTable));
 	return table;
 }
@@ -280,7 +275,7 @@ Memory::PageTable *Memory::PageTable::clone(ptr_t *phys) const {
 Memory::PageDirectory *Memory::PageDirectory::Allocate() {
 	ptr_t phys;
 
-	PageDirectory *dir = static_cast<PageDirectory *>(Akari->memory->allocAligned(sizeof(PageDirectory), &phys));
+	PageDirectory *dir = static_cast<PageDirectory *>(mu_memory->allocAligned(sizeof(PageDirectory), &phys));
 	memset(dir, 0, sizeof(PageDirectory));
 	ptr_t off = reinterpret_cast<ptr_t>(dir->tablePhysicals) - reinterpret_cast<ptr_t>(dir);
 	dir->physicalAddr = phys + off;						// check above
@@ -311,7 +306,7 @@ Memory::PageDirectory *Memory::PageDirectory::clone() const {
 	for (u32 i = 0; i < 1024; ++i) {
 		if (!tables[i])
 			continue;
-		if (Akari->memory->_kernelDirectory->tables[i] == tables[i]) {
+		if (mu_memory->_kernelDirectory->tables[i] == tables[i]) {
 			// kernel has this table, so just link it
 			d->tables[i] = tables[i];
 			d->tablePhysicals[i] = (tablePhysicals[i] & ~0x7) | 0x5;	// present, user

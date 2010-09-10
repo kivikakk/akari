@@ -25,16 +25,11 @@
 ELF::ELF()
 { }
 
-u8 ELF::versionMajor() const { return 0; }
-u8 ELF::versionMinor() const { return 1; }
-const char *ELF::versionManufacturer() const { return "Akari"; }
-const char *ELF::versionProduct() const { return "Akari ELF Loader"; }
-
 bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	const Elf32_Ehdr *hdr = reinterpret_cast<const Elf32_Ehdr *>(image);
 
 #ifdef ELF_DEBUG
-	Akari->console->printf("image is at 0x%x, entry point apparently 0x%x\n", reinterpret_cast<u32>(image), hdr->e_entry);
+	mu_console->printf("image is at 0x%x, entry point apparently 0x%x\n", reinterpret_cast<u32>(image), hdr->e_entry);
 #endif
 
 	if (hdr->e_ident[EI_MAG0] != 0x7f) return false;
@@ -46,13 +41,13 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	reinterpret_cast<struct modeswitch_registers *>(task->ks)->callback.eip = hdr->e_entry;
 
 #ifdef ELF_DEBUG
-	Akari->console->printf("type: ");
+	mu_console->printf("type: ");
 	switch (hdr->e_type) {
-		case ET_NONE:	Akari->console->printf("none\n"); break;
-		case ET_REL:	Akari->console->printf("relocatable\n"); break;
-		case ET_EXEC:	Akari->console->printf("executable\n"); break;
-		case ET_DYN:	Akari->console->printf("shared object\n"); break;
-		case ET_CORE:	Akari->console->printf("core\n"); break;
+		case ET_NONE:	mu_console->printf("none\n"); break;
+		case ET_REL:	mu_console->printf("relocatable\n"); break;
+		case ET_EXEC:	mu_console->printf("executable\n"); break;
+		case ET_DYN:	mu_console->printf("shared object\n"); break;
+		case ET_CORE:	mu_console->printf("core\n"); break;
 	}
 #endif
 	
@@ -64,12 +59,12 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	// XXX unforunately, as a side effect, we're reloading the page directory every time we move
 	// the 'wand', which is slow.  We need a better way to do this.
 
-	u8 *magic_wand = static_cast<u8 *>(Akari->memory->allocAligned(0x1000));
-	Memory::Page *wand_page = Akari->memory->_activeDirectory->getPage(reinterpret_cast<u32>(magic_wand), false);
+	u8 *magic_wand = static_cast<u8 *>(mu_memory->allocAligned(0x1000));
+	Memory::Page *wand_page = mu_memory->_activeDirectory->getPage(reinterpret_cast<u32>(magic_wand), false);
 	ASSERT(wand_page);
 
 #ifdef ELF_DEBUG
-	Akari->console->printf("wppA was %x, wp at %x\n", wand_page->pageAddress, (u32)wand_page);
+	mu_console->printf("wppA was %x, wp at %x\n", wand_page->pageAddress, (u32)wand_page);
 #endif
 
 	// We can now twiddle wand_page->pageAddress to change where 'magic_wand' looks at.
@@ -80,7 +75,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 
 		if (ph->p_type == PT_LOAD) {
 #ifdef ELF_DEBUG
-			Akari->console->printf("header at %x mapped to v/p %x/%x f/msz %x/%x align %x\n",
+			mu_console->printf("header at %x mapped to v/p %x/%x f/msz %x/%x align %x\n",
 				ph->p_offset, ph->p_vaddr, ph->p_paddr, ph->p_filesz, ph->p_memsz, ph->p_align);
 #endif
 
@@ -92,7 +87,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 					copy = ph->p_memsz - copied;
 
 #ifdef ELF_DEBUG
-				Akari->console->printf("\tvirt 0x%x", virt + copied);
+				mu_console->printf("\tvirt 0x%x", virt + copied);
 #endif
 
 				Memory::Page *page = task->pageDir->getPage((virt + copied) & ~0xfff, true);
@@ -102,12 +97,12 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 
 
 #ifdef ELF_DEBUG
-				Akari->console->printf(" (wand %x %x", wand_page->pageAddress, *((u8 *)magic_wand));
+				mu_console->printf(" (wand %x %x", wand_page->pageAddress, *((u8 *)magic_wand));
 #endif
 				wand_page->pageAddress = page->pageAddress;
 				__asm__ __volatile__("mov %%cr3, %%eax; mov %%eax, %%cr3" : : : "%eax");
 #ifdef ELF_DEBUG
-				Akari->console->printf("->%x %x) len 0x%x phys 0x%x off 0x%x\n",
+				mu_console->printf("->%x %x) len 0x%x phys 0x%x off 0x%x\n",
 						*((u8 *)magic_wand), wand_page->pageAddress,
 						copy, page->pageAddress * 0x1000, (virt + copied) % 0x1000);
 #endif
@@ -116,7 +111,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 
 				if (ph->p_filesz == 0) {
 #ifdef ELF_DEBUG
-					Akari->console->printf("\nblanking %x\n", copy);
+					mu_console->printf("\nblanking %x\n", copy);
 #endif
 					memset(dest, 0, copy);
 				} else if (ph->p_filesz < ph->p_memsz) {
@@ -140,7 +135,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 			}
 
 #ifdef ELF_DEBUG
-			Akari->console->putChar('\n');
+			mu_console->putChar('\n');
 #endif
 		} else {
 			// Ignore it.
@@ -150,7 +145,7 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	// Cleaning up our hole in memory.
 	wand_page->pageAddress = old_wand_pA;
 	__asm__ __volatile__("mov %%cr3, %%eax; mov %%eax, %%cr3" : : : "%eax");
-	Akari->memory->free(magic_wand);
+	mu_memory->free(magic_wand);
 
 	return true;
 }

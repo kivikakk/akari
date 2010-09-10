@@ -18,20 +18,14 @@
 #define __MEMORY_HPP__
 
 #include <Heap.hpp>
-#include <Subsystem.hpp>
 #include <OrderedArray.hpp>
 
-class Memory : public Subsystem {
+class Memory {
 public:
 	Memory(ptr_t);
 
 	explicit Memory(const Memory &);
 	Memory &operator =(const Memory &);
-
-	u8 versionMajor() const;
-	u8 versionMinor() const;
-	const char *versionManufacturer() const;
-	const char *versionProduct() const;
 
 	void setPlacementMode(ptr_t);
 	void setPaging(bool);

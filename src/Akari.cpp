@@ -20,23 +20,11 @@
 #include <Descriptor.hpp>
 #include <debug.hpp>
 
-Kernel *Akari;
-
-Kernel::Kernel():
-subsystems(),
-memory(0), console(0), descriptor(0), timer(0), tasks(0), syscall(0), elf(0), debugger(0)
-{ }
-
-/**
- * Constructs an Kernel, using the given address as the current placement address.
- */
-Kernel *Kernel::Construct(ptr_t addr, ptr_t upperMemory) {
-	Kernel *kernel = new (reinterpret_cast<void *>(addr)) Kernel();
-	addr += sizeof(Kernel);
-	kernel->memory = new (reinterpret_cast<void *>(addr)) Memory(upperMemory);
-	addr += sizeof(Memory);
-
-	kernel->memory->setPlacementMode(addr);
-
-	return kernel;
-}
+Memory *mu_memory = 0;
+Console *mu_console = 0;
+Descriptor *mu_descriptor = 0;
+Timer *mu_timer = 0;
+Tasks *mu_tasks = 0;
+Syscall *mu_syscall = 0;
+ELF *mu_elf = 0;
+Debugger *mu_debugger = 0;

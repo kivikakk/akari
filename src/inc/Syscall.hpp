@@ -17,12 +17,11 @@
 #ifndef __SYSCALL_HPP__
 #define __SYSCALL_HPP__
 
-#include <Subsystem.hpp>
 #include <Tasks.hpp>
 
 #define AKARI_SYSCALL_MAXCALLS 256
 
-class Syscall : public Subsystem {
+class Syscall {
 	public:
 		typedef u32(*syscall_fn_t)();
 
@@ -30,11 +29,6 @@ class Syscall : public Subsystem {
 
 		explicit Syscall(const Syscall &);
 		Syscall &operator =(const Syscall &);
-
-		u8 versionMajor() const;
-		u8 versionMinor() const;
-		const char *versionManufacturer() const;
-		const char *versionProduct() const;
 
 		void addSyscall(u16 num, syscall_fn_t fn);
 

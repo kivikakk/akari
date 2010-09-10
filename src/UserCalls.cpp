@@ -32,16 +32,16 @@
 namespace User {
 	void putc(char c) {
 		requirePrivilege(PRIV_CONSOLE_WRITE);
-		Akari->console->putChar(c);
+		mu_console->putChar(c);
 	}
 
 	void puts(const char *s) {
 		requirePrivilege(PRIV_CONSOLE_WRITE);
-		Akari->console->putString(s);
+		mu_console->putString(s);
 	}
 
 	u32 getProcessId() {
-		return Akari->tasks->current->id;
+		return mu_tasks->current->id;
 	}
 
 	IRQWaitCall::IRQWaitCall(u32 timeout): timeout(timeout), event(0)
@@ -54,10 +54,10 @@ namespace User {
 	}
 
 	u32 IRQWaitCall::operator ()() {
-		if (Akari->tasks->current->irqListenHits == 0) {
+		if (mu_tasks->current->irqListenHits == 0) {
 			if (timeout &&
 					AkariMicrokernelSwitches >=
-					(Akari->tasks->current->irqWaitStart + timeout / 10)) {
+					(mu_tasks->current->irqWaitStart + timeout / 10)) {
 				// XXX magic number: 1000ms per second, 100 ticks per second
 				// -> timeout ms/10 gives no. of ticks for timeout
 				// Should already be descheduled.
@@ -69,9 +69,9 @@ namespace User {
 				if (timeout) {
 					event = counted_ptr<TimerEventWakeup>(
 							new TimerEventWakeup(
-								Akari->tasks->current->irqWaitStart + timeout / 10,
-								Akari->tasks->current));
-					Akari->timer->at(event);
+								mu_tasks->current->irqWaitStart + timeout / 10,
+								mu_tasks->current));
+					mu_timer->at(event);
 				}
 
 				_willBlock();
@@ -80,12 +80,12 @@ namespace User {
 		}
 
 		if (event) {
-			Akari->timer->desched(*event);
+			mu_timer->desched(*event);
 			event = counted_ptr<TimerEventWakeup>(0);
 		}
 
 		_wontBlock();
-		Akari->tasks->current->irqListenHits--;
+		mu_tasks->current->irqListenHits--;
 		return static_cast<u32>(true);
 	}
 
@@ -95,40 +95,40 @@ namespace User {
 	void irqWait() {
 		requirePrivilege(PRIV_IRQ);
 
-		Akari->tasks->current->irqWaitStart = 0;
+		mu_tasks->current->irqWaitStart = 0;
 
 		IRQWaitCall c(0);
 		c();
 		if (!c.shallBlock())
 			return;
 
-		Akari->tasks->current->userWaiting = true;
-		Akari->tasks->current->userCall = new IRQWaitCall(c);
-		Akari->syscall->returnToNextTask();
+		mu_tasks->current->userWaiting = true;
+		mu_tasks->current->userCall = new IRQWaitCall(c);
+		mu_syscall->returnToNextTask();
 		return;
 	}
 
 	bool irqWaitTimeout(u32 ms) {
 		requirePrivilege(PRIV_IRQ);
 
-		Akari->tasks->current->irqWaitStart = AkariMicrokernelSwitches;
+		mu_tasks->current->irqWaitStart = AkariMicrokernelSwitches;
 
 		IRQWaitCall c(ms);
 		u32 r = c();
 		if (!c.shallBlock())
 			return static_cast<bool>(r);
 
-		Akari->tasks->current->userWaiting = true;
-		Akari->tasks->current->userCall = new IRQWaitCall(c);
-		Akari->syscall->returnToNextTask();
+		mu_tasks->current->userWaiting = true;
+		mu_tasks->current->userCall = new IRQWaitCall(c);
+		mu_syscall->returnToNextTask();
 		return false;
 	}
 
 	void irqListen(u32 irq) {
 		requirePrivilege(PRIV_IRQ);
 
-		Akari->tasks->current->irqListen = irq;
-		Akari->tasks->current->irqListenHits = 0;
+		mu_tasks->current->irqListen = irq;
+		mu_tasks->current->irqListenHits = 0;
 	}
 
 	u32 ticks() {
@@ -136,61 +136,61 @@ namespace User {
 	}
 
 	void panic(const char *s) {
-		Akari->console->printf("Process 0x%x \"%s\" ", Akari->tasks->current->id, Akari->tasks->current->name.c_str());
-		const char *rn = Akari->tasks->current->registeredName.c_str();
+		mu_console->printf("Process 0x%x \"%s\" ", mu_tasks->current->id, mu_tasks->current->name.c_str());
+		const char *rn = mu_tasks->current->registeredName.c_str();
 		if (rn) {
-			Akari->console->printf("(:%s) ", rn);
+			mu_console->printf("(:%s) ", rn);
 		}
-		Akari->console->printf("dying (panic'd \"%s\")\n", s);
+		mu_console->printf("dying (panic'd \"%s\")\n", s);
 
-		struct modeswitch_registers *r = reinterpret_cast<modeswitch_registers *>(Akari->tasks->current->ks);
-		Akari->console->printf("EIP was %x, ESP was %x, EBP was %x, EFLAGS was %x, USERESP was %x\n",
+		struct modeswitch_registers *r = reinterpret_cast<modeswitch_registers *>(mu_tasks->current->ks);
+		mu_console->printf("EIP was %x, ESP was %x, EBP was %x, EFLAGS was %x, USERESP was %x\n",
 			r->callback.eip, r->callback.esp, r->callback.ebp, r->callback.eflags, r->useresp);
 
 		u8 *ra = reinterpret_cast<u8 *>(r);
 		for (int i = 0; i < 128; ++i) {
-			Akari->console->printf("%s%x ", *ra >= 0x10 ? "" : "0", *ra);
-			if (i % 16 == 15) Akari->console->printf("\n");
-			if (i % 16 == 7) Akari->console->printf(" ");
+			mu_console->printf("%s%x ", *ra >= 0x10 ? "" : "0", *ra);
+			if (i % 16 == 15) mu_console->printf("\n");
+			if (i % 16 == 7) mu_console->printf(" ");
 			++ra;
 		}
 
 		u32 coresize;
-		u8 *core = Akari->tasks->current->dumpELFCore(&coresize);
-		Akari->debugger->setReceiveFile(core, coresize);
+		u8 *core = mu_tasks->current->dumpELFCore(&coresize);
+		mu_debugger->setReceiveFile(core, coresize);
 		delete [] core;
 
 		// when exit becomes more complicated later we may have to do cleanup
 		// instead of just a sysexit, may not be ideal for a process that's
 		// dieing because it sucks.
-		//Akari->debugger->run();
+		//mu_debugger->run();
 		sysexit();
 	}
 
 	void sysexit() {
-		for (std::map<Symbol, Tasks::Task *>::iterator it = Akari->tasks->registeredTasks.begin();
-				it != Akari->tasks->registeredTasks.end(); ++it) {
-			if (it->second == Akari->tasks->current) {
-				Akari->tasks->registeredTasks.erase(it->first);
+		for (std::map<Symbol, Tasks::Task *>::iterator it = mu_tasks->registeredTasks.begin();
+				it != mu_tasks->registeredTasks.end(); ++it) {
+			if (it->second == mu_tasks->current) {
+				mu_tasks->registeredTasks.erase(it->first);
 				break;
 			}
 		}
 
-		Tasks::Task *task = Akari->tasks->start;
+		Tasks::Task *task = mu_tasks->start;
 		while (task) {
-			if (task == Akari->tasks->current) {
+			if (task == mu_tasks->current) {
 				task = task->next;
 				continue;
 			}
 
-			task->unblockTypeWith(IPC::WaitProcessCall::type(), Akari->tasks->current->id);
+			task->unblockTypeWith(IPC::WaitProcessCall::type(), mu_tasks->current->id);
 			task = task->next;
 		}
 
-		Akari->syscall->returnToNextTask();
-		// Find the Task* which refers to Akari->tasks->current, and get it to skip it.
-		Tasks::Task **scanner = &Akari->tasks->start;
-		while (*scanner != Akari->tasks->current) {
+		mu_syscall->returnToNextTask();
+		// Find the Task* which refers to mu_tasks->current, and get it to skip it.
+		Tasks::Task **scanner = &mu_tasks->start;
+		while (*scanner != mu_tasks->current) {
 			scanner = &(*scanner)->next;
 		}
 
@@ -200,21 +200,21 @@ namespace User {
 	}
 
 	void defer() {
-		Akari->syscall->returnToNextTask();
+		mu_syscall->returnToNextTask();
 	}
 
 	void *malloc(u32 n) {
 		requirePrivilege(PRIV_MALLOC);
 
-		ASSERT(Akari->tasks->current->heap);
-		return Akari->tasks->current->heap->alloc(n);
+		ASSERT(mu_tasks->current->heap);
+		return mu_tasks->current->heap->alloc(n);
 	}
 
 	void *mallocap(u32 n, phptr *p) {
 		requirePrivilege(PRIV_MALLOC);
 		requirePrivilege(PRIV_PHYSADDR);
 
-		void *mem = Akari->tasks->current->heap->allocAligned(n);
+		void *mem = mu_tasks->current->heap->allocAligned(n);
 		*p = physAddr(mem);
 		return mem;
 	}
@@ -222,7 +222,7 @@ namespace User {
 	phptr physAddr(void *ptr) {
 		requirePrivilege(PRIV_PHYSADDR);
 
-		Memory::Page *page = Akari->tasks->current->pageDir->getPage(reinterpret_cast<u32>(ptr), false);
+		Memory::Page *page = mu_tasks->current->pageDir->getPage(reinterpret_cast<u32>(ptr), false);
 		if (!page) return 0;
 		return page->pageAddress * 0x1000 + (reinterpret_cast<u32>(ptr) & 0xFFF);
 	}
@@ -230,8 +230,8 @@ namespace User {
 	void free(void *p) {
 		requirePrivilege(PRIV_MALLOC);
 
-		ASSERT(Akari->tasks->current->heap);
-		bool success = Akari->tasks->current->heap->free(p);
+		ASSERT(mu_tasks->current->heap);
+		bool success = mu_tasks->current->heap->free(p);
 		if (!success) {
 			panic("free returned false");
 		}

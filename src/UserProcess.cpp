@@ -37,14 +37,14 @@ namespace Process {
 		while (args && *args) 
 			argl.push_back(*args++);
 
-		Tasks::Task *new_task = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, name, argl);
-		Akari->elf->loadImageInto(new_task, elf);
+		Tasks::Task *new_task = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, name, argl);
+		mu_elf->loadImageInto(new_task, elf);
 		return new_task->id;
 	}
 
 	bool grantPrivilege(pid_t taskpid, u16 priv) {
 		requirePrivilege(PRIV_GRANT_PRIV);
-		Tasks::Task *task = Akari->tasks->tasksByPid[taskpid];
+		Tasks::Task *task = mu_tasks->tasksByPid[taskpid];
 		if (!task)
 			return false;
 		task->grantPrivilege(static_cast<priv_t>(priv));
@@ -53,7 +53,7 @@ namespace Process {
 
 	bool grantIOPriv(pid_t taskpid, u16 port) {
 		requirePrivilege(PRIV_GRANT_PRIV);
-		Tasks::Task *task = Akari->tasks->tasksByPid[taskpid];
+		Tasks::Task *task = mu_tasks->tasksByPid[taskpid];
 		if (!task)
 			return false;
 		task->setIOMap(port, true);
@@ -61,11 +61,11 @@ namespace Process {
 	}
 
 	bool beginExecution(pid_t taskpid) {
-		Tasks::Task *task = Akari->tasks->tasksByPid[taskpid];
+		Tasks::Task *task = mu_tasks->tasksByPid[taskpid];
 		if (!task)
 			return false;
-		task->next = Akari->tasks->start;
-		Akari->tasks->start = task;
+		task->next = mu_tasks->start;
+		mu_tasks->start = task;
 		return true;
 	}
 }

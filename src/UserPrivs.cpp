@@ -25,7 +25,7 @@ namespace User {
 
 void requirePrivilege(priv_t priv) {
 	ASSERT(priv < PRIV_COUNT);
-	if (!Akari->tasks->current->hasPrivilege(priv))
+	if (!mu_tasks->current->hasPrivilege(priv))
 		panic("privilege check fail");
 }
 

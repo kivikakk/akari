@@ -17,22 +17,14 @@
 #ifndef __DESCRIPTOR_HPP__
 #define __DESCRIPTOR_HPP__
 
-#include <Subsystem.hpp>
 #include <interrupts.hpp>
 
-// the subsystem itself
-
-class Descriptor : public Subsystem {
+class Descriptor {
 public:
 	Descriptor();
 
 	explicit Descriptor(const Descriptor &);
 	Descriptor &operator =(const Descriptor &);
-
-	u8 versionMajor() const;
-	u8 versionMinor() const;
-	const char *versionManufacturer() const;
-	const char *versionProduct() const;
 
 	class GDT {
 	public:

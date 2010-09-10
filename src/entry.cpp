@@ -68,22 +68,21 @@ void AkariEntry() {
 	if ((AkariMultiboot->flags & 0x41) != 0x41)
 		AkariPanic("Akari: MULTIBOOT hasn't given us enough information about memory.");
 
-	Akari = Kernel::Construct(reinterpret_cast<u32>(&__kend), AkariMultiboot->mem_upper);
-	Akari->subsystems.push_back(Akari->memory);
+	ptr_t addr = reinterpret_cast<ptr_t>(&__kend);
+	mu_memory = new (reinterpret_cast<void *>(addr)) Memory(AkariMultiboot->mem_upper);
+	addr += sizeof(Memory);
+	mu_memory->setPlacementMode(addr);
 
-	// these can only work if Akari = an AkariKernel, since `new' calls Akari->...
-	// how could we integrate these with construction in AkariKernel::Construct
-	// without just doing it all by using placement new with kernel->Alloc?
-	// (which is lame)
-	Akari->console = new Console(); Akari->subsystems.push_back(Akari->console);
-	Akari->descriptor = new Descriptor(); Akari->subsystems.push_back(Akari->descriptor);
-	Akari->timer = new Timer(); Akari->subsystems.push_back(Akari->timer);
-	Akari->tasks = new Tasks(); Akari->subsystems.push_back(Akari->tasks);
-	Akari->syscall = new Syscall(); Akari->subsystems.push_back(Akari->syscall);
-	Akari->elf = new ELF(); Akari->subsystems.push_back(Akari->elf);
-	Akari->debugger = new Debugger(); Akari->subsystems.push_back(Akari->debugger);
+	// these can only work if mu_memory is a Memory subsys, since `new' calls mu_memory->...
+	mu_console = new Console();
+	mu_descriptor = new Descriptor();
+	mu_timer = new Timer();
+	mu_tasks = new Tasks();
+	mu_syscall = new Syscall();
+	mu_elf = new ELF();
+	mu_debugger = new Debugger();
 
-	Akari->console->putString("Akari " __AKARI_VERSION ". Dedicated to Misty.\nStarting ...\n");
+	mu_console->putString("Akari " __AKARI_VERSION ". Dedicated to Misty.\nStarting ...\n");
 
 	// This is done before paging is turned on (otherwise the memory where the
 	// modules reside is protected), but after memory is initialised.
@@ -94,7 +93,7 @@ void AkariEntry() {
 
 		loaded_module_t mod = {
 			strdup(reinterpret_cast<const char *>(module_ptr->string)),
-			static_cast<char *>(Akari->memory->alloc(len)),
+			static_cast<char *>(mu_memory->alloc(len)),
 			len
 		};
 
@@ -104,11 +103,11 @@ void AkariEntry() {
 		++module_ptr;
 	}
 
-	Akari->timer->setTimer(100);
-	Akari->memory->setPaging(true);
+	mu_timer->setTimer(100);
+	mu_memory->setPaging(true);
 	
 	// Give ourselves a normal stack. (n.b. this is from kernel heap!)
-	void *initTaskStack = Akari->memory->allocAligned(INIT_STACK_SIZE);
+	void *initTaskStack = mu_memory->allocAligned(INIT_STACK_SIZE);
 	// do we still need to flush the TLB?
 	__asm__ __volatile__("\
 		mov %%cr3, %%eax; \
@@ -121,25 +120,25 @@ void AkariEntry() {
 }
 
 static void AkariEntryCont() {	
-	ASSERT(Akari->memory->_activeDirectory == Akari->memory->_kernelDirectory);
+	ASSERT(mu_memory->_activeDirectory == mu_memory->_kernelDirectory);
 	for (u32 i = UKERNEL_STACK_POS; i >= UKERNEL_STACK_POS - UKERNEL_STACK_SIZE; i -= 0x1000)
-		Akari->memory->_activeDirectory->getPage(i, true)->allocAnyFrame(false, true);
+		mu_memory->_activeDirectory->getPage(i, true)->allocAnyFrame(false, true);
 
 	// Initial task
-	Tasks::Task *base = Tasks::Task::BootstrapInitialTask(3, Akari->memory->_kernelDirectory);
-	Akari->tasks->start = Akari->tasks->current = base;
+	Tasks::Task *base = Tasks::Task::BootstrapInitialTask(3, mu_memory->_kernelDirectory);
+	mu_tasks->start = mu_tasks->current = base;
 
-	Akari->descriptor->gdt->setTSSStack(base->ks + sizeof(struct modeswitch_registers));
-	Akari->descriptor->gdt->setTSSIOMap(base->iomap);
+	mu_descriptor->gdt->setTSSStack(base->ks + sizeof(struct modeswitch_registers));
+	mu_descriptor->gdt->setTSSIOMap(base->iomap);
 
 	// Idle task
-	Tasks::Task *idle = Tasks::Task::CreateTask(reinterpret_cast<u32>(&IdleProcess), 0, true, 0, Akari->memory->_kernelDirectory, "idle", std::list<std::string>());
-	Akari->tasks->current->next = idle;
+	Tasks::Task *idle = Tasks::Task::CreateTask(reinterpret_cast<u32>(&IdleProcess), 0, true, 0, mu_memory->_kernelDirectory, "idle", std::list<std::string>());
+	mu_tasks->current->next = idle;
 
 	// ATA driver
-	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "ata", std::list<std::string>());
-	Akari->elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
-	Akari->tasks->registeredTasks["system.io.ata"] = ata;
+	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "ata", std::list<std::string>());
+	mu_elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
+	mu_tasks->registeredTasks["system.io.ata"] = ata;
 	ata->registeredName = "system.io.ata";
 
 	for (u16 j = 0; j < 8; ++j) {
@@ -160,30 +159,30 @@ static void AkariEntryCont() {
 	idle->next = ata;
 	
 	// FAT driver
-	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "fat", std::list<std::string>());
-	Akari->elf->loadImageInto(fat, reinterpret_cast<u8 *>(module_by_name("/fat")->module));
-	Akari->tasks->registeredTasks["system.io.fs.fat"] = fat;
+	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "fat", std::list<std::string>());
+	mu_elf->loadImageInto(fat, reinterpret_cast<u8 *>(module_by_name("/fat")->module));
+	mu_tasks->registeredTasks["system.io.fs.fat"] = fat;
 	fat->registeredName = "system.io.fs.fat";
 	ata->next = fat;
 	
 	// VFS driver
-	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "vfs", std::list<std::string>());
-	Akari->elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module_by_name("/vfs")->module));
-	Akari->tasks->registeredTasks["system.io.vfs"] = vfs;
+	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "vfs", std::list<std::string>());
+	mu_elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module_by_name("/vfs")->module));
+	mu_tasks->registeredTasks["system.io.vfs"] = vfs;
 	vfs->registeredName = "system.io.vfs";
 	fat->next = vfs;
 	
 	// Booter
-	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, Akari->memory->_kernelDirectory, "booter", std::list<std::string>());
-	Akari->elf->loadImageInto(booter, reinterpret_cast<u8 *>(module_by_name("/booter")->module));
+	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "booter", std::list<std::string>());
+	mu_elf->loadImageInto(booter, reinterpret_cast<u8 *>(module_by_name("/booter")->module));
 	booter->grantPrivilege(PRIV_REGISTER_NAME);
 	booter->grantPrivilege(PRIV_GRANT_PRIV);
 	vfs->next = booter;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
-	Akari->memory->switchPageDirectory(base->pageDir);
+	mu_memory->switchPageDirectory(base->pageDir);
 
-	Akari->console->putString("Akari: kernel initialised.\n");
+	mu_console->putString("Akari: kernel initialised.\n");
 
 	Tasks::SwitchRing(3, 0); // switches to ring 3, uses IOPL 0 (no I/O access unless iomap gives it) and enables interrupts.
 
@@ -201,8 +200,8 @@ void IdleProcess() {
 // Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
 	// 100 times a second.
-	Akari->timer->tick();
-	Akari->tasks->saveRegisterToTask(Akari->tasks->current, r);
-	Akari->tasks->cycleTask();
-	return Akari->tasks->assignInternalTask(Akari->tasks->current);
+	mu_timer->tick();
+	mu_tasks->saveRegisterToTask(mu_tasks->current, r);
+	mu_tasks->cycleTask();
+	return mu_tasks->assignInternalTask(mu_tasks->current);
 }

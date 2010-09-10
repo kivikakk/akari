@@ -21,13 +21,8 @@
 
 Debugger::Debugger(): _receive(0), _receiveSize(0) { }
 
-u8 Debugger::versionMajor() const { return 0; }
-u8 Debugger::versionMinor() const { return 1; }
-const char *Debugger::versionManufacturer() const { return "Akari"; }
-const char *Debugger::versionProduct() const { return "Akari Debugger"; }
-
 void Debugger::run() {
-	Akari->console->printf("debugger started\n");
+	mu_console->printf("debugger started\n");
 
 	COMPort com1 = COMPort::COM(1);
 	com1.initialize();
@@ -109,7 +104,7 @@ u32 COMPort::getU32() const {
 	u32 r = 0;
 	for (int i = 0; i < 4; ++i)
 		r |= static_cast<u32>(static_cast<u8>(getChar())) << i * 8;
-	Akari->console->printf("getU32: %x\n", r);
+	mu_console->printf("getU32: %x\n", r);
 	return r;
 }
 std::string COMPort::getStringNL() const {

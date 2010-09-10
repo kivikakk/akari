@@ -41,11 +41,6 @@ Descriptor::Descriptor(): gdt(0), idt(0), irqt(0) {
 	irqt = new IRQT(idt);
 }
 
-u8 Descriptor::versionMajor() const { return 0; }
-u8 Descriptor::versionMinor() const { return 1; }
-const char *Descriptor::versionManufacturer() const { return "Akari"; }
-const char *Descriptor::versionProduct() const { return "Akari Descriptor Table Manager"; }
-
 Descriptor::GDT::GDT(u32 n): _entryCount(n), _entries(new Entry[n]), _pointer(), _tssEntry() {
 	_pointer.limit = (sizeof(Entry) * n - 1);
 	_pointer.base = (u32)_entries;
@@ -203,7 +198,7 @@ void Descriptor::IRQT::clearHandler(u8 irq) {
 }
 
 void *Descriptor::IRQT::callHandler(u8 irq, struct modeswitch_registers *regs) {
-	Tasks::Task *iter = Akari->tasks->start;
+	Tasks::Task *iter = mu_tasks->start;
 	while (iter) {
 		if (iter->irqListen == irq) {
 			iter->irqListenHits++;
@@ -212,7 +207,7 @@ void *Descriptor::IRQT::callHandler(u8 irq, struct modeswitch_registers *regs) {
 			if (!iter->userWaiting) {
 				// Looks like it's their turn. We append the current `iter` to the linked
 				// list made of ATS#priorityStart and the Task's own priorityNext's.
-				Tasks::Task **append = &Akari->tasks->priorityStart;
+				Tasks::Task **append = &mu_tasks->priorityStart;
 				while (*append)
 					append = &(*append)->priorityNext;
 				*append = iter;
@@ -223,15 +218,15 @@ void *Descriptor::IRQT::callHandler(u8 irq, struct modeswitch_registers *regs) {
 	}
 
 	// If there's a priority, switch to it immediately. Crap. What do we do about handlers?!
-	if (Akari->tasks->priorityStart) {
-		iter = Akari->tasks->priorityStart;
-		Akari->tasks->priorityStart = iter->priorityNext;
+	if (mu_tasks->priorityStart) {
+		iter = mu_tasks->priorityStart;
+		mu_tasks->priorityStart = iter->priorityNext;
 		iter->priorityNext = 0;
 
 		// Task switch!
-		Akari->tasks->saveRegisterToTask(Akari->tasks->current, regs);
-		Akari->tasks->current = iter;
-		return Akari->tasks->assignInternalTask(Akari->tasks->current);
+		mu_tasks->saveRegisterToTask(mu_tasks->current, regs);
+		mu_tasks->current = iter;
+		return mu_tasks->assignInternalTask(mu_tasks->current);
 	}
 		
 

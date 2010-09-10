@@ -29,16 +29,16 @@ namespace User {
 namespace IPC {
 	int getProcessList(process_info_t **info) {
 		int pcount = 1;
-		Tasks::Task *task = Akari->tasks->start;
+		Tasks::Task *task = mu_tasks->start;
 		while (task->next) {
 			task = task->next; ++pcount;
 		}
 
 		*info = reinterpret_cast<process_info_t *>(
-				Akari->tasks->current->heap->alloc(sizeof(process_info_t) * pcount));
+				mu_tasks->current->heap->alloc(sizeof(process_info_t) * pcount));
 
 		int index = 0;
-		task = Akari->tasks->start;
+		task = mu_tasks->start;
 		while (index < pcount) {
 			process_info_t *i = &((*info)[index]);
 
@@ -46,19 +46,19 @@ namespace IPC {
 
 			i->flags  = task->userWaiting ? PROCESS_FLAG_BLOCKING : 0;
 			i->flags |= task->irqListen ? PROCESS_FLAG_IRQ_LISTEN : 0;
-			i->flags |= task == Akari->tasks->current ? PROCESS_FLAG_CURRENT : 0;
+			i->flags |= task == mu_tasks->current ? PROCESS_FLAG_CURRENT : 0;
 
 			i->name = 0;
 			if (task->name.length() > 0) {
 				i->name = reinterpret_cast<char *>(
-						Akari->tasks->current->heap->alloc(task->name.length() + 1));
+						mu_tasks->current->heap->alloc(task->name.length() + 1));
 				strcpy(i->name, task->name.c_str());
 			}
 
 			i->registeredName = 0;
 			if (task->registeredName.c_str() != 0) {
 				i->registeredName = reinterpret_cast<char *>(
-						Akari->tasks->current->heap->alloc(
+						mu_tasks->current->heap->alloc(
 							strlen(task->registeredName.c_str()) + 1));
 				strcpy(i->registeredName, task->registeredName.c_str());
 			}
@@ -78,14 +78,14 @@ namespace IPC {
 		if (!c.shallBlock())
 			return status;
 
-		Akari->tasks->current->userWaiting = true;
-		Akari->tasks->current->userCall = new WaitProcessCall(c);
-		Akari->syscall->returnToNextTask();
+		mu_tasks->current->userWaiting = true;
+		mu_tasks->current->userCall = new WaitProcessCall(c);
+		mu_syscall->returnToNextTask();
 		return 0;
 	}
 
 	pid_t processId() {
-		return Akari->tasks->current->id;
+		return mu_tasks->current->id;
 	}
 
 	class ProcessIdByNameCall : public BlockingCall {
@@ -94,13 +94,13 @@ namespace IPC {
 		{ }
 
 		u32 operator()() {
-			if (Akari->tasks->registeredTasks.find(name) == Akari->tasks->registeredTasks.end()) {
+			if (mu_tasks->registeredTasks.find(name) == mu_tasks->registeredTasks.end()) {
 				_willBlock();
 				return 0;
 			}
 
 			_wontBlock();
-			return static_cast<u32>(Akari->tasks->registeredTasks[name]->id);
+			return static_cast<u32>(mu_tasks->registeredTasks[name]->id);
 		}
 
 		const Symbol &getName() const { return name; }
@@ -118,9 +118,9 @@ namespace IPC {
 		if (!block || !c.shallBlock())
 			return r;
 
-		Akari->tasks->current->userWaiting = true;
-		Akari->tasks->current->userCall = new ProcessIdByNameCall(c);
-		Akari->syscall->returnToNextTask();
+		mu_tasks->current->userWaiting = true;
+		mu_tasks->current->userCall = new ProcessIdByNameCall(c);
+		mu_syscall->returnToNextTask();
 		return 0;
 	}
 
@@ -137,17 +137,17 @@ namespace IPC {
 
 		Symbol sName(name);
 
-		if (Akari->tasks->registeredTasks.find(sName) != Akari->tasks->registeredTasks.end())
+		if (mu_tasks->registeredTasks.find(sName) != mu_tasks->registeredTasks.end())
 			return false;
 
-		Tasks::Task *task = Akari->tasks->getTaskById(pid);
+		Tasks::Task *task = mu_tasks->getTaskById(pid);
 		if (!task)
 			return false;
 
-		Akari->tasks->registeredTasks[sName] = task;
+		mu_tasks->registeredTasks[sName] = task;
 		task->registeredName = sName;
 
-		for (Tasks::Task *it = Akari->tasks->start; (it); it = it->next) {
+		for (Tasks::Task *it = mu_tasks->start; (it); it = it->next) {
 			if (it->userWaiting && it->userCall && it->userCall->insttype() == ProcessIdByNameCall::type()) {
 				if (static_cast<ProcessIdByNameCall *>(it->userCall)->getName() == sName)
 					it->userWaiting = false;
@@ -159,19 +159,19 @@ namespace IPC {
 
 	bool registerStream(const char *node) {
 		Symbol sNode(node);
-		if (Akari->tasks->current->streamsByName->find(node) != Akari->tasks->current->streamsByName->end()) {
+		if (mu_tasks->current->streamsByName->find(node) != mu_tasks->current->streamsByName->end()) {
 			AkariPanic("node already registered - cannot register atop it");
 		}
 
 		Tasks::Task::Stream *target = new Tasks::Task::Stream();
 
-		(*Akari->tasks->current->streamsByName)[sNode] = target;
+		(*mu_tasks->current->streamsByName)[sNode] = target;
 		return true;
 	}
 
 	static inline Tasks::Task::Stream *getStream(pid_t id, const char *node) {
 		Symbol sNode(node);
-		Tasks::Task *task = Akari->tasks->getTaskById(id);
+		Tasks::Task *task = mu_tasks->getTaskById(id);
 		if (!task || (task->streamsByName->find(sNode) == task->streamsByName->end()))
 			return 0;
 
@@ -200,7 +200,7 @@ namespace IPC {
 	{ }
 
 	u32 WaitProcessCall::operator ()() {
-		Tasks::Task *task = Akari->tasks->start;
+		Tasks::Task *task = mu_tasks->start;
 		bool running = false;
 
 		while (task) {
@@ -284,10 +284,10 @@ namespace IPC {
 		// Block until such time as some data is available.
 		Tasks::Task::Stream::Listener *l = c.getListener();
 
-		Akari->tasks->current->userWaiting = true;
-		Akari->tasks->current->userCall = new ReadStreamCall(c);
-		l->hook(Akari->tasks->current);
-		Akari->syscall->returnToNextTask();
+		mu_tasks->current->userWaiting = true;
+		mu_tasks->current->userCall = new ReadStreamCall(c);
+		l->hook(mu_tasks->current);
+		mu_syscall->returnToNextTask();
 		return 0;
 	}
 

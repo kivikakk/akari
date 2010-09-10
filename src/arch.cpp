@@ -24,15 +24,11 @@ void __cxa_pure_virtual() {
 }
 
 void *operator new(size_t n) {
-	ASSERT(Akari);
-	ASSERT(Akari->memory);
-	return Akari->memory->alloc(n);
+	return mu_memory->alloc(n);
 }
 
 void *operator new[](size_t n) {
-	ASSERT(Akari);
-	ASSERT(Akari->memory);
-	return Akari->memory->alloc(n);
+	return mu_memory->alloc(n);
 }
 
 void *operator new(size_t, void *p) {
@@ -40,14 +36,9 @@ void *operator new(size_t, void *p) {
 }
 
 void operator delete(void *p) {
-	ASSERT(Akari);
-	ASSERT(Akari->memory);
-	Akari->memory->free(p);
+	mu_memory->free(p);
 }
 
 void operator delete[](void *p) {
-	// These assertions seem quite wasteful.
-	ASSERT(Akari);
-	ASSERT(Akari->memory);
-	Akari->memory->free(p);
+	mu_memory->free(p);
 }

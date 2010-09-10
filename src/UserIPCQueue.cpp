@@ -75,14 +75,14 @@ namespace IPC {
 	};
 
 	static struct queue_item_info *probeQueue_impl(bool block, u32 reply_to=0) {
-		ProbeQueueCall c(Akari->tasks->current, reply_to);
+		ProbeQueueCall c(mu_tasks->current, reply_to);
 		struct queue_item_info *r = reinterpret_cast<struct queue_item_info *>(c());
 		if (!block || !c.shallBlock())
 			return r;
 
-		Akari->tasks->current->userWaiting = true;
-		Akari->tasks->current->userCall = new ProbeQueueCall(c);
-		Akari->syscall->returnToNextTask();
+		mu_tasks->current->userWaiting = true;
+		mu_tasks->current->userCall = new ProbeQueueCall(c);
+		mu_syscall->returnToNextTask();
 		return 0;
 	}
 
@@ -103,7 +103,7 @@ namespace IPC {
 	}
 
 	u32 readQueue(struct queue_item_info *info, u8 *dest, u32 offset, u32 len) { 
-		Tasks::Task::Queue::Item *item = Akari->tasks->current->replyQueue->itemById(info->id);
+		Tasks::Task::Queue::Item *item = mu_tasks->current->replyQueue->itemById(info->id);
 		if (!item) return 0;		// XXX error out!
 
 		// If offset is out of bounds, just return.
@@ -119,19 +119,19 @@ namespace IPC {
 	}
 
 	u8 *grabQueue(struct queue_item_info *info) {
-		u8 *data = reinterpret_cast<u8 *>(Akari->tasks->current->heap->alloc(info->data_len));
+		u8 *data = reinterpret_cast<u8 *>(mu_tasks->current->heap->alloc(info->data_len));
 		readQueue(info, data, 0, info->data_len);
 		return data;
 	}
 
 	void shiftQueue(struct queue_item_info *info) {
-		Tasks::Task::Queue::Item *item = Akari->tasks->current->replyQueue->itemById(info->id);
-		Akari->tasks->current->replyQueue->remove(item);
+		Tasks::Task::Queue::Item *item = mu_tasks->current->replyQueue->itemById(info->id);
+		mu_tasks->current->replyQueue->remove(item);
 	}
 
 	u32 sendQueue(pid_t id, u32 reply_to, const u8 *buffer, u32 len) {
-		Tasks::Task *task = Akari->tasks->getTaskById(id);
-		u32 msg_id = task->replyQueue->push_back(Akari->tasks->current->id, reply_to, buffer, len);
+		Tasks::Task *task = mu_tasks->getTaskById(id);
+		u32 msg_id = task->replyQueue->push_back(mu_tasks->current->id, reply_to, buffer, len);
 		task->unblockTypeWith(ProbeQueueCall::type(), reply_to);
 		return msg_id;
 	}

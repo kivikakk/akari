@@ -31,11 +31,6 @@ Console::Console(): _cursorX(0), _cursorY(0) {
 	clear();
 }
 
-u8 Console::versionMajor() const { return 0; }
-u8 Console::versionMinor() const { return 1; }
-const char *Console::versionManufacturer() const { return "Akari"; }
-const char *Console::versionProduct() const { return "Akari Console"; }
-
 void Console::clear() {
 	u16 *i = reinterpret_cast<u16 *>(SCREEN_VMEM);
 

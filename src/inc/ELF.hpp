@@ -17,17 +17,11 @@
 #ifndef __ELF_HPP__
 #define __ELF_HPP__
 
-#include <Subsystem.hpp>
 #include <Tasks.hpp>
 
-class ELF : public Subsystem {
+class ELF {
 public:
 	ELF();
-
-	u8 versionMajor() const;
-	u8 versionMinor() const;
-	const char *versionManufacturer() const;
-	const char *versionProduct() const;
 
 	bool loadImageInto(Tasks::Task *task, const u8 *image) const;
 };
