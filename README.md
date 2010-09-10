@@ -1,5 +1,5 @@
 # akari
-#### <span style="color: #333">microkernel</span>
+#### <span style="color: #333">microkernel operating system</span>
 
 ## introduction
 
@@ -7,7 +7,7 @@ Totally going to write more here later. For now: _akari_, a microkernel, and its
 
 ## see also
 
- - [website](http://www.akariproject.com/)
+ - [website](http://akari.co/)
 
 ## license
 
