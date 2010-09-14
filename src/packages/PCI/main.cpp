@@ -169,6 +169,7 @@ void check_non_hds() {
 
 		bootstrap_options_t bsops;
 		bsops.privs.push_back(PRIV_PHYSADDR);
+		bsops.privs.push_back(PRIV_IRQ);
 		for (u32 i = 0; i < 0x53; ++i)
 			bsops.iobits.push_back(0xc100 + i);
 

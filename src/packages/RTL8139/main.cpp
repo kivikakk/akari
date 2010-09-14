@@ -74,6 +74,8 @@ extern "C" int main() {
 	printf("RTL8139: MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 			macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
 
+	irqListen(irq);
+
 	AkariOutB(iobase + Config1, 0x00);
 	AkariOutB(iobase + ChipCmd, CmdReset);
 	while (AkariInB(iobase + ChipCmd) & CmdReset) {
@@ -83,6 +85,7 @@ extern "C" int main() {
 	phptr pptr;
 	u8 *localbuff = static_cast<u8 *>(mallocap(8192 + 16, &pptr));
 	AkariOutL(iobase + RxBuf, pptr);
+
 	AkariOutW(iobase + IntrMask, TxOK | RxOK);	// TOK, ROK
 	AkariOutL(iobase + RxConfig, AcceptAllPhys | AcceptMyPhys | AcceptMulticast | AcceptBroadcast);
 	AkariOutB(iobase + ChipCmd, CmdTxEnb | CmdRxEnb);		// RE + TE high
