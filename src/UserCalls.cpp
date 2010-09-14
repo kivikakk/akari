@@ -131,6 +131,13 @@ namespace User {
 		mu_tasks->current->irqListenHits = 0;
 	}
 
+	bool irqCheck() {
+		if (!mu_tasks->current->irqListenHits)
+			return false;
+		mu_tasks->current->irqListenHits--;
+		return true;
+	}
+
 	u32 ticks() {
 		return AkariMicrokernelSwitches;
 	}
