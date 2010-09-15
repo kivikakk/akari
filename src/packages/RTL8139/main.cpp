@@ -22,7 +22,7 @@
 #include <vector>
 #include <debug.hpp>
 
-#include "RTL.hpp"
+#include "rtl.hpp"
 #include "RTL8139Proto.hpp"
 #include "main.hpp"
 #include "../PCI/PCIProto.hpp"
@@ -61,38 +61,10 @@ extern "C" int main() {
 	// Let's power it up.
 	u16 iobase = static_cast<u16>(configs->bar0) & ~0x3;
 	u8 irq = static_cast<u8>(configs->interrupt_line);
-	u8 macaddr[] = {
-		AkariInB(iobase),
-		AkariInB(iobase + 1),
-		AkariInB(iobase + 2),
-		AkariInB(iobase + 3),
-		AkariInB(iobase + 4),
-		AkariInB(iobase + 5)
-	};
 
-	printf("RTL8139: started (IO base %4x, IRQ %d)\n", iobase, irq);
-	printf("RTL8139: MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
-			macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
+	rtl8139_probe(iobase);
+	return 0;
 
-	irqListen(irq);
-
-	AkariOutB(iobase + Config1, 0x00);
-	AkariOutB(iobase + ChipCmd, CmdReset);
-	while (AkariInB(iobase + ChipCmd) & CmdReset) {
-		printf(".");
-	}
-
-	phptr pptr;
-	u8 *localbuff = static_cast<u8 *>(mallocap(8192 + 16, &pptr));
-	AkariOutL(iobase + RxBuf, pptr);
-
-	AkariOutW(iobase + IntrMask, TxOK | RxOK);	// TOK, ROK
-	AkariOutL(iobase + RxConfig, AcceptAllPhys | AcceptMyPhys | AcceptMulticast | AcceptBroadcast);
-	AkariOutB(iobase + ChipCmd, CmdTxEnb | CmdRxEnb);		// RE + TE high
-
-	// XXX
-	delete [] localbuff;
-	
 	while (true) {
 		struct queue_item_info info = *probeQueue();
 		u8 *request = grabQueue(&info);
