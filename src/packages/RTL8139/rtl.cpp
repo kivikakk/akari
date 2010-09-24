@@ -16,6 +16,7 @@
 
 #include "rtl.hpp"
 #include <stdio.hpp>
+#include <UserCalls.hpp>
 
 u8 enetaddr[6];
 int ioaddr;
@@ -108,7 +109,7 @@ static const unsigned int rtl8139_rx_config =
 	(RX_FIFO_THRESH << 13) |
 	(RX_DMA_BURST << 8);
 
-static void set_rx_mode(struct eth_device *dev) {
+static void set_rx_mode() {
 	unsigned int mc_filter[2];
 	int rx_mode;
 	/* !IFF_PROMISC */
@@ -121,7 +122,7 @@ static void set_rx_mode(struct eth_device *dev) {
 	AkariOutL(ioaddr + MAR0 + 4, mc_filter[1]);
 }
 
-void rtl_reset(struct eth_device *dev)
+void rtl_reset()
 {
 	int i;
 
@@ -169,19 +170,17 @@ void rtl_reset(struct eth_device *dev)
 	AkariOutL(ioaddr + RxMissed, 0);
 
 	/* set_rx_mode */
-	set_rx_mode(dev);
+	set_rx_mode();
 
 	/* Disable all known interrupts by setting the interrupt mask. */
 	AkariOutW(ioaddr + IntrMask, 0);
 }
 
-int rtl_transmit(struct eth_device *dev, volatile void *packet, int length)
+int rtl_transmit(volatile void *packet, int length)
 {
 	unsigned int status, to;
 	unsigned long txstatus;
 	unsigned int len = length;
-
-	ioaddr = dev->iobase;
 
 	memcpy((char *)tx_buffer, (char *)packet, (int)length);
 
@@ -197,7 +196,7 @@ int rtl_transmit(struct eth_device *dev, volatile void *packet, int length)
 	AkariOutL(ioaddr + TxStatus0 + cur_tx*4,
 			((TX_FIFO_THRESH<<11) & 0x003f0000) | len);
 
-	to = currticks() + RTL_TIMEOUT;
+	to = ticks() + RTL_TIMEOUT;
 
 	do {
 		status = AkariInW(ioaddr + IntrStatus);
@@ -206,32 +205,30 @@ int rtl_transmit(struct eth_device *dev, volatile void *packet, int length)
 		 * rtl_poll() function.	 */
 		AkariOutW(ioaddr + IntrStatus, status & (TxOK | TxErr | PCIErr));
 		if ((status & (TxOK | TxErr | PCIErr)) != 0) break;
-	} while (currticks() < to);
+	} while (ticks() < to);
 
 	txstatus = AkariInL(ioaddr + TxStatus0 + cur_tx*4);
 
 	if (status & TxOK) {
 		cur_tx = (cur_tx + 1) % NUM_TX_DESC;
 		printf("tx done (%d ticks), status %hX txstatus %X\n",
-			to-currticks(), status, txstatus);
+			to-ticks(), status, txstatus);
 		return length;
 	} else {
 		printf("tx timeout/error (%d ticks), status %hX txstatus %X\n",
-			currticks()-to, status, txstatus);
-		rtl_reset(dev);
+			ticks()-to, status, txstatus);
+		rtl_reset();
 
 		return 0;
 	}
 }
 
-int rtl_poll(struct eth_device *dev)
+int rtl_poll()
 {
 	unsigned int status;
 	unsigned int ring_offs;
 	unsigned int rx_size, rx_status;
 	int length=0;
-
-	ioaddr = dev->iobase;
 
 	if (AkariInB(ioaddr + ChipCmd) & RxBufEmpty) {
 		return 0;
@@ -251,7 +248,7 @@ int rtl_poll(struct eth_device *dev)
 	if ((rx_status & (RxBadSymbol|RxRunt|RxTooLong|RxCRCErr|RxBadAlign)) ||
 	    (rx_size < ETH_ZLEN) || (rx_size > ETH_FRAME_LEN + 4)) {
 		printf("rx error %hX\n", rx_status);
-		rtl_reset(dev); /* this clears all interrupts still pending */
+		rtl_reset(); /* this clears all interrupts still pending */
 		return 0;
 	}
 
@@ -264,10 +261,10 @@ int rtl_poll(struct eth_device *dev)
 		memcpy(rxdata, rx_ring + ring_offs + 4, semi_count);
 		memcpy(&(rxdata[semi_count]), rx_ring, rx_size-4-semi_count);
 
-		NetReceive(rxdata, length);
+		//NetReceive(rxdata, length);
 		printf("rx packet %d+%d bytes", semi_count,rx_size-4-semi_count);
 	} else {
-		NetReceive(rx_ring + ring_offs + 4, length);
+		//NetReceive(rx_ring + ring_offs + 4, length);
 		printf("rx packet %d bytes", rx_size-4);
 	}
 
@@ -280,11 +277,9 @@ int rtl_poll(struct eth_device *dev)
 	return length;
 }
 
-void rtl_disable(struct eth_device *dev)
+void rtl_disable()
 {
 	int i;
-
-	ioaddr = dev->iobase;
 
 	/* reset the chip */
 	AkariOutB(ioaddr + ChipCmd, CmdReset);
@@ -292,7 +287,7 @@ void rtl_disable(struct eth_device *dev)
 	/* Give the chip 10ms to finish the reset. */
 	for (i=0; i<100; ++i){
 		if ((AkariInB(ioaddr + ChipCmd) & CmdReset) == 0) break;
-		udelay (100); /* wait 100us */
+		//udelay (100); /* wait 100us */
 	}
 }
 

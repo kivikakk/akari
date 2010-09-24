@@ -52,8 +52,10 @@ extern unsigned int cur_rx,cur_tx;
 #undef DEBUG_RX
 
 #define currticks()	get_timer(0)
-#define bus_to_phys(a)	pci_mem_to_phys((pci_dev_t)dev->priv, a)
-#define phys_to_bus(a)	pci_phys_to_mem((pci_dev_t)dev->priv, a)
+//#define bus_to_phys(a)	pci_mem_to_phys((pci_dev_t)dev->priv, a)
+//#define phys_to_bus(a)	pci_phys_to_mem((pci_dev_t)dev->priv, a)
+#define bus_to_phys(a)	(a)
+#define phys_to_bus(a)	(a)
 
 /* Symbolic offsets to registers. */
 enum RTL8139_registers {
