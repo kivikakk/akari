@@ -155,7 +155,7 @@ void rtl_reset()
 	 * from the configuration EEPROM default, because the card manufacturer
 	 * should have set that to match the card.  */
 
-	printf("rx ring address is %X\n",(unsigned long)rx_ring);
+	printf("rx ring address is %x\n",(unsigned long)rx_ring);
 	AkariOutL(ioaddr + RxBuf, phys_to_bus((int)rx_ring));
 
 	/* If we add multicast support, the MAR0 register would have to be
@@ -211,11 +211,11 @@ int rtl_transmit(volatile void *packet, int length)
 
 	if (status & TxOK) {
 		cur_tx = (cur_tx + 1) % NUM_TX_DESC;
-		printf("tx done (%d ticks), status %hX txstatus %X\n",
+		printf("tx done (%d ticks), status %x txstatus %x\n",
 			to-ticks(), status, txstatus);
 		return length;
 	} else {
-		printf("tx timeout/error (%d ticks), status %hX txstatus %X\n",
+		printf("tx timeout/error (%d ticks), status %x txstatus %x\n",
 			ticks()-to, status, txstatus);
 		rtl_reset();
 
@@ -238,7 +238,7 @@ int rtl_poll()
 	/* See below for the rest of the interrupt acknowledges.  */
 	AkariOutW(ioaddr + IntrStatus, status & ~(RxFIFOOver | RxOverflow | RxOK));
 
-	printf("rtl_poll: int %hX ", status);
+	printf("rtl_poll: int %x ", status);
 
 	ring_offs = cur_rx % RX_BUF_LEN;
 	rx_status = (u32)(rx_ring + ring_offs);
@@ -247,7 +247,7 @@ int rtl_poll()
 
 	if ((rx_status & (RxBadSymbol|RxRunt|RxTooLong|RxCRCErr|RxBadAlign)) ||
 	    (rx_size < ETH_ZLEN) || (rx_size > ETH_FRAME_LEN + 4)) {
-		printf("rx error %hX\n", rx_status);
+		printf("rx error %x\n", rx_status);
 		rtl_reset(); /* this clears all interrupts still pending */
 		return 0;
 	}
