@@ -52,6 +52,7 @@ multiboot_info_t *AkariMultiboot;
 typedef struct {
 	char *name;
 	char *module;
+	std::list<std::string> *args;
 	u32 module_len;
 } loaded_module_t;
 
@@ -91,9 +92,14 @@ void AkariEntry() {
 	while (mods_count--) {
 		u32 len = module_ptr->mod_end - module_ptr->mod_start;
 
+		mu_console->putString("loaded module: ");
+		mu_console->putString(reinterpret_cast<const char*>(module_ptr->string));
+		mu_console->putString("\n");
+
 		loaded_module_t mod = {
 			strdup(reinterpret_cast<const char *>(module_ptr->string)),
 			static_cast<char *>(mu_memory->alloc(len)),
+			0,
 			len
 		};
 
@@ -124,6 +130,20 @@ static void AkariEntryCont() {
 	for (u32 i = UKERNEL_STACK_POS; i >= UKERNEL_STACK_POS - UKERNEL_STACK_SIZE; i -= 0x1000)
 		mu_memory->_activeDirectory->getPage(i, true)->allocAnyFrame(false, true);
 
+	// Now that we have something of a dynamic-y memory bit, let's look at the modules
+	// and split away arguments.
+	for (std::slist<loaded_module_t>::iterator it = modules.begin(); it != modules.end(); ++it) {
+		std::string module = it->name;
+		std::vector<std::string> args = module.split();
+
+		if (args.size() > 1) {
+			it->name = strdup(args[0].c_str());
+			it->args = new std::list<std::string>();
+			for (int i = 1; i < static_cast<int>(args.size()); ++i)
+				it->args->push_back(args[i]);
+		}
+	}
+
 	// Initial task
 	Tasks::Task *base = Tasks::Task::BootstrapInitialTask(3, mu_memory->_kernelDirectory);
 	mu_tasks->start = mu_tasks->current = base;
@@ -136,8 +156,10 @@ static void AkariEntryCont() {
 	mu_tasks->current->next = idle;
 
 	// ATA driver
-	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "ata", std::list<std::string>());
-	mu_elf->loadImageInto(ata, reinterpret_cast<u8 *>(module_by_name("/ata")->module));
+	loaded_module_t *module = module_by_name("/ata");
+	ASSERT(module);
+	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "ata", module->args ? *module->args : std::list<std::string>());
+	mu_elf->loadImageInto(ata, reinterpret_cast<u8 *>(module->module));
 	mu_tasks->registeredTasks["system.io.ata"] = ata;
 	ata->registeredName = "system.io.ata";
 
@@ -159,22 +181,28 @@ static void AkariEntryCont() {
 	idle->next = ata;
 	
 	// FAT driver
-	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "fat", std::list<std::string>());
-	mu_elf->loadImageInto(fat, reinterpret_cast<u8 *>(module_by_name("/fat")->module));
+	module = module_by_name("/fat");
+	ASSERT(module);
+	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "fat", module->args ? *module->args : std::list<std::string>());
+	mu_elf->loadImageInto(fat, reinterpret_cast<u8 *>(module->module));
 	mu_tasks->registeredTasks["system.io.fs.fat"] = fat;
 	fat->registeredName = "system.io.fs.fat";
 	ata->next = fat;
 	
 	// VFS driver
-	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "vfs", std::list<std::string>());
-	mu_elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module_by_name("/vfs")->module));
+	module = module_by_name("/vfs");
+	ASSERT(module);
+	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "vfs", module->args ? *module->args : std::list<std::string>());
+	mu_elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module->module));
 	mu_tasks->registeredTasks["system.io.vfs"] = vfs;
 	vfs->registeredName = "system.io.vfs";
 	fat->next = vfs;
 	
 	// Booter
-	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "booter", std::list<std::string>());
-	mu_elf->loadImageInto(booter, reinterpret_cast<u8 *>(module_by_name("/booter")->module));
+	module = module_by_name("/booter");
+	ASSERT(module);
+	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "booter", module->args ? *module->args : std::list<std::string>());
+	mu_elf->loadImageInto(booter, reinterpret_cast<u8 *>(module->module));
 	booter->grantPrivilege(PRIV_REGISTER_NAME);
 	booter->grantPrivilege(PRIV_GRANT_PRIV);
 	vfs->next = booter;
