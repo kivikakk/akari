@@ -29,7 +29,8 @@ bool ELF::loadImageInto(Tasks::Task *task, const u8 *image) const {
 	const Elf32_Ehdr *hdr = reinterpret_cast<const Elf32_Ehdr *>(image);
 
 #ifdef ELF_DEBUG
-	mu_console->printf("image is at 0x%x, entry point apparently 0x%x\n", reinterpret_cast<u32>(image), hdr->e_entry);
+	mu_console->printf("image is at 0x%x, ", reinterpret_cast<u32>(image));
+	mu_console->printf("entry point apparently 0x%x\n", hdr->e_entry);
 #endif
 
 	if (hdr->e_ident[EI_MAG0] != 0x7f) return false;
