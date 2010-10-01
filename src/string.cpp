@@ -178,6 +178,13 @@ std::vector<std::string> std::string::split() const {
 	return result;
 }
 
+int atoi(const char *s) {
+	int n = 0;
+	while (isdigit(*s))
+		n = n * 10 + *s++ - '0';
+	return n;
+}
+
 void *memset(void *mem, u8 c, u32 n) {
 	u8 *m = static_cast<u8 *>(mem);
 	while (n--)
@@ -237,6 +244,10 @@ s32 strpos(const char *haystack, const char *needle) {
 		++i, ++haystack;
 	}
 	return std::string::npos;
+}
+
+bool isdigit(char c) {
+	return (c >= '0' && c <= '9');
 }
 
 bool isspace(char c) {

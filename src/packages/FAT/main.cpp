@@ -37,6 +37,7 @@ static u8 *get_filename(const fat_dirent_t *fd);
 
 pid_t ata = 0, vfs = 0;
 u32 vfs_driver_no = 0;
+u32 pno = 0;
 
 static fat_boot_record_t boot_record;
 
@@ -46,9 +47,13 @@ static u32 root_cluster;
 
 static std::map<u32, u8 *> fat_clusters;
 
-extern "C" int main() {
+extern "C" int main(int argc, char **argv) {
 	printf("FAT: starting ... ");
 	ata = processIdByNameBlock("system.io.ata");
+
+	if (argc > 0) {
+		pno = atoi(argv[0]);
+	}
 
 	// Initialize our important stuff
 	if (!init()) {
@@ -141,7 +146,7 @@ extern "C" int main() {
 }
 
 bool init() {
-	partition_read_data(0, 0, 0, sizeof(fat_boot_record_t), reinterpret_cast<u8 *>(&boot_record));
+	partition_read_data(pno, 0, 0, sizeof(fat_boot_record_t), reinterpret_cast<u8 *>(&boot_record));
 
 	fat32esque = 0xff;
 	if ((boot_record.total_sectors_small > 0) && (boot_record.ebr.signature == 0x28 || boot_record.ebr.signature == 0x29))
@@ -211,7 +216,7 @@ u8 *fat_read_fat_cluster(u32 cluster) {
 		return it->second;
 
 	u8 *cluster_data = new u8[boot_record.sectors_per_cluster * boot_record.bytes_per_sector];
-	partition_read_data(0, first_fat_sector + cluster * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, cluster_data);
+	partition_read_data(pno, first_fat_sector + cluster * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, cluster_data);
 
 	fat_clusters[cluster] = cluster_data;
 
@@ -220,10 +225,10 @@ u8 *fat_read_fat_cluster(u32 cluster) {
 
 void fat_read_cluster(u32 cluster, u8 *buffer) {
 	if (!fat32esque) {
-		// partition_read_data(0, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
+		// partition_read_data(pno, root_cluster + root_dir_sectors + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
 		panic("FAT not impl for !FAT32");
 	} else {
-		partition_read_data(0, first_data_sector + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
+		partition_read_data(pno, first_data_sector + (cluster - 2) * boot_record.sectors_per_cluster, 0, boot_record.bytes_per_sector * boot_record.sectors_per_cluster, buffer);
 	}
 }
 
