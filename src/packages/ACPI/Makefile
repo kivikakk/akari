@@ -14,17 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-include ../Makefile.inc
+TARGET = ACPI
+COPYDEST = C:/ACPI
 
-PACKAGES = ACPI ATA FAT VFS Booter PCI Keyboard Shell PIIX3 PS RTL8139
+include ../PackageMakefile.inc
 
-all: $(PACKAGES)
-
-$(PACKAGES): force_subdir
-	@cd $@; $(MAKE) $(MFLAGS) all
-
-force_subdir:
-	@true
-
-clean:
-	@for i in $(PACKAGES); do (cd $$i; $(MAKE) $(MFLAGS) clean); done
