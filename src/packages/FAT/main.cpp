@@ -188,7 +188,7 @@ bool init() {
 		fat_type = 32;
 	}
 
-	#ifdef SHOW_FAT_INFORMATION
+	#if 1
 		printf("FAT: No. of FATs: 0x%x\n", boot_record.fats);
 		printf("FAT: Sectors per FAT: 0x%x\n", fat_sectors);
 		printf("FAT: Bytes per sector: 0x%x\n", boot_record.bytes_per_sector);
