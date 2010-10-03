@@ -42,6 +42,8 @@ extern "C" int main() {
 
 		if (request[0] == ACPI_OP_SHUTDOWN) {
 			acpiPowerOff();
+		} else if (request[0] == ACPI_OP_REBOOT) {
+			acpiReboot();
 		} else {
 			panic("ACPI: confused");
 		}
@@ -231,4 +233,9 @@ void acpiPowerOff() {
 		AkariOutW((u32)PM1b_CNT, SLP_TYPb | SLP_EN);
 	
 	printf("ACPI poweroff failed.\n");
+}
+
+void acpiReboot() {
+	// NOTE: we don't even use ACPI for this!
+	sysreboot();
 }

@@ -104,7 +104,7 @@ extern "C" int main() {
 				if (fdir(path.c_str())) {
 					printf("%s: is a directory\n", line[0].c_str());
 				} else {
-					pid_t pid = bootstrap(path.c_str());
+					pid_t pid = bootstrap(path.c_str(), line);
 					if (!bg)
 						waitProcess(pid);
 				}

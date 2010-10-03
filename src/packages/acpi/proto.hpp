@@ -17,10 +17,15 @@
 #ifndef ACPI_PROTO_HPP
 #define ACPI_PROTO_HPP
 
-#define ACPI_OP_SHUTDOWN 		0x1
+#define ACPI_OP_SHUTDOWN	0x1
+#define ACPI_OP_REBOOT 		0x2
 
 typedef struct {
 	u8 cmd;
 } ACPIOpShutdown;
+
+typedef struct {
+	u8 cmd;
+} ACPIOpReboot;
 
 #endif

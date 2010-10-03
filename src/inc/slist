@@ -17,6 +17,8 @@
 #ifndef __SLIST
 #define __SLIST
 
+#include <vector>
+
 namespace std {
 	template <typename T> class slist {
 	protected:
@@ -28,6 +30,12 @@ namespace std {
 		slist(const slist &r): _begin(0) {
 			for (typename slist::iterator it = r.begin(); it != r.end(); ++it)
 				push_back(*it);
+		}
+
+		slist(const vector<T> &r): _begin(0) {
+			int rsize = r.size();
+			for (int i = 0; i < rsize; ++i)
+				push_back(r[i]);
 		}
 
 		~slist() {

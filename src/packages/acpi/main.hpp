@@ -49,5 +49,6 @@ u32 *acpiGetRSDPtr();
 u32 *acpiCheckRSDPtr(u32 *ptr);
 bool acpiEnable();
 void acpiPowerOff();
+void acpiReboot();
 
 #endif

@@ -21,11 +21,41 @@
 #include "main.hpp"
 #include "../acpi/proto.hpp"
 
+int usage() {
+	printf("Usage: shutdown OPTION\n");
+	printf("Bring the system down.\n\n");
+	printf("Options:\n");
+	printf("  -r                reboot after shutdown\n");
+	printf("  -h                halt or power off after shutdown\n");
+	return 0;
+}
+
 extern "C" int main(int argc, char **argv) {
 	pid_t acpi = processIdByNameBlock("system.bus.acpi");
 
-	ACPIOpShutdown op = { ACPI_OP_SHUTDOWN };
-	sendQueue(acpi, 0, reinterpret_cast<u8 *>(&op), sizeof(ACPIOpShutdown));
+	if (argc < 2) return usage();
+
+	bool reboot = false, halt = false, unknown = false;
+	++argv;
+	while (*argv) {
+		if (strcmp(*argv, "-r") == 0)
+			reboot = true;
+		else if (strcmp(*argv, "-h") == 0)
+			halt = true;
+		else
+			unknown = true;
+		++argv;
+	}
+
+	if ((reboot && halt) || unknown) return usage();
+
+	if (halt) {
+		ACPIOpShutdown op = { ACPI_OP_SHUTDOWN };
+		sendQueue(acpi, 0, reinterpret_cast<u8 *>(&op), sizeof(ACPIOpShutdown));
+	} else if (reboot) {
+		ACPIOpReboot op = { ACPI_OP_REBOOT };
+		sendQueue(acpi, 0, reinterpret_cast<u8 *>(&op), sizeof(ACPIOpReboot));
+	}
 
 	return 0;
 }

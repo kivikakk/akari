@@ -16,7 +16,7 @@
 
 include ../Makefile.inc
 
-PACKAGES = acpi ata fat init keyboard pci piix3 poweroff ps rtl8139 sh vfs
+PACKAGES = acpi ata fat init keyboard pci piix3 ps rtl8139 sh shutdown vfs
 
 all: $(PACKAGES)
 

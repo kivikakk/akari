@@ -42,6 +42,7 @@ Syscall::Syscall(): _syscalls_assigned(0), _returnTask(0) {
 	addSyscall(40, reinterpret_cast<syscall_fn_t>(&User::mallocap));
 	addSyscall(42, reinterpret_cast<syscall_fn_t>(&User::physAddr));
 	addSyscall(10, reinterpret_cast<syscall_fn_t>(&User::free));
+	addSyscall(52, reinterpret_cast<syscall_fn_t>(&User::sysreboot));
 
 	addSyscall(43, reinterpret_cast<syscall_fn_t>(&User::IPC::getProcessList));
 	addSyscall(44, reinterpret_cast<syscall_fn_t>(&User::IPC::waitProcess));

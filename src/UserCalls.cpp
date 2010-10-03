@@ -229,5 +229,14 @@ namespace User {
 			panic("free returned false");
 		}
 	}
+
+	void sysreboot() {
+		requirePrivilege(PRIV_POWER_MGMT);
+
+		asm volatile("cli");
+		while (AkariInB(0x64) & 0x02);
+		AkariOutB(0x64, 0xFE);
+		while(1) asm volatile("hlt");
+	}
 }
 #endif

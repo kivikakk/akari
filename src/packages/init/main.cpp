@@ -35,6 +35,7 @@ extern "C" int main() {
 		bsops.mmap[i] = i;
 	bsops.privs.push_back(PRIV_PHYSADDR);
 	bsops.privs.push_back(PRIV_GRANT_PRIV);
+	bsops.privs.push_back(PRIV_POWER_MGMT);
 
 	pid_t acpi = bootstrap("/sys/services/acpi", std::slist<std::string>(), bsops);
 	registerName(acpi, "system.bus.acpi");
