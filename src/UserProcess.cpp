@@ -23,6 +23,7 @@
 #include <Tasks.hpp>
 #include <ELF.hpp>
 #include <Akari.hpp>
+#include <Console.hpp>
 
 namespace User {
 namespace Process {
@@ -41,6 +42,25 @@ namespace Process {
 		Tasks::Task *new_task = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, name, argl);
 		mu_elf->loadImageInto(new_task, elf);
 		return new_task->id;
+	}
+
+	bool mapPhysicalMem(pid_t taskpid, u32 virt_from, u32 virt_to, u32 phys_from, bool readwrite) {
+		requirePrivilege(PRIV_GRANT_PRIV);
+		requirePrivilege(PRIV_PHYSADDR);
+		Tasks::Task *task = mu_tasks->tasksByPid[taskpid];
+		if (!task)
+			return false;
+		Memory::Page *page;
+		
+		for (; virt_from <= virt_to; virt_from += 0x1000, phys_from += 0x1000) {
+			page = task->pageDir->getPage(virt_from, true);
+			page->present = true;
+			page->readwrite = readwrite;
+			page->user = true;
+			page->pageAddress = phys_from / 0x1000;
+		}
+
+		return true;
 	}
 
 	bool grantPrivilege(pid_t taskpid, u16 priv) {

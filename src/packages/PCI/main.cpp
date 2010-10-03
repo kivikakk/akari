@@ -61,12 +61,10 @@ static std::slist<AwaitingDriversUp> awaiting_drivers_up;
 static device_list_t all_devices;
 
 extern "C" int main() {
-	printf("PCI: starting ... ");
 	if (!init()) {
-		printf("failed init\n");
+		printf("PCI: failed init\n");
 		return 1;
 	}
-	printf("done!\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();
@@ -165,8 +163,7 @@ void check_non_hds() {
 			continue;
 		}
 
-		printf("bootstrapping %s\n", filename);
-
+		// Hacky priv adds for RTL8139.
 		bootstrap_options_t bsops;
 		bsops.privs.push_back(PRIV_PHYSADDR);
 		bsops.privs.push_back(PRIV_IRQ);

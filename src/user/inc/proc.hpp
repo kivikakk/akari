@@ -19,13 +19,15 @@
 
 #include <arch.hpp>
 #include <string>
+#include <map>
 #include <slist>
 
 typedef class BootstrapOptions {
 public:
-	BootstrapOptions(): privs(), iobits() {
+	BootstrapOptions(): mmap(), privs(), iobits() {
 	}
 
+	std::map<u32, u32> mmap;
 	std::slist<u32> privs;
 	std::slist<u16> iobits;
 } bootstrap_options_t;

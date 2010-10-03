@@ -41,7 +41,6 @@ typedef struct {
 std::slist<AwaitingRoot> awaiting_root;
 
 extern "C" int main() {
-	printf("VFS: starting ... ");
 	{
 		// Requests to driver 0 will come back here.
 		VFSDriver null_driver;
@@ -49,8 +48,6 @@ extern "C" int main() {
 		null_driver.pid = processId();
 		drivers.push_back(null_driver);
 	}
-
-	printf("done!\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();

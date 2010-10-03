@@ -38,18 +38,15 @@ master_boot_record_t hdd_mbr;
 bool dma_enabled = false;
 
 extern "C" int main() {
-	printf("ATA: starting ... ");
 	int devices_found = reg_config();
 
 	if (devices_found == 0) {
-		printf("failed init - totally no hard drives\n");
+		printf("ATA: failed init - totally no hard drives\n");
 		return 0;
 	}
 
 	ata_read_data(0, 0, 512, reinterpret_cast<u8 *>(&hdd_mbr));
 	if (hdd_mbr.signature != 0xAA55) panic("invalid MBR!\n");
-
-	printf("done!\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();

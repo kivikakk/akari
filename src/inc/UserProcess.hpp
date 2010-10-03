@@ -31,6 +31,7 @@ namespace User {
 namespace Process {
 	pid_t fork();
 	pid_t spawn(const char *name, const u8 *elf, u32 elf_len, char *const *args);
+	bool mapPhysicalMem(pid_t taskpid, u32 virt_from, u32 virt_to, u32 phys_from, bool readwrite);
 	bool grantPrivilege(pid_t task, u16 priv);
 	bool grantIOPriv(pid_t task, u16 port);
 	bool beginExecution(pid_t task);
@@ -43,6 +44,7 @@ namespace Process {
 
 DEFN_SYSCALL0(fork, 35, pid_t)
 DEFN_SYSCALL4(spawn, 36, pid_t, const char *, const u8 *, u32, char *const *)
+DEFN_SYSCALL5(mapPhysicalMem, 50, bool, pid_t, u32, u32, u32, bool)
 DEFN_SYSCALL2(grantPrivilege, 45, bool, pid_t, u16)
 DEFN_SYSCALL2(grantIOPriv, 46, bool, pid_t, u16)
 DEFN_SYSCALL1(beginExecution, 47, bool, pid_t)
@@ -52,6 +54,7 @@ DEFN_SYSCALL2(nanosleep, 49, int, const struct timespec *, struct timespec *)
 
 DECL_SYSCALL0(fork, pid_t);
 DECL_SYSCALL4(spawn, pid_t, const char *, const u8 *, u32, char *const *);
+DECL_SYSCALL5(mapPhysicalMem, bool, pid_t, u32, u32, u32, bool);
 DECL_SYSCALL2(grantPrivilege, bool, pid_t, u16);
 DECL_SYSCALL2(grantIOPriv, bool, pid_t, u16);
 DECL_SYSCALL1(beginExecution, bool, pid_t);

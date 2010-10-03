@@ -68,6 +68,7 @@ Syscall::Syscall(): _syscalls_assigned(0), _returnTask(0) {
 
 	addSyscall(35, reinterpret_cast<syscall_fn_t>(&User::Process::fork));
 	addSyscall(36, reinterpret_cast<syscall_fn_t>(&User::Process::spawn));
+	addSyscall(50, reinterpret_cast<syscall_fn_t>(&User::Process::mapPhysicalMem));
 	addSyscall(45, reinterpret_cast<syscall_fn_t>(&User::Process::grantPrivilege));
 	addSyscall(46, reinterpret_cast<syscall_fn_t>(&User::Process::grantIOPriv));
 	addSyscall(47, reinterpret_cast<syscall_fn_t>(&User::Process::beginExecution));

@@ -48,7 +48,6 @@ static u32 root_cluster;
 static std::map<u32, u8 *> fat_clusters;
 
 extern "C" int main(int argc, char **argv) {
-	printf("FAT: starting ... ");
 	ata = processIdByNameBlock("system.io.ata");
 
 	if (argc > 0) {
@@ -57,7 +56,7 @@ extern "C" int main(int argc, char **argv) {
 
 	// Initialize our important stuff
 	if (!init()) {
-		printf("calling it quits in init");
+		printf("FAT: calling it quits in init");
 		return 1;
 	}
 
@@ -103,7 +102,6 @@ extern "C" int main(int argc, char **argv) {
 	}
 
 	// All done.
-	printf("done!\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();

@@ -205,6 +205,7 @@ static void AkariEntryCont() {
 	mu_elf->loadImageInto(booter, reinterpret_cast<u8 *>(module->module));
 	booter->grantPrivilege(PRIV_REGISTER_NAME);
 	booter->grantPrivilege(PRIV_GRANT_PRIV);
+	booter->grantPrivilege(PRIV_PHYSADDR);
 	vfs->next = booter;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.

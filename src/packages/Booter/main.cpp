@@ -25,7 +25,21 @@
 #include "../PCI/PCIProto.hpp"
 
 extern "C" int main() {
+	// ACPI
 	bootstrap_options_t bsops;
+
+	// Give access to first mem page (for 0x40E for EBDA),
+	// and 0x000E0000 ~ 0x00100000.
+	bsops.mmap[0x0000] = 0x0000;
+	for (u32 i = 0xE0000; i < 0x100000; i += 0x1000)
+		bsops.mmap[i] = i;
+	bsops.privs.push_back(PRIV_PHYSADDR);
+	bsops.privs.push_back(PRIV_GRANT_PRIV);
+
+	bootstrap("/ACPI", std::slist<std::string>(), bsops);
+
+	// PCI
+	bsops = bootstrap_options_t();
 
 	bsops.iobits.push_back(0xCF8);
 	bsops.iobits.push_back(0xCF9);
@@ -46,16 +60,18 @@ extern "C" int main() {
 		shiftQueue(probeQueueFor(msg_id));
 	}
 
-	bsops.iobits.clear();
+	// Keyboard
+	bsops = bootstrap_options_t();
+
 	bsops.iobits.push_back(0x60);
 	bsops.iobits.push_back(0x64);
 
-	bsops.privs.clear();
 	bsops.privs.push_back(PRIV_IRQ);
 
 	pid_t keyboard = bootstrap("/Keyboard", std::slist<std::string>(), bsops);
 	registerName(keyboard, "system.io.keyboard");
 
+	// Shell
 	bootstrap("/Shell");
 
 	return 0;

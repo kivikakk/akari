@@ -46,6 +46,9 @@ pid_t bootstrap(const char *filename, const std::slist<std::string> &args, const
 	delete [] argsc;
 	delete [] image;
 
+	for (std::map<u32, u32>::iterator it = options.mmap.begin(); it != options.mmap.end(); ++it)
+		mapPhysicalMem(task, it->first, it->first, it->second, false);	// No way to request R/W mapping?
+
 	for (std::slist<u32>::iterator it = options.privs.begin(); it != options.privs.end(); ++it)
 		grantPrivilege(task, *it);
 

@@ -33,11 +33,7 @@ u16 SLP_TYPa, SLP_TYPb, SLP_EN, SCI_EN;
 u8 PM1_CNT_LEN;
 
 extern "C" int main() {
-	printf("ACPI: starting ... ");
-
 	acpiInit();
-
-	printf("done!\n");
 
 	while (true) {
 		struct queue_item_info info = *probeQueue();
@@ -56,6 +52,7 @@ extern "C" int main() {
 
 bool acpiInit() {
 	u32 *ptr = acpiGetRSDPtr();
+	mapPhysicalMem(processId(), (u32)ptr & 0xFFFFF000, ((u32)ptr & 0xFFFFF000) + 0x2000, (u32)ptr & 0xFFFFF000, true);
 
 	if (ptr != 0 && acpiCheckHeader(ptr, "RSDT") == 0) {
 		// we have ACPI.
@@ -145,6 +142,7 @@ u32 *acpiGetRSDPtr() {
 			return rsdp;
 	}
 
+	printf("ACPI: trying to fetch from edba\n");
 	int ebda = *((u16 *)0x40E);
 	ebda = ebda * 0x10 & 0x000FFFFF;
 

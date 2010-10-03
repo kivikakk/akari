@@ -117,6 +117,10 @@ namespace std {
 			return items.rbegin()->second;
 		}
 
+		void clear() {
+			items.clear();
+		}
+
 		int erase(const K &first) {
 			for (typename std::list<pair>::iterator it = items.begin(); it != items.end(); ++it) {
 				if (first == it->first) {
