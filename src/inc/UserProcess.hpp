@@ -20,6 +20,11 @@
 #include <arch.hpp>
 #include <UserGates.hpp>
 
+struct timespec {
+	unsigned long tv_sec;
+	long tv_nsec;
+};
+
 #if defined(__AKARI_KERNEL)
 
 namespace User {
@@ -29,6 +34,8 @@ namespace Process {
 	bool grantPrivilege(pid_t task, u16 priv);
 	bool grantIOPriv(pid_t task, u16 port);
 	bool beginExecution(pid_t task);
+
+	int nanosleep(const struct timespec *req, struct timespec *rem);
 }
 }
 
@@ -39,6 +46,7 @@ DEFN_SYSCALL4(spawn, 36, pid_t, const char *, const u8 *, u32, char *const *)
 DEFN_SYSCALL2(grantPrivilege, 45, bool, pid_t, u16)
 DEFN_SYSCALL2(grantIOPriv, 46, bool, pid_t, u16)
 DEFN_SYSCALL1(beginExecution, 47, bool, pid_t)
+DEFN_SYSCALL2(nanosleep, 49, int, const struct timespec *, struct timespec *)
 
 #else
 
@@ -47,6 +55,7 @@ DECL_SYSCALL4(spawn, pid_t, const char *, const u8 *, u32, char *const *);
 DECL_SYSCALL2(grantPrivilege, bool, pid_t, u16);
 DECL_SYSCALL2(grantIOPriv, bool, pid_t, u16);
 DECL_SYSCALL1(beginExecution, bool, pid_t);
+DECL_SYSCALL2(nanosleep, int, const struct timespec *, struct timespec *);
 
 #endif
 

@@ -20,10 +20,17 @@
 #include <UserIPCQueue.hpp>
 #include <debug.hpp>
 #include <cpp.hpp>
+#include <string>
+#include <time.hpp>
 
 #include "main.hpp"
+#include "ACPIProto.hpp"
 
-bool acpiInit();
+u32 *SMI_CMD;
+u8 ACPI_ENABLE, ACPI_DISABLE;
+u32 *PM1a_CNT, *PM1b_CNT;
+u16 SLP_TYPa, SLP_TYPb, SLP_EN, SCI_EN;
+u8 PM1_CNT_LEN;
 
 extern "C" int main() {
 	printf("ACPI: starting ... ");
@@ -37,43 +44,10 @@ extern "C" int main() {
 		u8 *request = grabQueue(&info);
 		shiftQueue(&info);
 
-		if (request[0] == ATA_OP_READ) {
-			ATAOpRead *op = reinterpret_cast<ATAOpRead *>(request);
-
-			u8 *buffer = new u8[op->length];
-			ata_read_data(op->sector, op->offset, op->length, buffer);
-			sendQueue(info.from, info.id, buffer, op->length);
-			delete [] buffer;
-		} else if (request[0] == ATA_OP_WRITE) {
-			ATAOpWrite *op = reinterpret_cast<ATAOpWrite *>(request);
-
-			ata_write_data(op->sector, op->offset, op->length, op->data);
-			sendQueue(info.from, info.id, reinterpret_cast<const u8 *>("\1"), 1);
-		} else if (request[0] == ATA_OP_MBR_READ) {
-			ATAOpMBRRead *op = reinterpret_cast<ATAOpMBRRead *>(request);
-
-			// u8 *buffx = new u8[1024];
-			// partition_read_data(0, 0, 0, 16, buffx);
-			// printf("BUFFX read 1024: %s/%x %x %x %x %x %x %x %x ...\n", buffx, buffx[0], buffx[1], buffx[2], buffx[3], buffx[4], buffx[5], buffx[6], buffx[7]);
-			// delete [] buffx;
-
-			u8 *buffer = new u8[op->length];
-			partition_read_data(op->partition_id, op->sector, op->offset, op->length, buffer);
-			sendQueue(info.from, info.id, buffer, op->length);
-			delete [] buffer;
-		} else if (request[0] == ATA_OP_SET_BAR4) {
-			ATAOpSetBAR4 *op = reinterpret_cast<ATAOpSetBAR4 *>(request);
-
-			pio_bmide_base_addr = op->bar4;
-			dma_pci_config();
-			dma_enabled = true;
-
-			printf("ATA: bar4 set to %x\n", op->bar4);
-
-			// send a confirmation that it's done.
-			sendQueue(info.from, info.id, 0, 0);
+		if (request[0] == ACPI_OP_SHUTDOWN) {
+			acpiPowerOff();
 		} else {
-			panic("ATA: confused");
+			panic("ACPI: confused");
 		}
 
 		delete [] request;
@@ -145,4 +119,111 @@ bool acpiInit() {
 	}
 
 	return false;
+}
+
+int acpiCheckHeader(u32 *ptr, const char *sig) {
+	if (memcmp(ptr, sig, 4) == 0) {
+		u8 *checkPtr = reinterpret_cast<u8 *>(ptr);
+		int len = *(ptr + 1);
+		u8 check = 0;
+		while (0 < len--) {
+			check += *checkPtr;
+			++checkPtr;
+		}
+		if (check == 0)
+			return 0;
+	}
+	return -1;
+}
+
+u32 *acpiGetRSDPtr() {
+	u32 *addr, *rsdp;
+
+	for (addr = reinterpret_cast<u32 *>(0x000E0000); addr < reinterpret_cast<u32 *>(0x00100000); addr += 0x10 / sizeof(addr)) {
+		rsdp = acpiCheckRSDPtr(addr);
+		if (rsdp != 0)
+			return rsdp;
+	}
+
+	int ebda = *((u16 *)0x40E);
+	ebda = ebda * 0x10 & 0x000FFFFF;
+
+	for (addr = reinterpret_cast<u32 *>(ebda); addr < reinterpret_cast<u32 *>(ebda + 1024); addr += 0x10 / sizeof(addr)) {
+		rsdp = acpiCheckRSDPtr(addr);
+		if (rsdp != 0)
+			return rsdp;
+	}
+
+	return 0;
+}
+
+u32 *acpiCheckRSDPtr(u32 *ptr) {
+	const char *sig = "RSD PTR ";
+	struct RSDPtr *rsdp = reinterpret_cast<struct RSDPtr *>(ptr);
+	u8 *bptr;
+	u8 check = 0;
+	int i;
+
+	if (memcmp(sig, rsdp, 8) == 0) {
+		bptr = (u8 *)ptr;
+		for (i = 0; i < static_cast<int>(sizeof(struct RSDPtr)); ++i) {
+			check += *bptr;
+			++bptr;
+		}
+
+		if (check == 0) {
+			return (u32 *)rsdp->RsdtAddress;
+		}
+	}
+
+	return 0;
+}
+
+bool acpiEnable() {
+	if ((AkariInW((u32)PM1a_CNT) & SCI_EN) == 0) {
+		if (SMI_CMD != 0 && ACPI_ENABLE != 0) {
+			AkariOutB((u32)SMI_CMD, ACPI_ENABLE);
+
+			int i;
+			for (i = 0; i < 300; ++i) {
+				if ((AkariInW((u32)PM1a_CNT) & SCI_EN) == 1)
+					break;
+				sleep(10);
+			}
+			if (PM1b_CNT != 0) {
+				for (; i < 300; ++i) {
+					if ((AkariInW((u32)PM1b_CNT) & SCI_EN) == 1)
+						break;
+					sleep(10);
+				}
+			}
+			if (i < 300) {
+				printf("enabled ACPI\n");
+				return true;
+			} else {
+				printf("couldn't enable ACPI\n");
+				return false;
+			}
+		} else {
+			printf("no known way to enable ACPI\n");
+			return false;
+		}
+	} else {
+		printf("ACPI already enabled\n");
+		return true;
+	}
+}
+
+void acpiPowerOff() {
+	// SCI_EN set to 1 if ACPI shutdown is possible
+	if (SCI_EN == 0)
+		return;
+
+	acpiEnable();
+
+	AkariOutW((u32)PM1a_CNT, SLP_TYPa | SLP_EN);
+	if (PM1b_CNT != 0)
+		AkariOutW((u32)PM1b_CNT, SLP_TYPb | SLP_EN);
+	
+	printf("ACPI poweroff failed.\n");
 }

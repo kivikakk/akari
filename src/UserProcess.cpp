@@ -19,6 +19,7 @@
 #if defined(__AKARI_KERNEL)
 
 #include <debug.hpp>
+#include <UserCalls.hpp>
 #include <Tasks.hpp>
 #include <ELF.hpp>
 #include <Akari.hpp>
@@ -67,6 +68,13 @@ namespace Process {
 		task->next = mu_tasks->start;
 		mu_tasks->start = task;
 		return true;
+	}
+
+	int nanosleep(const struct timespec *req, struct timespec *rem) {
+		if (rem) panic("Whoops! 'rem' is ignored in nanosleep.");
+
+		panic("Not implemented. Eek.");
+		return -1;
 	}
 }
 }

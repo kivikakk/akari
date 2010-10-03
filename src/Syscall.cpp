@@ -71,6 +71,7 @@ Syscall::Syscall(): _syscalls_assigned(0), _returnTask(0) {
 	addSyscall(45, reinterpret_cast<syscall_fn_t>(&User::Process::grantPrivilege));
 	addSyscall(46, reinterpret_cast<syscall_fn_t>(&User::Process::grantIOPriv));
 	addSyscall(47, reinterpret_cast<syscall_fn_t>(&User::Process::beginExecution));
+	addSyscall(49, reinterpret_cast<syscall_fn_t>(&User::Process::nanosleep));
 }
 
 void Syscall::addSyscall(u16 num, syscall_fn_t fn) {

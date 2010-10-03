@@ -264,6 +264,18 @@ char toupper(char c) {
 	return c - ('a' - 'A');
 }
 
+s32 memcmp(const void *s1, const void *s2, size_t n) {
+	const u8 *c1 = reinterpret_cast<const u8 *>(s1),
+		 *c2 = reinterpret_cast<const u8 *>(s2);
+
+	while (n-- > 0) {
+		if (*c1 < *c2) return -1;
+		if (*c1 > *c2) return 1;
+		++c1, ++c2;
+	}
+	return 0;
+}
+
 s32 stricmp(const char *s1, const char *s2) {
 	while (*s1 && *s2) {
 		if (toupper(*s1) < toupper(*s2)) return -1;
