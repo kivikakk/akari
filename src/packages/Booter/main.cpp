@@ -36,7 +36,8 @@ extern "C" int main() {
 	bsops.privs.push_back(PRIV_PHYSADDR);
 	bsops.privs.push_back(PRIV_GRANT_PRIV);
 
-	bootstrap("/ACPI", std::slist<std::string>(), bsops);
+	pid_t acpi = bootstrap("/ACPI", std::slist<std::string>(), bsops);
+	registerName(acpi, "system.bus.acpi");
 
 	// PCI
 	bsops = bootstrap_options_t();
