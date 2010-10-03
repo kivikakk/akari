@@ -156,9 +156,9 @@ static void AkariEntryCont() {
 	mu_tasks->current->next = idle;
 
 	// ATA driver
-	loaded_module_t *module = module_by_name("/ata");
+	loaded_module_t *module = module_by_name("/ATA");
 	ASSERT(module);
-	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "ata", module->args ? *module->args : std::list<std::string>());
+	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "/ATA", module->args ? *module->args : std::list<std::string>());
 	mu_elf->loadImageInto(ata, reinterpret_cast<u8 *>(module->module));
 	mu_tasks->registeredTasks["system.io.ata"] = ata;
 	ata->registeredName = "system.io.ata";
@@ -181,18 +181,18 @@ static void AkariEntryCont() {
 	idle->next = ata;
 	
 	// FAT driver
-	module = module_by_name("/fat");
+	module = module_by_name("/FAT");
 	ASSERT(module);
-	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "fat", module->args ? *module->args : std::list<std::string>());
+	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "/FAT", module->args ? *module->args : std::list<std::string>());
 	mu_elf->loadImageInto(fat, reinterpret_cast<u8 *>(module->module));
 	mu_tasks->registeredTasks["system.io.fs.fat"] = fat;
 	fat->registeredName = "system.io.fs.fat";
 	ata->next = fat;
 	
 	// VFS driver
-	module = module_by_name("/vfs");
+	module = module_by_name("/VFS");
 	ASSERT(module);
-	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "vfs", module->args ? *module->args : std::list<std::string>());
+	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "/VFS", module->args ? *module->args : std::list<std::string>());
 	mu_elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module->module));
 	mu_tasks->registeredTasks["system.io.vfs"] = vfs;
 	vfs->registeredName = "system.io.vfs";
@@ -201,7 +201,7 @@ static void AkariEntryCont() {
 	// Booter
 	module = module_by_name("/booter");
 	ASSERT(module);
-	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "booter", module->args ? *module->args : std::list<std::string>());
+	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "/booter", module->args ? *module->args : std::list<std::string>());
 	mu_elf->loadImageInto(booter, reinterpret_cast<u8 *>(module->module));
 	booter->grantPrivilege(PRIV_REGISTER_NAME);
 	booter->grantPrivilege(PRIV_GRANT_PRIV);
