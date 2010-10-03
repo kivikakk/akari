@@ -102,5 +102,17 @@ typedef struct fat_dirent
 	u32 size;
 } __attribute__((__packed__)) fat_dirent_t;
 
+typedef struct fat_lfn_dirent
+{
+	u8 ordinal;
+	u16 c1, c2, c3, c4, c5;
+	u8 attributes;
+	u8 type;		// reserved: 0
+	u8 checksum;
+	u16 c6, c7, c8, c9, c10, c11;
+	u8 cluster;		// unused: 0
+	u16 c12, c13;
+} __attribute__((__packed__)) fat_lfn_dirent_t;
+
 #endif
 

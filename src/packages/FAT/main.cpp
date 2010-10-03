@@ -33,7 +33,7 @@ u32 fat_read_data(u32 inode, u32 offset, u32 length, u8 *buffer);
 u32 fat_entry_for(u32 for_cluster);
 VFSDirent *fat_readdir(u32 inode, u32 index);
 VFSNode *fat_finddir(u32 inode, const char *name);
-static u8 *get_filename(const fat_dirent_t *fd);
+static const char *get_filename(const fat_dirent_t *fd);
 
 pid_t ata = 0, vfs = 0;
 u32 vfs_driver_no = 0;
@@ -371,6 +371,7 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 		current = 2;
 	}
 
+	std::string lfn;
 	while (true) {
 		fat_read_cluster(current_cluster, cluster_buffer);
 		
@@ -381,8 +382,27 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 				break;
 			else if (fd->filename[0] == 0xe5)
 				continue;
-			else if (fd->filename[11] == 0x0f) {
-				continue;	// TODO LFN
+			else if (fd->attributes == (FAT_READ_ONLY | FAT_HIDDEN | FAT_SYSTEM | FAT_VOLUME_ID)) {
+				fat_lfn_dirent_t *lfnent = reinterpret_cast<fat_lfn_dirent_t *>(fd);
+				std::string portion;
+				#define APPEND_PORTION(num) \
+					if (lfnent->c##num) { portion += static_cast<char>(lfnent->c##num); }
+				APPEND_PORTION(1);
+				APPEND_PORTION(2);
+				APPEND_PORTION(3);
+				APPEND_PORTION(4);
+				APPEND_PORTION(5);
+				APPEND_PORTION(6);
+				APPEND_PORTION(7);
+				APPEND_PORTION(8);
+				APPEND_PORTION(9);
+				APPEND_PORTION(10);
+				APPEND_PORTION(11);
+				APPEND_PORTION(12);
+				APPEND_PORTION(13);
+				lfn = portion + lfn;
+				#undef APPEND_PORTION
+				continue;
 			}
 			else if (fd->attributes & FAT_VOLUME_ID) {
 				continue;	// fd->filename is vol ID
@@ -393,13 +413,15 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 				// bingo!
 				VFSDirent *dirent = new VFSDirent;
 
-				u8 *filename = get_filename(fd);
-				strcpy(dirent->name, reinterpret_cast<char *>(filename));
+				const char *filename = lfn.length() ? lfn.c_str() : get_filename(fd);
+				strncpy(dirent->name, filename, sizeof(dirent->name) - 1);
+				dirent->name[sizeof(dirent->name) - 1] = 0;		// In case we maxed out in strncpy.
 
 				dirent->inode = (fd->first_cluster_high << 16) | fd->first_cluster_low;
 
 				return dirent;
 			}
+			lfn = "";
 		}
 
 		// Didn't find it here.
@@ -450,8 +472,8 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 			else if (fd->attributes & FAT_VOLUME_ID)
 				continue;
 
-			u8 *filename = get_filename(fd);
-			if (stricmp(reinterpret_cast<char *>(filename), name) == 0) {
+			const char *filename = get_filename(fd);
+			if (stricmp(filename, name) == 0) {
 				VFSNode *node = new VFSNode;
 				strcpy(node->name, name);
 				node->flags = (fd->attributes & FAT_DIRECTORY) ? VFS_DIRECTORY : VFS_FILE;
@@ -478,10 +500,10 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 	return 0;
 }
 
-static u8 *get_filename(const fat_dirent_t *fd) {
-	static u8 filename_return[13];
+static const char *get_filename(const fat_dirent_t *fd) {
+	static char filename_return[13];
 
-	u8 *write = filename_return;
+	char *write = filename_return;
 	const u8 *read = fd->filename;
 	u8 read_past_tense = 0;
 	while (read_past_tense < 8 && *read > 0x20) {
