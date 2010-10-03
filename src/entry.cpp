@@ -109,7 +109,7 @@ void AkariEntry() {
 		++module_ptr;
 	}
 
-	mu_timer->setTimer(100);
+	mu_timer->setTimer(2000);
 	mu_memory->setPaging(true);
 	
 	// Give ourselves a normal stack. (n.b. this is from kernel heap!)
