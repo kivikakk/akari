@@ -20,6 +20,7 @@
 #include <Akari.hpp>
 
 u32 AkariMicrokernelSwitches = 0;
+u32 AkariTickHz = 0;
 
 TimerEvent::TimerEvent(u32 at): at(at)
 { }
@@ -32,6 +33,7 @@ Timer::Timer(): time_til_next(), events()
 { }
 
 void Timer::setTimer(u16 hz) {
+	AkariTickHz = hz;
 	u16 r = 0x1234dc / hz;
 	AkariOutB(0x43, 0x36);		// 0b00110110; not BCD, square, LSB+MSB, c0
 	AkariOutB(0x40, r & 0xFF);
@@ -53,10 +55,6 @@ void Timer::tick() {
 }
 
 void Timer::at(counted_ptr<TimerEvent> event) {
-	// Takes any event, won't delete it - is callers'
-	// responsibility post-event fire. Delete it before
-	// the event fires and you may regret it.
-	
 	bool was_empty = events.empty();
 	ASSERT(event->at > AkariMicrokernelSwitches);
 

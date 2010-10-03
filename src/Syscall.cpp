@@ -34,6 +34,7 @@ Syscall::Syscall(): _syscalls_assigned(0), _returnTask(0) {
 	addSyscall(5, reinterpret_cast<syscall_fn_t>(&User::irqListen));
 	addSyscall(48, reinterpret_cast<syscall_fn_t>(&User::irqCheck));
 	addSyscall(37, reinterpret_cast<syscall_fn_t>(&User::ticks));
+	addSyscall(51, reinterpret_cast<syscall_fn_t>(&User::tickHz));
 	addSyscall(6, reinterpret_cast<syscall_fn_t>(&User::panic));
 	addSyscall(7, reinterpret_cast<syscall_fn_t>(&User::sysexit));		// Don't change my number from 7 without changing entry.cpp.
 	addSyscall(8, reinterpret_cast<syscall_fn_t>(&User::defer));

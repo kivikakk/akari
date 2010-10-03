@@ -226,9 +226,8 @@ void IdleProcess() {
 	while (true) asm volatile("hlt");
 }
 
-// Returns how much the stack needs to be shifted.
 void *AkariMicrokernel(struct modeswitch_registers *r) {
-	// 100 times a second.
+	// 2000 times a second (or so).
 	mu_timer->tick();
 	mu_tasks->saveRegisterToTask(mu_tasks->current, r);
 	mu_tasks->cycleTask();

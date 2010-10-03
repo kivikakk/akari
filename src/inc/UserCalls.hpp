@@ -35,6 +35,7 @@ namespace User {
 	void irqListen(u32 irq);
 	bool irqCheck();
 	u32 ticks();
+	u32 tickHz();
 	void panic(const char *s);
 	void sysexit();
 	void defer();
@@ -69,6 +70,7 @@ DEFN_SYSCALL1(irqWaitTimeout, 38, bool, u32)
 DEFN_SYSCALL1(irqListen, 5, void, u32)
 DEFN_SYSCALL0(irqCheck, 48, bool)
 DEFN_SYSCALL0(ticks, 37, u32)
+DEFN_SYSCALL0(tickHz, 51, u32)
 DEFN_SYSCALL1(panic, 6, void, const char *)
 DEFN_SYSCALL0(sysexit, 7, void)
 DEFN_SYSCALL0(defer, 8, void)
@@ -87,6 +89,7 @@ DECL_SYSCALL1(irqWaitTimeout, bool, u32);
 DECL_SYSCALL1(irqListen, void, u32);
 DECL_SYSCALL0(irqCheck, bool);
 DECL_SYSCALL0(ticks, u32);
+DECL_SYSCALL0(tickHz, u32);
 DECL_SYSCALL1(panic, void, const char *);
 DECL_SYSCALL0(sysexit, void);
 DECL_SYSCALL0(defer, void);

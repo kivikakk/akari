@@ -142,6 +142,10 @@ namespace User {
 		return AkariMicrokernelSwitches;
 	}
 
+	u32 tickHz() {
+		return AkariTickHz;
+	}
+
 	void panic(const char *s) {
 		mu_console->printf("Process 0x%x \"%s\" ", mu_tasks->current->id, mu_tasks->current->name.c_str());
 		const char *rn = mu_tasks->current->registeredName.c_str();

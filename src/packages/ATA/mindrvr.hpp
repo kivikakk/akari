@@ -42,10 +42,6 @@
 
 extern int SYSTEM_WAIT_INTR_OR_TIMEOUT();
 
-// This defines the number of system timer ticks per second.
-
-#define SYSTEM_TIMER_TICKS_PER_SECOND  100L
-
 //********************************************************************
 //
 // !!! ATA controller hardware specific data

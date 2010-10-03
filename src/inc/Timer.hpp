@@ -21,7 +21,7 @@
 #include <list>
 #include <counted_ptr>
 
-extern u32 AkariMicrokernelSwitches;
+extern u32 AkariMicrokernelSwitches, AkariTickHz;
 
 class TimerEvent {
 public:

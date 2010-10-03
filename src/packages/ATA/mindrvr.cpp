@@ -32,6 +32,7 @@
 u8 int_ata_status;    // ATA status read by interrupt handler
 u8 int_bmide_status;  // BMIDE status read by interrupt handler
 u8 int_use_intr_flag = INT_DEFAULT_INTERRUPT_MODE;
+u32 SYSTEM_TIMER_TICKS_PER_SECOND = 0;
 
 struct REG_CMD_INFO reg_cmd_info;
 
@@ -126,6 +127,7 @@ int SYSTEM_WAIT_INTR_OR_TIMEOUT() {
 //*************************************************************
 
 int reg_config() {
+   SYSTEM_TIMER_TICKS_PER_SECOND = tickHz();
    static bool irq_listened = false;
    if (!irq_listened) {
       irq_listened = true;
@@ -2241,7 +2243,7 @@ int tmr_chk_timeout() {
    curTime = ticks();
 
    // timed out yet ?
-   if (curTime >= (tmr_cmd_start_time + (TMR_TIME_OUT * SYSTEM_TIMER_TICKS_PER_SECOND)))
+   if (curTime >= (tmr_cmd_start_time + (TMR_TIME_OUT * (long)SYSTEM_TIMER_TICKS_PER_SECOND)))
       return 1;      // yes
 
    // no timeout yet
