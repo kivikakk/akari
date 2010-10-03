@@ -34,6 +34,11 @@
 
 #define INIT_STACK_SIZE		0x2000
 
+#define MODULE_ATA_LOCATION	"/sys/services/ata"
+#define MODULE_FAT_LOCATION	"/sys/services/fat"
+#define MODULE_VFS_LOCATION	"/sys/services/vfs"
+#define MODULE_INIT_LOCATION	"/bin/init"
+
 static void AkariEntryCont();
 void IdleProcess();
 
@@ -156,9 +161,9 @@ static void AkariEntryCont() {
 	mu_tasks->current->next = idle;
 
 	// ATA driver
-	loaded_module_t *module = module_by_name("/ATA");
+	loaded_module_t *module = module_by_name(MODULE_ATA_LOCATION);
 	ASSERT(module);
-	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "/ATA", module->args ? *module->args : std::list<std::string>());
+	Tasks::Task *ata = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, MODULE_ATA_LOCATION, module->args ? *module->args : std::list<std::string>());
 	mu_elf->loadImageInto(ata, reinterpret_cast<u8 *>(module->module));
 	mu_tasks->registeredTasks["system.io.ata"] = ata;
 	ata->registeredName = "system.io.ata";
@@ -181,32 +186,32 @@ static void AkariEntryCont() {
 	idle->next = ata;
 	
 	// FAT driver
-	module = module_by_name("/FAT");
+	module = module_by_name(MODULE_FAT_LOCATION);
 	ASSERT(module);
-	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "/FAT", module->args ? *module->args : std::list<std::string>());
+	Tasks::Task *fat = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, MODULE_FAT_LOCATION, module->args ? *module->args : std::list<std::string>());
 	mu_elf->loadImageInto(fat, reinterpret_cast<u8 *>(module->module));
 	mu_tasks->registeredTasks["system.io.fs.fat"] = fat;
 	fat->registeredName = "system.io.fs.fat";
 	ata->next = fat;
 	
 	// VFS driver
-	module = module_by_name("/VFS");
+	module = module_by_name(MODULE_VFS_LOCATION);
 	ASSERT(module);
-	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "/VFS", module->args ? *module->args : std::list<std::string>());
+	Tasks::Task *vfs = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, MODULE_VFS_LOCATION, module->args ? *module->args : std::list<std::string>());
 	mu_elf->loadImageInto(vfs, reinterpret_cast<u8 *>(module->module));
 	mu_tasks->registeredTasks["system.io.vfs"] = vfs;
 	vfs->registeredName = "system.io.vfs";
 	fat->next = vfs;
 	
-	// Booter
-	module = module_by_name("/booter");
+	// init
+	module = module_by_name(MODULE_INIT_LOCATION);
 	ASSERT(module);
-	Tasks::Task *booter = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, "/booter", module->args ? *module->args : std::list<std::string>());
-	mu_elf->loadImageInto(booter, reinterpret_cast<u8 *>(module->module));
-	booter->grantPrivilege(PRIV_REGISTER_NAME);
-	booter->grantPrivilege(PRIV_GRANT_PRIV);
-	booter->grantPrivilege(PRIV_PHYSADDR);
-	vfs->next = booter;
+	Tasks::Task *init = Tasks::Task::CreateTask(0, 3, true, 0, mu_memory->_kernelDirectory, MODULE_INIT_LOCATION, module->args ? *module->args : std::list<std::string>());
+	mu_elf->loadImageInto(init, reinterpret_cast<u8 *>(module->module));
+	init->grantPrivilege(PRIV_REGISTER_NAME);
+	init->grantPrivilege(PRIV_GRANT_PRIV);
+	init->grantPrivilege(PRIV_PHYSADDR);
+	vfs->next = init;
 	
 	// Now we need our own directory! BootstrapTask should've been nice enough to make us one anyway.
 	mu_memory->switchPageDirectory(base->pageDir);

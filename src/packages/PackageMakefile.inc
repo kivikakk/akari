@@ -30,7 +30,8 @@ all: $(TARGET)-copy
 
 $(TARGET)-copy: $(TARGET)
 	@echo "[MCOPY] $<"
-	@$(MTOOLS_BIN)/mcopy -D o $(TARGET) $(COPYDEST)
+	@$(MTOOLS_BIN)/mmd -Ds `echo "$(COPYDEST)" | ruby -pne '$$_ = $$_.gsub(/[^\/]*$$/, "").split("/").inject {|a,b| "#{a} #{a}/#{b}"}.split.uniq.select {|e| e.index("/")}.join " "'` || true
+	@$(MTOOLS_BIN)/mcopy -Do $(TARGET) $(COPYDEST)
 
 $(TARGET): $(OBJS) ../../$(LINKAGE_TARGET) obj
 	@echo "[LD]    $@"

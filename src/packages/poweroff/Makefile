@@ -15,7 +15,7 @@
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
 TARGET = poweroff
-COPYDEST = C:/poweroff
+COPYDEST = C:/bin/poweroff
 
 include ../PackageMakefile.inc
 

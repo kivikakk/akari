@@ -14,25 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Akari.  If not, see <http://www.gnu.org/licenses/>.
 
-include ../Makefile.inc
+TARGET = fat
+COPYDEST = C:/sys/services/fat
 
-PACKAGES = acpi ata fat init keyboard pci piix3 poweroff ps rtl8139 sh vfs
+include ../PackageMakefile.inc
 
-all: $(PACKAGES)
-
-$(PACKAGES): force_subdir
-	@cd $@; $(MAKE) $(MFLAGS) all
-
-generate:
-	@if [ -z "$$PACKAGE" ]; then \
-	echo "Usage: make generate PACKAGE=xyzzy"; \
-	exit 1; \
-	fi
-	cp -r template $$PACKAGE
-	sed -i "s/template/$$PACKAGE/g" $$PACKAGE/.gitignore $$PACKAGE/Makefile $$PACKAGE/main.cpp $$PACKAGE/main.hpp
-
-force_subdir:
-	@true
-
-clean:
-	@for i in $(PACKAGES); do (cd $$i; $(MAKE) $(MFLAGS) clean); done

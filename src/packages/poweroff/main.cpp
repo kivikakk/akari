@@ -19,7 +19,7 @@
 #include <UserIPCQueue.hpp>
 
 #include "main.hpp"
-#include "../ACPI/ACPIProto.hpp"
+#include "../acpi/proto.hpp"
 
 extern "C" int main(int argc, char **argv) {
 	pid_t acpi = processIdByNameBlock("system.bus.acpi");

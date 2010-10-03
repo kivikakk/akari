@@ -21,9 +21,9 @@ color cyan/blue white/blue
 title Akari
 root (hd0,0)
 kernel /Akari
-module /ata
-module /fat
-module /vfs
-module /booter
+module /sys/services/ata
+module /sys/services/fat
+module /sys/services/vfs
+module /bin/init
 boot
 

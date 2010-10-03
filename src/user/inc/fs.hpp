@@ -17,7 +17,7 @@
 #ifndef __FS_HPP
 #define __FS_HPP
 
-#include "../packages/VFS/VFSProto.hpp"
+#include "../packages/vfs/proto.hpp"
 
 typedef struct {
 	VFSNode *file;
