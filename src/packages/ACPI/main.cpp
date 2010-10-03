@@ -52,7 +52,8 @@ extern "C" int main() {
 
 bool acpiInit() {
 	u32 *ptr = acpiGetRSDPtr();
-	mapPhysicalMem(processId(), (u32)ptr & 0xFFFFF000, ((u32)ptr & 0xFFFFF000) + 0x2000, (u32)ptr & 0xFFFFF000, true);
+	pid_t self = processId();
+	mapPhysicalMem(self, (u32)ptr & 0xFFFFF000, ((u32)ptr & 0xFFFFF000) + 0x2000, (u32)ptr & 0xFFFFF000, true);
 
 	if (ptr != 0 && acpiCheckHeader(ptr, "RSDT") == 0) {
 		// we have ACPI.
@@ -90,6 +91,12 @@ bool acpiInit() {
 
 							PM1a_CNT = facp->PM1a_CNT_BLK;
 							PM1b_CNT = facp->PM1b_CNT_BLK;
+
+							grantIOPriv(self, (u16)(u32)SMI_CMD);
+							grantIOPriv(self, (u16)(u32)PM1a_CNT);
+							grantIOPriv(self, (u16)(u32)PM1a_CNT + 1);
+							grantIOPriv(self, (u16)(u32)PM1b_CNT);
+							grantIOPriv(self, (u16)(u32)PM1b_CNT + 1);
 
 							PM1_CNT_LEN = facp->PM1_CNT_LEN;
 
