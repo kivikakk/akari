@@ -44,44 +44,30 @@ namespace User {
 		return mu_tasks->current->id;
 	}
 
-	IRQWaitCall::IRQWaitCall(u32 timeout): timeout(timeout), event(0)
+	IRQWaitCall::IRQWaitCall(u32 timeout): timeout(timeout), wakeeventId(0)
 	{ }
-
-	IRQWaitCall::~IRQWaitCall() {
-		if (event) {
-			event = counted_ptr<TimerEventWakeup>(0);
-		}
-	}
 
 	u32 IRQWaitCall::operator ()() {
 		if (mu_tasks->current->irqListenHits == 0) {
-			if (timeout &&
-					AkariMicrokernelSwitches >=
-					(mu_tasks->current->irqWaitStart + timeout / 10)) {
-				// XXX magic number: 1000ms per second, 100 ticks per second
-				// -> timeout ms/10 gives no. of ticks for timeout
-				// Should already be descheduled.
-				event = counted_ptr<TimerEventWakeup>(0);
-
+			if (timeout && !wakeeventId) {
+				wakeeventId = mu_timer->wakeIn(timeout * 1000, mu_tasks->current);
+				_willBlock();
+				return 0;
+			} else if (timeout) {
+				// we've timed out!
+				wakeeventId = 0;
 				_wontBlock();
 				return static_cast<u32>(false);
 			} else {
-				if (timeout) {
-					event = counted_ptr<TimerEventWakeup>(
-							new TimerEventWakeup(
-								mu_tasks->current->irqWaitStart + timeout / 10,
-								mu_tasks->current));
-					mu_timer->at(event);
-				}
-
+				// no timeout.
 				_willBlock();
 				return 0;
 			}
 		}
 
-		if (event) {
-			mu_timer->desched(*event);
-			event = counted_ptr<TimerEventWakeup>(0);
+		if (wakeeventId) {
+			ASSERT(mu_timer->desched(wakeeventId));
+			wakeeventId = 0;
 		}
 
 		_wontBlock();
@@ -94,8 +80,6 @@ namespace User {
 
 	void irqWait() {
 		requirePrivilege(PRIV_IRQ);
-
-		mu_tasks->current->irqWaitStart = 0;
 
 		IRQWaitCall c(0);
 		c();
@@ -110,8 +94,6 @@ namespace User {
 
 	bool irqWaitTimeout(u32 ms) {
 		requirePrivilege(PRIV_IRQ);
-
-		mu_tasks->current->irqWaitStart = AkariMicrokernelSwitches;
 
 		IRQWaitCall c(ms);
 		u32 r = c();

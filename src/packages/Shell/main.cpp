@@ -17,6 +17,7 @@
 #include <stdio.hpp>
 #include <proc.hpp>
 #include <fs.hpp>
+#include <time.hpp>
 #include <UserCalls.hpp>
 #include <UserIPC.hpp>
 #include <UserIPCQueue.hpp>
@@ -82,6 +83,8 @@ extern "C" int main() {
 				closedir(dirp);
 				cwd = path;
 			}
+		} else if (line[0] == "usleep") {
+			usleep(atoi(line[1].c_str()));
 		} else {
 			std::string path;
 		   

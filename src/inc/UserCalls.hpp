@@ -47,7 +47,6 @@ namespace User {
 	class IRQWaitCall : public BlockingCall {
 	public:
 		IRQWaitCall(u32 timeout);
-		~IRQWaitCall();
 
 		u32 operator ()();
 
@@ -56,7 +55,7 @@ namespace User {
 
 	protected:
 		u32 timeout;
-		counted_ptr<TimerEventWakeup> event;
+		u32 wakeeventId;
 	};
 }
 

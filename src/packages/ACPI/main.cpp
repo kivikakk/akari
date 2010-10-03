@@ -193,13 +193,13 @@ bool acpiEnable() {
 			for (i = 0; i < 300; ++i) {
 				if ((AkariInW((u32)PM1a_CNT) & SCI_EN) == 1)
 					break;
-				sleep(10);
+				usleep(100000);
 			}
 			if (PM1b_CNT != 0) {
 				for (; i < 300; ++i) {
 					if ((AkariInW((u32)PM1b_CNT) & SCI_EN) == 1)
 						break;
-					sleep(10);
+					usleep(100000);
 				}
 			}
 			if (i < 300) {

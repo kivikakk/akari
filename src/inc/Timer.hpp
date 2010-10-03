@@ -21,16 +21,16 @@
 #include <list>
 #include <counted_ptr>
 
-extern u32 AkariMicrokernelSwitches, AkariTickHz;
+extern u32 AkariMicrokernelSwitches, AkariTickHz, AkariSystemUs;
 
-class TimerEvent {
+class WakeEvent {
 public:
-	TimerEvent(u32 at);
-	virtual ~TimerEvent();
+	explicit WakeEvent();
+	WakeEvent(const WakeEvent &);
 
-	virtual void operator()() = 0;
-
-	u32 at;
+	Tasks::Task *toWake;
+	u32 uid;
+	u32 usLeft;
 };
 
 class Timer {
@@ -40,25 +40,11 @@ public:
 	void setTimer(u16);
 	void tick();
 
-	void at(counted_ptr<TimerEvent> event);
-	void desched(const TimerEvent &event);
+	u32 wakeIn(u32 us, Tasks::Task *task);
+	bool desched(u32 uid);
 
 protected:
-	u32 time_til_next;
-	std::list< counted_ptr<TimerEvent> > events;
-};
-
-class TimerEventWakeup : public TimerEvent {
-public:
-	TimerEventWakeup(u32 at, Tasks::Task *task);
-
-	explicit TimerEventWakeup(const TimerEventWakeup &);
-	TimerEventWakeup &operator =(const TimerEventWakeup &);
-
-	void operator()();
-
-protected:
-	Tasks::Task *wakeup;
+	std::list<WakeEvent> wakeevents;
 };
 
 #endif

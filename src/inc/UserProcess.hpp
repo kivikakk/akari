@@ -19,6 +19,7 @@
 
 #include <arch.hpp>
 #include <UserGates.hpp>
+#include <BlockingCall.hpp>
 
 struct timespec {
 	unsigned long tv_sec;
@@ -35,6 +36,21 @@ namespace Process {
 	bool grantPrivilege(pid_t task, u16 priv);
 	bool grantIOPriv(pid_t task, u16 port);
 	bool beginExecution(pid_t task);
+
+	class NanosleepCall : public BlockingCall {
+	public:
+		NanosleepCall(unsigned long tv_sec, long tv_nsec);
+
+		u32 operator ()();
+
+		static Symbol type();
+		Symbol insttype() const;
+
+	protected:
+		unsigned long tv_sec;
+		long tv_nsec;
+		u32 wakeeventId;
+	};
 
 	int nanosleep(const struct timespec *req, struct timespec *rem);
 }

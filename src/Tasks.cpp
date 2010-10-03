@@ -736,7 +736,7 @@ Tasks::Task::Queue::Item *Tasks::Task::Queue::itemById(u32 id) {
 }
 
 Tasks::Task::Task(u8 cpl, const std::string &name):
-		next(0), priorityNext(0), irqListen(0), irqListenHits(0), irqWaitStart(0),
+		next(0), priorityNext(0), irqListen(0), irqListenHits(0),
 		userWaiting(false), userCall(0),
 		id(0), name(name), registeredName(),
 		cpl(cpl), pageDir(0),

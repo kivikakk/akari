@@ -24,6 +24,7 @@
 #include <ELF.hpp>
 #include <Akari.hpp>
 #include <Console.hpp>
+#include <Syscall.hpp>
 
 namespace User {
 namespace Process {
@@ -90,11 +91,35 @@ namespace Process {
 		return true;
 	}
 
+	NanosleepCall::NanosleepCall(unsigned long tv_sec, long tv_nsec): tv_sec(tv_sec), tv_nsec(tv_nsec), wakeeventId(0)
+	{ }
+
+	u32 NanosleepCall::operator ()() {
+		if (!wakeeventId) {
+			wakeeventId = mu_timer->wakeIn(tv_sec * 1000000 + tv_nsec / 1000, mu_tasks->current);
+			_willBlock();
+			return 0;
+		}
+
+		_wontBlock();
+		return 0;
+	}
+
+	Symbol NanosleepCall::type() { return Symbol("NanosleepCall"); }
+	Symbol NanosleepCall::insttype() const { return type(); }
+
 	int nanosleep(const struct timespec *req, struct timespec *rem) {
 		if (rem) panic("Whoops! 'rem' is ignored in nanosleep.");
 
-		panic("Not implemented. Eek.");
-		return -1;
+		NanosleepCall c(req->tv_sec, req->tv_nsec);
+		int r = c();
+		if (!c.shallBlock())
+			return r;
+
+		mu_tasks->current->userWaiting = true;
+		mu_tasks->current->userCall = new NanosleepCall(c);
+		mu_syscall->returnToNextTask();
+		return 0;
 	}
 }
 }

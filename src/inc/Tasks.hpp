@@ -144,7 +144,6 @@ public:
 
 		// IRQ listening controls.
 		u32 irqListen, irqListenHits;
-		u32 irqWaitStart;
 
 		// User call blocking. (HACKy?)
 		bool userWaiting;
