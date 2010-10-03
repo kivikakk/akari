@@ -386,7 +386,7 @@ VFSDirent *fat_readdir(u32 inode, u32 index) {
 				fat_lfn_dirent_t *lfnent = reinterpret_cast<fat_lfn_dirent_t *>(fd);
 				std::string portion;
 				#define APPEND_PORTION(num) \
-					if (lfnent->c##num) { portion += static_cast<char>(lfnent->c##num); }
+					if (lfnent->c##num < 0x80) { portion += static_cast<char>(lfnent->c##num & 0x7F); }
 				APPEND_PORTION(1);
 				APPEND_PORTION(2);
 				APPEND_PORTION(3);
@@ -472,7 +472,7 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 				fat_lfn_dirent_t *lfnent = reinterpret_cast<fat_lfn_dirent_t *>(fd);
 				std::string portion;
 				#define APPEND_PORTION(num) \
-					if (lfnent->c##num) { portion += static_cast<char>(lfnent->c##num); }
+					if (lfnent->c##num < 0x80) { portion += static_cast<char>(lfnent->c##num & 0x7F); }
 				APPEND_PORTION(1);
 				APPEND_PORTION(2);
 				APPEND_PORTION(3);
@@ -494,8 +494,7 @@ VFSNode *fat_finddir(u32 inode, const char *name) {
 				continue;
 
 			const char *filename = lfn.length() ? lfn.c_str() : get_filename(fd);
-			if (stricmp(filename, name) == 0) {
-				printf("%s vs %s\n", filename, name);
+			if (strcmp(filename, name) == 0) {			// Need to make FAT case-insensitive? Change me to stricmp.
 				VFSNode *node = new VFSNode;
 				strcpy(node->name, name);
 				node->flags = (fd->attributes & FAT_DIRECTORY) ? VFS_DIRECTORY : VFS_FILE;
