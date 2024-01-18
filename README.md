@@ -1,4 +1,5 @@
-# akari
+# [akari](https://hrzn.ee/kivikakk/akari)
+
 #### <span style="color: #333">microkernel operating system</span>
 
 ## introduction
